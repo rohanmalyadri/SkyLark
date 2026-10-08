@@ -14,6 +14,8 @@ const ServerEnvSchema = z.object({
   AI_MODEL: z.string().default("claude-opus-5-5"),
   CRON_SECRET: z.string().min(16).optional(),
   ADMIN_EMAILS: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().endsWith(".apps.googleusercontent.com").optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(10).optional(),
 });
 
 export type ServerEnv = z.infer<typeof ServerEnvSchema> & { dataMode: "supabase" | "demo"; sessionSecret: string };
@@ -37,3 +39,12 @@ export function serverEnv(): ServerEnv {
 }
 
 export const isDemoMode = () => serverEnv().dataMode === "demo";
+
+/** Google sign-in without Supabase (demo/self-hosted auth). With Supabase, Google is configured on the Supabase project instead. */
+export const nativeGoogleEnabled = () => {
+  const env = serverEnv();
+  return env.dataMode === "demo" && !!env.GOOGLE_CLIENT_ID && !!env.GOOGLE_CLIENT_SECRET;
+};
+
+/** Whether the "Continue with Google" button should be offered at all. */
+export const googleSignInAvailable = () => serverEnv().dataMode === "supabase" || nativeGoogleEnabled();

@@ -41,7 +41,7 @@ async function Dashboard() {
     <>
       <PageHeader
         eyebrow="Command center"
-        title={user.onboardedAt && Date.now() - new Date(user.onboardedAt).getTime() < 3_600_000 ? `Welcome to AutoApply, ${first}` : `Welcome back, ${first}`}
+        title={d.firstVisit ? `Welcome to AutoApply, ${first}` : `Welcome back, ${first}`}
         description={summary.join(" · ")}
         actions={
           <>
