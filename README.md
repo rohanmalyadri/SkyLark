@@ -1,9 +1,6 @@
 <div align="center">
 
-<img src="docs/media/tour.gif" alt="AutoApply product tour" width="860" />
-
-<br />
-<br />
+<img src="docs/media/logo.png" alt="AutoApply logo" width="112" />
 
 # AutoApply
 
@@ -24,6 +21,10 @@ It tailors every application, and a human specialist reviews it before anything 
 ![Tests](https://img.shields.io/badge/tests-28_passing-3dd68c?style=flat-square)
 
 [**Quick start**](#quick-start) · [**How it works**](#how-it-works) · [**Architecture**](#architecture) · [**Security**](#security-model) · [**Project structure**](#project-structure)
+
+<br />
+
+<img src="docs/media/tour.gif" alt="AutoApply product tour" width="860" />
 
 </div>
 

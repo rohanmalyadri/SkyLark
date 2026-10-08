@@ -1,13 +1,10 @@
+import Image from "next/image";
 import { cn, initials } from "@/lib/utils";
 
 export function Logo({ className, wordmark = true }: { className?: string; wordmark?: boolean }) {
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <svg viewBox="0 0 28 28" className="size-7" aria-hidden>
-        <rect x="0.5" y="0.5" width="27" height="27" rx="7" fill="#0C0D10" stroke="rgb(255 255 255 / 0.14)" />
-        <path d="M8 19.5 13.2 8.5h1.6L20 19.5" fill="none" stroke="#EDEEF0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M10.6 15.2h5.2l2.7-2.7" fill="none" stroke="#3D7BFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <Image src="/brand/logo-mark.png" alt="" width={512} height={512} sizes="32px" loading="eager" className="size-8 shrink-0" />
       {wordmark && <span className="text-[15px] font-semibold tracking-[-0.02em] text-fg">AutoApply</span>}
     </span>
   );
