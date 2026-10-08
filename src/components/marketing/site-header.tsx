@@ -6,12 +6,13 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/ui/marks";
 import { cn } from "@/lib/utils";
+import { SECTION_NAV_EVENT } from "./smooth-anchors";
 
 const NAV = [
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#matching", label: "Matching" },
   { href: "/#international", label: "International" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/#pricing", label: "Pricing" },
   { href: "/#security", label: "Security" },
 ];
 
@@ -24,6 +25,12 @@ export function SiteHeader() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const close = () => setOpen(false);
+    window.addEventListener(SECTION_NAV_EVENT, close);
+    return () => window.removeEventListener(SECTION_NAV_EVENT, close);
   }, []);
 
   useEffect(() => {
@@ -62,7 +69,7 @@ export function SiteHeader() {
         <div id="mobile-nav" className="fixed inset-x-0 bottom-0 top-16 z-40 flex flex-col bg-bg px-4 pb-8 pt-4 md:hidden">
           <nav aria-label="Mobile" className="flex flex-col">
             {NAV.map((n) => (
-              <Link key={n.href} href={n.href} onClick={() => setOpen(false)} className="border-b border-line py-4 text-lg font-medium tracking-tight text-fg">
+              <Link key={n.href} href={n.href} className="border-b border-line py-4 text-lg font-medium tracking-tight text-fg">
                 {n.label}
               </Link>
             ))}
