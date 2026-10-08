@@ -1,6 +1,8 @@
 "use client";
 
+import { Suspense } from "react";
 import { Toaster } from "sonner";
+import { SmoothAnchors } from "@/components/marketing/smooth-anchors";
 import { MotionProvider } from "@/components/ui/motion";
 import { TooltipProvider } from "@/components/ui/overlay";
 
@@ -9,6 +11,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <MotionProvider>
       <TooltipProvider delayDuration={250}>
         {children}
+        {/* Reads the URL, so it must stream behind a boundary under Cache Components. */}
+        <Suspense fallback={null}>
+          <SmoothAnchors />
+        </Suspense>
         <Toaster
           theme="dark"
           position="bottom-right"
