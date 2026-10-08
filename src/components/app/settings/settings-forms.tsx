@@ -98,7 +98,7 @@ export function PreferencesForm({ settings }: { settings: UserSettings }) {
   );
 }
 
-export function SecurityPanel({ method, demo }: { method: string; demo: boolean }) {
+export function SecurityPanel({ method, demo, google }: { method: string; demo: boolean; google: boolean }) {
   return (
     <Panel id="security" className="scroll-mt-20">
       <PanelHeader title="Security & connected accounts" />
@@ -115,9 +115,9 @@ export function SecurityPanel({ method, demo }: { method: string; demo: boolean 
         <div className="flex items-center justify-between gap-4 px-5 py-3.5">
           <dt>
             <span className="block font-medium">Google</span>
-            <span className="block text-xs text-muted">{demo ? "Available when Supabase Auth is configured" : "Sign in with your Google account"}</span>
+            <span className="block text-xs text-muted">{google ? "Sign in with the Google account that uses your email" : "Not configured on this server"}</span>
           </dt>
-          <dd>{demo ? <Badge>Unavailable in demo</Badge> : <Badge tone={method === "Google" ? "success" : "neutral"}>{method === "Google" ? "Connected" : "Not connected"}</Badge>}</dd>
+          <dd>{google ? <Badge tone="success">Available</Badge> : <Badge>Unavailable</Badge>}</dd>
         </div>
         <div className="flex items-center justify-between gap-4 px-5 py-3.5">
           <dt>

@@ -74,6 +74,7 @@ export async function dashboardData(user: User) {
   };
 
   return {
+    firstVisit: !!user.onboardedAt && now - new Date(user.onboardedAt).getTime() < 3_600_000,
     profile,
     completeness,
     stats,

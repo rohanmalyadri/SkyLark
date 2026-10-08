@@ -7,6 +7,7 @@ import { useFormStatus } from "react-dom";
 import { demoAction, googleAction, signInAction, signUpAction, type AuthState } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 import { InlineError } from "@/components/ui/states";
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
@@ -41,17 +42,42 @@ function GoogleButton({ next }: { next?: string }) {
   );
 }
 
+/** Google's four-colour "G" mark, as published in Google's sign-in branding guidelines. */
+function GoogleMark() {
+  return (
+    <svg viewBox="0 0 48 48" className="size-[18px] shrink-0" aria-hidden>
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
+  );
+}
+
+/** Google's dark-theme button: #131314 fill, #8E918F outline, #E3E3E3 label. */
 function GoogleSubmit() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="secondary" size="lg" className="w-full" loading={pending}>
-      <svg viewBox="0 0 24 24" className="size-4" aria-hidden>
-        <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.2 1.3-1.6 3.9-5.5 3.9-3.3 0-6-2.7-6-6.1s2.7-6.1 6-6.1c1.9 0 3.1.8 3.8 1.5l2.6-2.5C16.8 3.3 14.6 2.3 12 2.3 6.7 2.3 2.4 6.6 2.4 12s4.3 9.7 9.6 9.7c5.5 0 9.2-3.9 9.2-9.4 0-.6-.1-1.1-.2-1.6H12z" />
-      </svg>
-      Continue with Google
-    </Button>
+    <button
+      type="submit"
+      disabled={pending}
+      aria-busy={pending || undefined}
+      className="relative flex h-11 w-full items-center justify-center gap-3 rounded-md border border-[#8E918F] bg-[#131314] px-4 text-[14px] font-medium text-[#E3E3E3] transition-[background-color,border-color] duration-150 hover:border-[#B4B7B5] hover:bg-[#1C1C1E] active:translate-y-px disabled:opacity-70"
+    >
+      {pending ? <Spinner className="text-[#E3E3E3]" /> : <GoogleMark />}
+      {pending ? "Redirecting to Google…" : "Continue with Google"}
+    </button>
   );
 }
+
+const GOOGLE_ERRORS: Record<string, { title: string; message: string }> = {
+  google_unavailable: { title: "Google sign-in unavailable", message: "Try email and password, or a demo account." },
+  google_cancelled: { title: "Google sign-in cancelled", message: "No problem. Choose another way to sign in, or try again." },
+  google_expired: { title: "Sign-in link expired", message: "That Google sign-in took too long or was opened in another browser. Please try again." },
+  google_failed: { title: "Couldn't sign in with Google", message: "Google didn't confirm your account. Please try again." },
+  rate_limited: { title: "Too many attempts", message: "Please wait a few minutes before trying again." },
+  callback: { title: "Couldn't complete sign-in", message: "That sign-in link is invalid or expired. Please try again." },
+};
 
 function Divider() {
   return (
@@ -90,7 +116,8 @@ function DemoButton({ icon, label }: { icon: React.ReactNode; label: string }) {
   );
 }
 
-export function SignInForm({ next, demo, googleError }: { next?: string; demo: boolean; googleError?: boolean }) {
+export function SignInForm({ next, demo, google, error }: { next?: string; demo: boolean; google: boolean; error?: string }) {
+  const authError = error ? GOOGLE_ERRORS[error] : undefined;
   const [state, action] = useActionState(signInAction, null);
   return (
     <div>
@@ -98,9 +125,13 @@ export function SignInForm({ next, demo, googleError }: { next?: string; demo: b
       <p className="mt-1.5 text-sm text-muted">Sign in to your career command center.</p>
 
       <div className="mt-8">
-        {!demo && <GoogleButton next={next} />}
-        {!demo && <Divider />}
-        {googleError && <div className="mb-4"><InlineError title="Google sign-in unavailable" message="Try email and password, or a demo account." /></div>}
+        {authError && (
+          <div className="mb-4">
+            <InlineError title={authError.title} message={authError.message} />
+          </div>
+        )}
+        {google && <GoogleButton next={next} />}
+        {google && <Divider />}
         <form action={action} className="space-y-4" noValidate>
           <input type="hidden" name="next" value={next ?? ""} />
           {state && !state.ok && !state.fieldErrors && <InlineError title="Couldn't sign you in" message={state.error} />}
@@ -128,7 +159,7 @@ export function SignInForm({ next, demo, googleError }: { next?: string; demo: b
   );
 }
 
-export function SignUpForm({ demo, plan }: { demo: boolean; plan?: string }) {
+export function SignUpForm({ demo, google, plan }: { demo: boolean; google: boolean; plan?: string }) {
   const [state, action] = useActionState(signUpAction, null);
 
   if (state?.ok && state.data.needsConfirmation) {
@@ -152,8 +183,8 @@ export function SignUpForm({ demo, plan }: { demo: boolean; plan?: string }) {
         {plan ? `You picked ${plan[0]!.toUpperCase()}${plan.slice(1)}. ` : ""}Five minutes to your first ranked matches.
       </p>
       <div className="mt-8">
-        {!demo && <GoogleButton next="/onboarding" />}
-        {!demo && <Divider />}
+        {google && <GoogleButton next="/onboarding" />}
+        {google && <Divider />}
         <form action={action} className="space-y-4" noValidate>
           {state && !state.ok && !state.fieldErrors && <InlineError title="Couldn't create your account" message={state.error} />}
           <Field label="Full name" htmlFor="fullName" error={fieldError(state, "fullName")}>

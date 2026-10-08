@@ -6,7 +6,8 @@ import { systemRepo } from "@/lib/data";
 import { memoryStore } from "@/lib/data/memory";
 import { SignInSchema, SignUpSchema } from "@/lib/domain/schemas";
 import type { User } from "@/lib/domain/types";
-import { serverEnv } from "@/lib/env";
+import type { GoogleProfile } from "@/lib/auth/google";
+import { nativeGoogleEnabled, serverEnv } from "@/lib/env";
 import { AppError } from "@/lib/infra/errors";
 import { rateLimit } from "@/lib/infra/rate-limit";
 import { DEMO_ADMIN_KEY, DEMO_CANDIDATE_KEY, userIdByKey } from "@/lib/seed/people";
@@ -85,7 +86,8 @@ export async function signIn(input: unknown, ip: string) {
 
 export async function googleSignInUrl(next = "/dashboard") {
   const env = serverEnv();
-  if (env.dataMode === "demo") throw new AppError("validation", "Google sign-in needs Supabase configured. Use a demo account instead.");
+  if (nativeGoogleEnabled()) return `/auth/google?next=${encodeURIComponent(next)}`;
+  if (env.dataMode === "demo") throw new AppError("validation", "Google sign-in isn't configured. Use a demo account instead.");
   const supabase = await createSessionClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -93,6 +95,27 @@ export async function googleSignInUrl(next = "/dashboard") {
   });
   if (error || !data.url) throw new AppError("internal", "Couldn't start Google sign-in.");
   return data.url;
+}
+
+/**
+ * Signs in (or signs up) from a verified Google identity when running without Supabase.
+ * Accounts are matched on Google-verified email, so an existing email/password user lands in the same account.
+ */
+export async function completeGoogleSignIn(profile: GoogleProfile, ip: string) {
+  await rateLimit("auth", ip);
+  const repo = systemRepo();
+  let user = await repo.getUserByEmail(profile.email);
+  const created = !user;
+  if (!user) {
+    user = await repo.createUser({ email: profile.email, fullName: profile.name, role: "candidate", avatarUrl: profile.picture, onboardedAt: null });
+  } else if (!user.avatarUrl && profile.picture) {
+    user = await repo.updateUser(user.id, { avatarUrl: profile.picture });
+  }
+  await applyRoleAllowlist(user);
+  user = (await repo.getUser(user.id)) ?? user;
+  await setDemoCookie(user.id);
+  await audit(user, created ? "auth.signed_up" : "auth.signed_in", "user", user.id, { method: "google" });
+  return user;
 }
 
 export async function exchangeOAuthCode(code: string) {
