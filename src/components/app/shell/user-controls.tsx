@@ -6,17 +6,17 @@ import { useRouter } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import { markNotificationsReadAction } from "@/app/actions/candidate";
 import { signOutAction } from "@/app/actions/auth";
-import { Avatar } from "@/components/ui/marks";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, Popover, PopoverContent, PopoverTrigger } from "@/components/ui/overlay";
 import type { Notification } from "@/lib/domain/types";
 import { cn, timeAgo } from "@/lib/utils";
 
-export function UserMenu({ name, email, role }: { name: string; email: string; role: string }) {
+export function UserMenu({ name, email, role, avatarUrl }: { name: string; email: string; role: string; avatarUrl: string | null }) {
   const router = useRouter();
   return (
     <Menu>
       <MenuTrigger className="rounded-full" aria-label="Account menu">
-        <Avatar name={name} className="size-7 transition-colors hover:border-white/25" />
+        <UserAvatar name={name} src={avatarUrl} className="size-7 transition-colors hover:border-white/25" />
       </MenuTrigger>
       <MenuContent className="w-60">
         <div className="px-2.5 py-2">

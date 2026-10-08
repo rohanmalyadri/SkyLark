@@ -64,3 +64,47 @@ export async function extractText(bytes: Uint8Array, mime: string): Promise<stri
   }
   return null;
 }
+
+/* ---------- Profile photos ---------- */
+
+export const MAX_AVATAR_BYTES = 1024 * 1024;
+export const AVATAR_BUCKET = "avatars";
+
+/** PNG, JPEG or WebP, by magic bytes. */
+export function sniffImageType(bytes: Uint8Array): "image/png" | "image/jpeg" | "image/webp" | null {
+  const b = bytes;
+  if (b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return "image/png";
+  if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "image/jpeg";
+  if (b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50) return "image/webp";
+  return null;
+}
+
+const avatarKey = (userId: string) => `avatars/${userId}`;
+
+/** Stores a profile photo and returns a cache-busted URL for <img src>. */
+export async function putAvatar(userId: string, bytes: Uint8Array, mime: string) {
+  const env = serverEnv();
+  const version = Date.now().toString(36);
+  if (env.dataMode === "demo") {
+    memoryStore().blobs.set(avatarKey(userId), { bytes, mime });
+    return `/api/avatars/${userId}?v=${version}`;
+  }
+  const admin = createAdminClient();
+  const path = `${userId}/avatar`;
+  const { error } = await admin.storage.from(AVATAR_BUCKET).upload(path, bytes, { contentType: mime, upsert: true, cacheControl: "3600" });
+  if (error) throw new Error(`Avatar upload failed: ${error.message}`);
+  return `${admin.storage.from(AVATAR_BUCKET).getPublicUrl(path).data.publicUrl}?v=${version}`;
+}
+
+export async function removeAvatar(userId: string) {
+  const env = serverEnv();
+  if (env.dataMode === "demo") {
+    memoryStore().blobs.delete(avatarKey(userId));
+    return;
+  }
+  await createAdminClient().storage.from(AVATAR_BUCKET).remove([`${userId}/avatar`]);
+}
+
+export function readAvatar(userId: string) {
+  return memoryStore().blobs.get(avatarKey(userId)) ?? null;
+}

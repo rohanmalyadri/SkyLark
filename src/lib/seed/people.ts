@@ -38,7 +38,7 @@ export function demoProfile(now: string): CandidateProfile {
     headline: "Senior Full-Stack Engineer",
     summary:
       "Full-stack engineer with seven years building payments and commerce platforms in India's fastest-growing fintech market. I care about reliable systems, clean interfaces and teams that ship. Looking to relocate to Europe or Canada with an employer that sponsors.",
-    location: { city: "Bengaluru", country: "IN" },
+    location: { city: "Bengaluru", region: "Karnataka", country: "IN" },
     citizenship: ["IN"],
     workAuthorizations: [{ country: "IN", status: "citizen" }],
     requiresSponsorship: true,
@@ -141,7 +141,7 @@ export function otherProfiles(now: string): CandidateProfile[] {
     userId: userIdByKey(o.key),
     headline: o.headline,
     summary: `${o.headline} with ${o.years} years of experience, looking for international opportunities in ${o.targets.join(", ")}.`,
-    location: { city: o.city, country: o.country },
+    location: { city: o.city, region: "", country: o.country },
     citizenship: o.auth.slice(0, 1),
     workAuthorizations: o.auth.map((country) => ({ country, status: "citizen" as const })),
     requiresSponsorship: true,

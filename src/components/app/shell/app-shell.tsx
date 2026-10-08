@@ -75,7 +75,7 @@ async function ShellUser() {
   return (
     <div className="flex items-center gap-1.5">
       <NotificationsButton items={notifications} />
-      <UserMenu name={user.fullName} email={user.email} role={user.role} />
+      <UserMenu name={user.fullName} email={user.email} role={user.role} avatarUrl={user.avatarUrl} />
       <CommandPalette staff={isStaff(user)} />
     </div>
   );

@@ -33,5 +33,5 @@ async function Onboarding() {
   if (user.role !== "candidate") redirect("/admin");
   if (user.onboardedAt) redirect("/dashboard");
   const { profile, resumes } = await getProfileBundle(user);
-  return <OnboardingWizard profile={profile} firstName={user.fullName.split(" ")[0] ?? ""} hasResume={resumes.length > 0} />;
+  return <OnboardingWizard profile={profile} firstName={user.fullName.split(" ")[0] ?? ""} fullName={user.fullName} avatarUrl={user.avatarUrl} hasResume={resumes.length > 0} />;
 }

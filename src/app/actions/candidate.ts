@@ -89,6 +89,18 @@ export async function uploadResumeAction(form: FormData) {
   }, { message: "Resume uploaded" });
 }
 
+export async function uploadAvatarAction(form: FormData) {
+  return run("avatar.upload", async (u) => {
+    const file = form.get("file");
+    if (!(file instanceof File)) throw new z.ZodError([{ code: "custom", path: ["file"], message: "Choose an image", input: null }]);
+    return profile.uploadAvatar(u, file);
+  }, { message: "Profile photo updated" });
+}
+
+export async function removeAvatarAction() {
+  return run("avatar.remove", (u) => profile.deleteAvatar(u), { message: "Profile photo removed" });
+}
+
 export async function deleteResumeAction(resumeId: string) {
   return run("resume.delete", (u) => profile.deleteResume(u, id.parse(resumeId)), { message: "Resume deleted" });
 }
