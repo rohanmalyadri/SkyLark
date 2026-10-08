@@ -24,14 +24,6 @@ export function CompanyMark({ name, color, size = "md", className }: { name: str
   );
 }
 
-export function Avatar({ name, className }: { name: string; className?: string }) {
-  return (
-    <span className={cn("inline-grid size-8 shrink-0 place-items-center rounded-full border border-line-strong bg-surface-3 text-[11px] font-semibold text-fg", className)} aria-hidden>
-      {initials(name)}
-    </span>
-  );
-}
-
 export function Kbd({ children, className }: { children: React.ReactNode; className?: string }) {
   return <kbd className={cn("inline-flex h-5 min-w-5 items-center justify-center rounded border border-line-strong bg-surface-2 px-1 font-mono text-[10px] text-subtle", className)}>{children}</kbd>;
 }

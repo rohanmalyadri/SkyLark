@@ -47,7 +47,7 @@ const profile = (patch: Partial<CandidateProfile> = {}): CandidateProfile => ({
   userId: "u1",
   headline: "Engineer",
   summary: "",
-  location: { city: "Bengaluru", country: "IN" },
+  location: { city: "Bengaluru", region: "Karnataka", country: "IN" },
   citizenship: ["IN"],
   workAuthorizations: [{ country: "IN", status: "citizen" }],
   requiresSponsorship: true,

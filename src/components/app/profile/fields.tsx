@@ -1,10 +1,13 @@
 "use client";
 
 import { Plus, Trash2, X } from "lucide-react";
-import { useId, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Select, Textarea } from "@/components/ui/input";
-import { AUTH_STATUS_LABEL, COUNTRIES, SENIORITY_LABEL } from "@/lib/domain/constants";
+import { Combobox } from "@/components/ui/combobox";
+import { Field, Input, Textarea } from "@/components/ui/input";
+import { SelectMenu } from "@/components/ui/select-menu";
+import { AUTH_STATUS_LABEL, COUNTRIES, countryName, SENIORITY_LABEL } from "@/lib/domain/constants";
+import { useCountries, useRegions } from "@/lib/hooks/use-geo";
 import type { AuthStatus, CandidateProfile, Experience, Skill } from "@/lib/domain/types";
 import { cn } from "@/lib/utils";
 
@@ -19,16 +22,84 @@ export function toDraft(p: CandidateProfile): ProfileDraft {
 
 const countryEntries = Object.entries(COUNTRIES).sort((a, b) => a[1].localeCompare(b[1]));
 
-export function CountrySelect({ id, value, onChange, placeholder = "Select a country" }: { id?: string; value: string; onChange: (v: string) => void; placeholder?: string }) {
+export function CountrySelect({ id, value, onChange, placeholder = "Select a country", invalid }: { id?: string; value: string; onChange: (v: string) => void; placeholder?: string; invalid?: boolean }) {
+  const { data, loading, error, retry } = useCountries();
+  const options = useMemo(() => (data ?? []).map((c) => ({ value: c.code, label: c.name })), [data]);
   return (
-    <Select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
-      <option value="">{placeholder}</option>
-      {countryEntries.map(([code, name]) => (
-        <option key={code} value={code}>
-          {name}
-        </option>
-      ))}
-    </Select>
+    <Combobox
+      id={id}
+      value={value}
+      onChange={onChange}
+      options={options}
+      loading={loading}
+      error={error}
+      onRetry={retry}
+      placeholder={placeholder}
+      searchPlaceholder="Search countries"
+      emptyText="No country matches"
+      aria-label="Country"
+      aria-invalid={invalid}
+    />
+  );
+}
+
+/** States, provinces or regions, fetched for the chosen country. */
+export function RegionSelect({ id, country, value, onChange, invalid, onAvailability }: { id?: string; country: string; value: string; onChange: (v: string) => void; invalid?: boolean; onAvailability?: (hasRegions: boolean) => void }) {
+  const { data, loading, error, retry } = useRegions(country);
+  const options = useMemo(() => (data ?? []).map((r) => ({ value: r.name, label: r.name })), [data]);
+  const hasRegions = !!data && data.length > 0;
+  useEffect(() => {
+    if (data) onAvailability?.(data.length > 0);
+  }, [data, onAvailability]);
+
+  if (country && data && !hasRegions) {
+    return <div className="flex h-9 items-center rounded-md border border-dashed border-line-strong px-3 text-[13px] text-subtle">No states or regions for this country</div>;
+  }
+  return (
+    <Combobox
+      id={id}
+      value={value}
+      onChange={onChange}
+      options={options}
+      loading={!!country && loading}
+      error={error}
+      onRetry={retry}
+      disabled={!country}
+      placeholder={country ? "Select a state or region" : "Choose a country first"}
+      searchPlaceholder="Search states and regions"
+      emptyText="No state matches"
+      aria-label="State or region"
+      aria-invalid={invalid}
+    />
+  );
+}
+
+/** Country → state/region → city, in that order. Changing the country clears the state. */
+export function LocationFields({
+  idPrefix,
+  value,
+  onChange,
+  errors,
+  onRegionAvailability,
+}: {
+  idPrefix: string;
+  value: ProfileDraft["location"];
+  onChange: (v: ProfileDraft["location"]) => void;
+  errors?: { country?: string; region?: string; city?: string };
+  onRegionAvailability?: (hasRegions: boolean) => void;
+}) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Field label="Country" htmlFor={`${idPrefix}-country`} error={errors?.country}>
+        <CountrySelect id={`${idPrefix}-country`} value={value.country} invalid={!!errors?.country} onChange={(country) => onChange({ ...value, country, region: country === value.country ? value.region : "" })} />
+      </Field>
+      <Field label="State / region" htmlFor={`${idPrefix}-region`} error={errors?.region}>
+        <RegionSelect id={`${idPrefix}-region`} country={value.country} value={value.region} invalid={!!errors?.region} onChange={(region) => onChange({ ...value, region })} onAvailability={onRegionAvailability} />
+      </Field>
+      <Field label="City" htmlFor={`${idPrefix}-city`} error={errors?.city} className="sm:col-span-2">
+        <Input id={`${idPrefix}-city`} value={value.city} onChange={(e) => onChange({ ...value, city: e.target.value })} autoComplete="address-level2" placeholder="e.g. Bengaluru" aria-invalid={!!errors?.city || undefined} />
+      </Field>
+    </div>
   );
 }
 
@@ -157,7 +228,7 @@ export function AuthorizationEditor({ value, onChange }: { value: CandidateProfi
         <ul className="divide-y divide-line rounded-md border border-line">
           {value.map((a) => (
             <li key={a.country} className="flex items-center gap-3 px-3 py-2 text-[13px]">
-              <span className="flex-1 text-fg">{COUNTRIES[a.country] ?? a.country}</span>
+              <span className="flex-1 text-fg">{countryName(a.country)}</span>
               <span className="text-muted">{AUTH_STATUS_LABEL[a.status]}</span>
               <button type="button" onClick={() => onChange(value.filter((x) => x.country !== a.country))} className="grid size-7 place-items-center rounded text-subtle hover:bg-surface-2 hover:text-danger" aria-label={`Remove ${a.country}`}>
                 <X className="size-3.5" />
@@ -168,15 +239,14 @@ export function AuthorizationEditor({ value, onChange }: { value: CandidateProfi
       )}
       <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
         <CountrySelect id={`${id}-c`} value={country} onChange={setCountry} />
-        <Select aria-label="Authorization status" value={status} onChange={(e) => setStatus(e.target.value as AuthStatus)}>
-          {Object.entries(AUTH_STATUS_LABEL)
+        <SelectMenu
+          aria-label="Authorization status"
+          value={status}
+          onValueChange={(v) => setStatus(v as AuthStatus)}
+          options={Object.entries(AUTH_STATUS_LABEL)
             .filter(([k]) => k !== "none")
-            .map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-        </Select>
+            .map(([k, v]) => ({ value: k, label: v }))}
+        />
         <Button
           type="button"
           variant="secondary"
@@ -244,18 +314,14 @@ export function ExperienceEditor({ value, onChange }: { value: Experience[]; onC
 }
 
 export function SenioritySelect({ id, value, onChange }: { id?: string; value: CandidateProfile["seniority"]; onChange: (v: CandidateProfile["seniority"]) => void }) {
-  return (
-    <Select id={id} value={value} onChange={(e) => onChange(e.target.value as CandidateProfile["seniority"])}>
-      {Object.entries(SENIORITY_LABEL).map(([k, v]) => (
-        <option key={k} value={k}>
-          {v}
-        </option>
-      ))}
-    </Select>
-  );
+  return <SelectMenu id={id} value={value} onValueChange={(v) => onChange(v as CandidateProfile["seniority"])} options={Object.entries(SENIORITY_LABEL).map(([k, v]) => ({ value: k, label: v }))} />;
 }
 
 export const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "SGD", "CHF", "AED", "INR"];
+
+export function CurrencySelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return <SelectMenu aria-label="Currency" className="w-24" value={value} onValueChange={onChange} options={CURRENCIES.map((c) => ({ value: c, label: c }))} />;
+}
 
 /** Strip empty optional values so the server schema sees clean input. */
 export function cleanDraft(d: ProfileDraft): ProfileDraft {

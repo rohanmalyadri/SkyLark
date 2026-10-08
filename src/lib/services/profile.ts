@@ -8,7 +8,8 @@ import type { CandidateProfile, User } from "@/lib/domain/types";
 import { AppError, notFound } from "@/lib/infra/errors";
 import { rateLimit } from "@/lib/infra/rate-limit";
 import { enqueueAndKick } from "@/lib/pipeline/queue";
-import { ALLOWED_DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, extractText, putDocument, removeDocument, sniffDocumentType } from "@/lib/storage";
+import { isValidRegion, listRegions } from "@/lib/geo";
+import { ALLOWED_DOCUMENT_TYPES, MAX_AVATAR_BYTES, MAX_DOCUMENT_BYTES, extractText, putAvatar, putDocument, removeAvatar, removeDocument, sniffDocumentType, sniffImageType } from "@/lib/storage";
 import { audit } from "./audit";
 import { matchCandidate } from "./matching/service";
 
@@ -18,8 +19,20 @@ export async function getProfileBundle(user: User) {
   return { profile: profile ?? emptyProfile(user.id, new Date().toISOString()), resumes, hasProfile: !!profile };
 }
 
+/** The region must belong to the chosen country; onboarding also requires one when the country has regions. */
+function checkRegion(data: ProfileInput, required: boolean) {
+  const { country, region } = data.location;
+  if (region && (!country || !isValidRegion(country, region))) {
+    throw new AppError("validation", "Choose a state or region from the list for your country.");
+  }
+  if (required && country && !region && (listRegions(country)?.length ?? 0) > 0) {
+    throw new AppError("validation", "Choose your state or region.");
+  }
+}
+
 export async function updateProfile(user: User, input: unknown) {
   const data: ProfileInput = ProfileSchema.parse(input);
+  checkRegion(data, false);
   const repo = await userRepo();
   const current = (await repo.getProfile(user.id)) ?? emptyProfile(user.id, new Date().toISOString());
   const next: CandidateProfile = { ...current, ...data, links: data.links, userId: user.id, updatedAt: new Date().toISOString() };
@@ -33,6 +46,7 @@ export async function updateProfile(user: User, input: unknown) {
 
 export async function completeOnboarding(user: User, input: unknown) {
   const data = ProfileSchema.parse(input);
+  checkRegion(data, true);
   const repo = await userRepo();
   const profile: CandidateProfile = { ...emptyProfile(user.id, new Date().toISOString()), ...data, userId: user.id };
   await repo.upsertProfile(profile);
@@ -102,4 +116,23 @@ export async function setPrimaryResume(user: User, resumeId: string) {
 export async function rematchNow(user: User) {
   await rateLimit("mutation", user.id);
   return matchCandidate(user.id);
+}
+
+export async function uploadAvatar(user: User, file: File) {
+  await rateLimit("upload", user.id);
+  if (!file || file.size === 0) throw new AppError("validation", "Choose an image to upload.");
+  if (file.size > MAX_AVATAR_BYTES) throw new AppError("validation", "Images must be 1 MB or smaller.");
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const mime = sniffImageType(bytes);
+  if (!mime) throw new AppError("validation", "Upload a PNG, JPEG or WebP image.");
+  const url = await putAvatar(user.id, bytes, mime);
+  await (await userRepo()).updateUser(user.id, { avatarUrl: url });
+  await audit(user, "avatar.updated", "user", user.id, { sizeBytes: file.size, mime });
+  return url;
+}
+
+export async function deleteAvatar(user: User) {
+  await removeAvatar(user.id);
+  await (await userRepo()).updateUser(user.id, { avatarUrl: null });
+  await audit(user, "avatar.removed", "user", user.id);
 }

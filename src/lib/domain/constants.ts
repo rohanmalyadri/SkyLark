@@ -31,7 +31,17 @@ export const COUNTRIES: Record<string, string> = {
   VN: "Vietnam",
 };
 
-export const countryName = (code: string) => COUNTRIES[code] ?? code;
+const regionNames = typeof Intl !== "undefined" && "DisplayNames" in Intl ? new Intl.DisplayNames(["en"], { type: "region" }) : null;
+
+export const countryName = (code: string) => {
+  if (!code) return "";
+  if (COUNTRIES[code]) return COUNTRIES[code];
+  try {
+    return regionNames?.of(code) ?? code;
+  } catch {
+    return code;
+  }
+};
 
 export const SENIORITY_LABEL: Record<Seniority, string> = {
   entry: "Entry",

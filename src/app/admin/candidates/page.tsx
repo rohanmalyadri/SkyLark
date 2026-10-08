@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SearchBox } from "@/components/admin/admin-controls";
 import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/marks";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { PageHeader, Panel } from "@/components/ui/panel";
 import { ScoreBar } from "@/components/ui/score";
 import { PageSkeleton } from "@/components/ui/skeleton";
@@ -63,7 +63,7 @@ async function List({ searchParams }: { searchParams: PageProps<"/admin/candidat
                   <tr key={user.id} className="hover:bg-surface-2/40">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        <Avatar name={user.fullName} />
+                        <UserAvatar name={user.fullName} src={user.avatarUrl} />
                         <div className="min-w-0">
                           <p className="font-medium text-fg">{user.fullName}</p>
                           <p className="truncate text-xs text-subtle">{profile?.headline || user.email}</p>

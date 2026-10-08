@@ -4,14 +4,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { updateProfileAction } from "@/app/actions/candidate";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Select, Textarea } from "@/components/ui/input";
+import { Field, Input, Textarea } from "@/components/ui/input";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Switch } from "@/components/ui/switch";
 import type { CandidateProfile } from "@/lib/domain/types";
 import { useAction } from "@/lib/hooks/use-action";
-import { AuthorizationEditor, CountryChips, CountrySelect, CURRENCIES, ExperienceEditor, Segmented, SenioritySelect, SkillsEditor, TagInput, cleanDraft, toDraft, type ProfileDraft } from "./fields";
+import { AvatarField } from "./avatar-field";
+import { AuthorizationEditor, CountryChips, CurrencySelect, ExperienceEditor, LocationFields, Segmented, SenioritySelect, SkillsEditor, TagInput, cleanDraft, toDraft, type ProfileDraft } from "./fields";
 
-export function ProfileEditor({ profile }: { profile: CandidateProfile }) {
+export function ProfileEditor({ profile, fullName, avatarUrl }: { profile: CandidateProfile; fullName: string; avatarUrl: string | null }) {
   const initial = useMemo(() => toDraft(profile), [profile]);
   const [d, setD] = useState<ProfileDraft>(initial);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -31,6 +32,9 @@ export function ProfileEditor({ profile }: { profile: CandidateProfile }) {
     <div className="space-y-6">
       <Panel id="basics" className="scroll-mt-20">
         <PanelHeader title="Basics" description="How you introduce yourself to employers" />
+        <div className="border-b border-line p-5">
+          <AvatarField name={fullName} avatarUrl={avatarUrl} />
+        </div>
         <div className="grid gap-4 p-5 sm:grid-cols-2">
           <Field label="Headline" htmlFor="headline" error={err("headline")} className="sm:col-span-2">
             <Input id="headline" value={d.headline} onChange={(e) => set("headline", e.target.value)} placeholder="Senior Full-Stack Engineer" maxLength={140} />
@@ -38,12 +42,9 @@ export function ProfileEditor({ profile }: { profile: CandidateProfile }) {
           <Field label="Summary" htmlFor="summary" hint={`${d.summary.length}/2000`} error={err("summary")} className="sm:col-span-2">
             <Textarea id="summary" value={d.summary} onChange={(e) => set("summary", e.target.value)} maxLength={2000} className="min-h-28" />
           </Field>
-          <Field label="City" htmlFor="city">
-            <Input id="city" value={d.location.city} onChange={(e) => set("location", { ...d.location, city: e.target.value })} autoComplete="address-level2" />
-          </Field>
-          <Field label="Country" htmlFor="country">
-            <CountrySelect id="country" value={d.location.country} onChange={(country) => set("location", { ...d.location, country })} />
-          </Field>
+          <div className="sm:col-span-2">
+            <LocationFields idPrefix="p" value={d.location} onChange={(location) => set("location", location)} errors={{ country: err("location.country"), region: err("location.region"), city: err("location.city") }} />
+          </div>
           <Field label="Seniority" htmlFor="seniority">
             <SenioritySelect id="seniority" value={d.seniority} onChange={(v) => set("seniority", v)} />
           </Field>
@@ -104,11 +105,7 @@ export function ProfileEditor({ profile }: { profile: CandidateProfile }) {
             </Field>
             <Field label="Minimum salary (annual)" htmlFor="salary" optional>
               <div className="flex gap-2">
-                <Select aria-label="Currency" className="w-24" value={d.salaryExpectation?.currency ?? "USD"} onChange={(e) => set("salaryExpectation", { min: d.salaryExpectation?.min ?? 0, currency: e.target.value })}>
-                  {CURRENCIES.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </Select>
+                <CurrencySelect value={d.salaryExpectation?.currency ?? "USD"} onChange={(currency) => set("salaryExpectation", { min: d.salaryExpectation?.min ?? 0, currency })} />
                 <Input id="salary" type="number" min={0} step={1000} value={d.salaryExpectation?.min ?? ""} onChange={(e) => set("salaryExpectation", e.target.value ? { min: Number(e.target.value), currency: d.salaryExpectation?.currency ?? "USD" } : null)} placeholder="80000" />
               </div>
             </Field>

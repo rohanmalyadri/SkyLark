@@ -3,11 +3,12 @@
 import { motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, Check, FileCheck2, Loader2, UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { completeOnboardingAction, uploadResumeAction } from "@/app/actions/candidate";
-import { AuthorizationEditor, CountryChips, CountrySelect, CURRENCIES, ExperienceEditor, Segmented, SenioritySelect, SkillsEditor, TagInput, cleanDraft, toDraft, type ProfileDraft } from "@/components/app/profile/fields";
+import { AvatarField } from "@/components/app/profile/avatar-field";
+import { AuthorizationEditor, CountryChips, CurrencySelect, ExperienceEditor, LocationFields, Segmented, SenioritySelect, SkillsEditor, TagInput, cleanDraft, toDraft, type ProfileDraft } from "@/components/app/profile/fields";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Select, Textarea } from "@/components/ui/input";
+import { Field, Input, Textarea } from "@/components/ui/input";
 import { InlineError } from "@/components/ui/states";
 import { Switch } from "@/components/ui/switch";
 import type { CandidateProfile } from "@/lib/domain/types";
@@ -16,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 const STEPS = ["Resume", "About you", "Work authorization", "Preferences", "Skills & experience"] as const;
 
-export function OnboardingWizard({ profile, firstName, hasResume }: { profile: CandidateProfile; firstName: string; hasResume: boolean }) {
+export function OnboardingWizard({ profile, firstName, fullName, avatarUrl, hasResume }: { profile: CandidateProfile; firstName: string; fullName: string; avatarUrl: string | null; hasResume: boolean }) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [d, setD] = useState<ProfileDraft>(() => {
@@ -25,9 +26,16 @@ export function OnboardingWizard({ profile, firstName, hasResume }: { profile: C
   });
   const [uploaded, setUploaded] = useState<string | null>(hasResume ? "Resume on file" : null);
   const [stepError, setStepError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ headline?: string; country?: string; region?: string; city?: string }>({});
+  // Unknown until the region list for the chosen country has loaded.
+  const [hasRegions, setHasRegions] = useState<boolean | null>(null);
+  const onRegionAvailability = useCallback((v: boolean) => setHasRegions(v), []);
   const [finishing, setFinishing] = useState<{ phase: number; matches: number } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const set = <K extends keyof ProfileDraft>(k: K, v: ProfileDraft[K]) => setD((p) => ({ ...p, [k]: v }));
+  const set = <K extends keyof ProfileDraft>(k: K, v: ProfileDraft[K]) => {
+    setD((p) => ({ ...p, [k]: v }));
+    setStepError(null);
+  };
 
   const upload = useAction(uploadResumeAction, {
     onSuccess: (res) => {
@@ -45,7 +53,15 @@ export function OnboardingWizard({ profile, firstName, hasResume }: { profile: C
   const complete = useAction(completeOnboardingAction, { successToast: false });
 
   const validate = (): string | null => {
-    if (step === 1 && (!d.headline.trim() || !d.location.country)) return "Add a headline and your current country.";
+    if (step === 1) {
+      const errs: typeof fieldErrors = {};
+      if (!d.headline.trim()) errs.headline = "Add a headline";
+      if (!d.location.country) errs.country = "Choose your country";
+      else if (hasRegions !== false && !d.location.region) errs.region = hasRegions === null ? "Wait for the list to load, then choose a state" : "Choose your state or region";
+      if (!d.location.city.trim()) errs.city = "Enter your city";
+      setFieldErrors(errs);
+      if (Object.keys(errs).length) return "A few details are missing above.";
+    }
     if (step === 2 && d.workAuthorizations.length === 0 && !d.requiresSponsorship) return "Add at least one country you're authorized to work in, or turn on sponsorship.";
     if (step === 3 && (d.preferredRoles.length === 0 || d.preferredCountries.length === 0)) return "Choose at least one role and one target country.";
     if (step === 4 && d.skills.length < 3) return "Add at least three skills so we can score roles accurately.";
@@ -137,19 +153,29 @@ export function OnboardingWizard({ profile, firstName, hasResume }: { profile: C
 
           {step === 1 && (
             <StepShell title="About you" body="How you'll be introduced to employers.">
+              <div className="mb-6 rounded-lg border border-line p-4">
+                <AvatarField name={fullName} avatarUrl={avatarUrl} />
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Headline" htmlFor="o-headline" className="sm:col-span-2">
-                  <Input id="o-headline" value={d.headline} onChange={(e) => set("headline", e.target.value)} placeholder="Senior Full-Stack Engineer" autoFocus />
+                <Field label="Headline" htmlFor="o-headline" className="sm:col-span-2" error={fieldErrors.headline}>
+                  <Input id="o-headline" value={d.headline} onChange={(e) => (set("headline", e.target.value), setFieldErrors((f) => ({ ...f, headline: undefined })))} placeholder="Senior Full-Stack Engineer" aria-invalid={!!fieldErrors.headline || undefined} />
                 </Field>
                 <Field label="Short summary" htmlFor="o-summary" optional className="sm:col-span-2">
                   <Textarea id="o-summary" value={d.summary} onChange={(e) => set("summary", e.target.value)} placeholder="What you do best and what you're looking for next." />
                 </Field>
-                <Field label="Current city" htmlFor="o-city">
-                  <Input id="o-city" value={d.location.city} onChange={(e) => set("location", { ...d.location, city: e.target.value })} />
-                </Field>
-                <Field label="Current country" htmlFor="o-country">
-                  <CountrySelect id="o-country" value={d.location.country} onChange={(country) => set("location", { ...d.location, country })} />
-                </Field>
+                <div className="sm:col-span-2">
+                  <LocationFields
+                    idPrefix="o"
+                    value={d.location}
+                    onChange={(location) => {
+                      if (location.country !== d.location.country) setHasRegions(null);
+                      set("location", location);
+                      setFieldErrors((e) => ({ ...e, country: undefined, region: undefined, city: location.city.trim() ? undefined : e.city }));
+                    }}
+                    errors={fieldErrors}
+                    onRegionAvailability={onRegionAvailability}
+                  />
+                </div>
                 <Field label="Seniority" htmlFor="o-sen">
                   <SenioritySelect id="o-sen" value={d.seniority} onChange={(v) => set("seniority", v)} />
                 </Field>
@@ -203,11 +229,7 @@ export function OnboardingWizard({ profile, firstName, hasResume }: { profile: C
                 </Field>
                 <Field label="Minimum annual salary" htmlFor="o-salary" optional>
                   <div className="flex max-w-sm gap-2">
-                    <Select aria-label="Currency" className="w-24" value={d.salaryExpectation?.currency ?? "USD"} onChange={(e) => set("salaryExpectation", { min: d.salaryExpectation?.min ?? 0, currency: e.target.value })}>
-                      {CURRENCIES.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </Select>
+                    <CurrencySelect value={d.salaryExpectation?.currency ?? "USD"} onChange={(currency) => set("salaryExpectation", { min: d.salaryExpectation?.min ?? 0, currency })} />
                     <Input id="o-salary" type="number" min={0} step={1000} value={d.salaryExpectation?.min ?? ""} onChange={(e) => set("salaryExpectation", e.target.value ? { min: Number(e.target.value), currency: d.salaryExpectation?.currency ?? "USD" } : null)} />
                   </div>
                 </Field>

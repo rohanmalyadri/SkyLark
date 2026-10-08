@@ -57,11 +57,16 @@ export interface SalaryExpectation {
   currency: string;
 }
 
+/** A candidate's home location. `region` is the state, province or region name. */
+export interface HomeLocation extends Place {
+  region: string;
+}
+
 export interface CandidateProfile {
   userId: string;
   headline: string;
   summary: string;
-  location: Place;
+  location: HomeLocation;
   citizenship: string[];
   workAuthorizations: WorkAuthorization[];
   requiresSponsorship: boolean;

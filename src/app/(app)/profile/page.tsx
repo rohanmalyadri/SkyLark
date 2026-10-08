@@ -63,7 +63,7 @@ async function Profile() {
           </div>
         </aside>
         <div className="min-w-0 space-y-6 pb-16">
-          <ProfileEditor profile={profile} />
+          <ProfileEditor profile={profile} fullName={user.fullName} avatarUrl={user.avatarUrl} />
           <Panel id="documents" className="scroll-mt-20">
             <PanelHeader title="Resumes & documents" description="Your primary resume is the starting point for every tailored version" />
             <ResumeManager resumes={resumes} />

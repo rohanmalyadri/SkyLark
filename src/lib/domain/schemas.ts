@@ -40,7 +40,7 @@ export const ExperienceSchema = z.object({
 export const ProfileSchema = z.object({
   headline: shortText(140),
   summary: shortText(2000),
-  location: z.object({ city: shortText(80), country: country.or(z.literal("")) }),
+  location: z.object({ city: shortText(80), region: shortText(80).default(""), country: country.or(z.literal("")) }),
   citizenship: z.array(country).max(4),
   workAuthorizations: z.array(z.object({ country, status: z.enum(["citizen", "permanent_resident", "work_visa", "student_visa", "none"]) })).max(10),
   requiresSponsorship: z.boolean(),
