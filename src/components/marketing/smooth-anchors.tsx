@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { scrollToId } from "@/lib/smooth-scroll";
+import { scrollToId, smoothScrollTo } from "@/lib/smooth-scroll";
 
 export const SECTION_NAV_EVENT = "autoapply:section-nav";
 
@@ -35,8 +35,19 @@ export function SmoothAnchors() {
       if (!anchor || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
 
       const url = new URL(anchor.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
       const id = decodeURIComponent(url.hash.slice(1));
-      if (!id || url.origin !== window.location.origin) return;
+
+      // A link to the page you're already on (e.g. the logo on the home page) glides back to the top.
+      if (!id) {
+        if (url.pathname !== window.location.pathname || url.search !== window.location.search) return;
+        e.preventDefault();
+        e.stopPropagation();
+        window.dispatchEvent(new Event(SECTION_NAV_EVENT));
+        await nextFrame();
+        if (await smoothScrollTo(0)) history.replaceState(history.state, "", url.pathname + url.search);
+        return;
+      }
 
       // Take over before Next's <Link> handler jumps instantly to the hash.
       e.preventDefault();
