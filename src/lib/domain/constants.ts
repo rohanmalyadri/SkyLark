@@ -1,4 +1,4 @@
-import type { ApplicationStatus, AuthStatus, FactorRating, PipelineStage, ReviewStatus, Seniority } from "./types";
+import type { ApplicationStatus, AuthStatus, FactorRating, PipelineStage, ReviewStatus, Seniority, VerificationStatus } from "./types";
 
 export const COUNTRIES: Record<string, string> = {
   US: "United States",
@@ -127,3 +127,13 @@ export const CANDIDATE_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[
   offer: ["rejected", "interview"],
   rejected: ["saved"],
 };
+
+export const VERIFICATION_META: Record<VerificationStatus, { label: string; tone: Tone; description: string }> = {
+  pending: { label: "Awaiting review", tone: "warning", description: "A specialist is reviewing your profile." },
+  approved: { label: "Verified", tone: "success", description: "A specialist reviewed and approved your profile." },
+  changes_requested: { label: "Changes requested", tone: "accent", description: "A specialist asked you to update your profile." },
+  rejected: { label: "Not verified", tone: "danger", description: "A specialist couldn't verify your profile." },
+};
+
+/** "Berlin, Germany", or just "Germany" when a listing names no city. */
+export const formatPlace = (p: { city: string; country: string }) => (p.city ? `${p.city}, ${countryName(p.country)}` : countryName(p.country));

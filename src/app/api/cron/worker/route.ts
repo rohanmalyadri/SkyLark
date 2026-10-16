@@ -4,7 +4,7 @@ import { serverEnv } from "@/lib/env";
 import { logger } from "@/lib/infra/logger";
 import { runWorker } from "@/lib/pipeline/worker";
 import { enqueue } from "@/lib/pipeline/queue";
-import { SOURCES } from "@/lib/pipeline/sources";
+import { enabledSources } from "@/lib/pipeline/sources";
 
 export const maxDuration = 60;
 
@@ -24,7 +24,7 @@ function authorized(req: NextRequest) {
 export async function GET(req: NextRequest) {
   if (!authorized(req)) return Response.json({ error: "unauthorized" }, { status: 401 });
   const hour = new Date().toISOString().slice(0, 13);
-  for (const s of SOURCES) {
+  for (const s of enabledSources()) {
     await enqueue({ type: "ingest_source", payload: { source: s.id }, idempotencyKey: `ingest:${s.id}:${hour}` });
   }
   const result = await runWorker({ limit: 50, budgetMs: 50_000 });

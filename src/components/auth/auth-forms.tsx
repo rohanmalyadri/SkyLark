@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Field, Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { InlineError } from "@/components/ui/states";
+import { nameProblem } from "@/lib/validation/text";
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
   const { pending } = useFormStatus();
@@ -54,7 +55,7 @@ function GoogleMark() {
   );
 }
 
-/** Google's dark-theme button: #131314 fill, #8E918F outline, #E3E3E3 label. */
+/** Google's light-theme button: #FFFFFF fill, #747775 outline, #1F1F1F label. */
 function GoogleSubmit() {
   const { pending } = useFormStatus();
   return (
@@ -62,9 +63,9 @@ function GoogleSubmit() {
       type="submit"
       disabled={pending}
       aria-busy={pending || undefined}
-      className="relative flex h-11 w-full items-center justify-center gap-3 rounded-md border border-[#8E918F] bg-[#131314] px-4 text-[14px] font-medium text-[#E3E3E3] transition-[background-color,border-color] duration-150 hover:border-[#B4B7B5] hover:bg-[#1C1C1E] active:translate-y-px disabled:opacity-70"
+      className="relative flex h-11 w-full items-center justify-center gap-3 rounded-md border border-[#747775] bg-white px-4 text-[14px] font-medium text-[#1F1F1F] transition-[background-color,border-color] duration-150 hover:bg-[#F8F8F8] active:translate-y-px disabled:opacity-70"
     >
-      {pending ? <Spinner className="text-[#E3E3E3]" /> : <GoogleMark />}
+      {pending ? <Spinner className="text-[#1F1F1F]" /> : <GoogleMark />}
       {pending ? "Redirecting to Google…" : "Continue with Google"}
     </button>
   );
@@ -121,8 +122,8 @@ export function SignInForm({ next, demo, google, error }: { next?: string; demo:
   const [state, action] = useActionState(signInAction, null);
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-[-0.025em]">Welcome back</h1>
-      <p className="mt-1.5 text-sm text-muted">Sign in to your career command center.</p>
+      <h1 className="headline text-[40px]">Welcome back</h1>
+      <p className="mt-3 text-[15px] text-muted">Sign in to follow every application.</p>
 
       <div className="mt-8">
         {authError && (
@@ -150,7 +151,7 @@ export function SignInForm({ next, demo, google, error }: { next?: string; demo:
       {demo && <DemoAccounts />}
 
       <p className="mt-8 text-center text-sm text-muted">
-        New to AutoApply?{" "}
+        New to Skylark?{" "}
         <Link href="/signup" className="font-medium text-fg underline-offset-4 hover:underline">
           Create an account
         </Link>
@@ -159,8 +160,19 @@ export function SignInForm({ next, demo, google, error }: { next?: string; demo:
   );
 }
 
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 export function SignUpForm({ demo, google, plan }: { demo: boolean; google: boolean; plan?: string }) {
   const [state, action] = useActionState(signUpAction, null);
+  // Instant feedback on blur; the server re-validates everything (and checks the email domain).
+  const [local, setLocal] = useState<{ fullName?: string; email?: string; password?: string }>({});
+  const [lastState, setLastState] = useState(state);
+  if (lastState !== state) {
+    setLastState(state);
+    setLocal({});
+  }
+  const err = (k: "fullName" | "email" | "password") => local[k] ?? fieldError(state, k);
+  const clear = (k: keyof typeof local) => local[k] && setLocal((l) => ({ ...l, [k]: undefined }));
 
   if (state?.ok && state.data.needsConfirmation) {
     return (
@@ -168,7 +180,7 @@ export function SignUpForm({ demo, google, plan }: { demo: boolean; google: bool
         <div className="mx-auto grid size-12 place-items-center rounded-xl border border-line-strong bg-surface-2">
           <MailCheck className="size-5 text-accent" />
         </div>
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight">Check your inbox</h1>
+        <h1 className="headline mt-6 text-[36px]">Check your inbox</h1>
         <p className="mt-2 text-sm text-muted">
           We sent a confirmation link to <span className="text-fg">{state.values?.email}</span>. Open it on this device to continue to onboarding.
         </p>
@@ -178,8 +190,8 @@ export function SignUpForm({ demo, google, plan }: { demo: boolean; google: bool
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-[-0.025em]">Create your account</h1>
-      <p className="mt-1.5 text-sm text-muted">
+      <h1 className="headline text-[40px]">Create your account</h1>
+      <p className="mt-3 text-[15px] text-muted">
         {plan ? `You picked ${plan[0]!.toUpperCase()}${plan.slice(1)}. ` : ""}Five minutes to your first ranked matches.
       </p>
       <div className="mt-8">
@@ -187,20 +199,30 @@ export function SignUpForm({ demo, google, plan }: { demo: boolean; google: bool
         {google && <Divider />}
         <form action={action} className="space-y-4" noValidate>
           {state && !state.ok && !state.fieldErrors && <InlineError title="Couldn't create your account" message={state.error} />}
-          <Field label="Full name" htmlFor="fullName" error={fieldError(state, "fullName")}>
-            <Input id="fullName" name="fullName" autoComplete="name" required defaultValue={state?.values?.fullName} aria-invalid={!!fieldError(state, "fullName") || undefined} className="h-10" />
+          <Field label="Full name" htmlFor="fullName" error={err("fullName")}>
+            <Input id="fullName" name="fullName" autoComplete="name" required maxLength={80} defaultValue={state?.values?.fullName} onBlur={(e) => e.target.value && setLocal((l) => ({ ...l, fullName: nameProblem(e.target.value) ?? undefined }))} onChange={() => clear("fullName")} aria-invalid={!!err("fullName") || undefined} className="h-10" />
           </Field>
-          <Field label="Email" htmlFor="email" error={fieldError(state, "email")}>
-            <Input id="email" name="email" type="email" autoComplete="email" required defaultValue={state?.values?.email} aria-invalid={!!fieldError(state, "email") || undefined} className="h-10" />
+          <Field label="Email" htmlFor="email" error={err("email")}>
+            <Input id="email" name="email" type="email" autoComplete="email" required maxLength={254} defaultValue={state?.values?.email} onBlur={(e) => e.target.value && setLocal((l) => ({ ...l, email: EMAIL_SHAPE.test(e.target.value.trim()) ? undefined : "Enter a valid email address" }))} onChange={() => clear("email")} aria-invalid={!!err("email") || undefined} className="h-10" />
           </Field>
-          <Field label="Password" htmlFor="password" hint="At least 10 characters, with a letter and a number." error={fieldError(state, "password")}>
-            <PasswordInput id="password" autoComplete="new-password" invalid={!!fieldError(state, "password")} />
+          <Field label="Password" htmlFor="password" hint="At least 10 characters, with a letter and a number." error={err("password")}>
+            <PasswordInput id="password" autoComplete="new-password" invalid={!!err("password")} />
           </Field>
           <SubmitButton>
             Create account <ArrowRight />
           </SubmitButton>
         </form>
-        <p className="mt-4 text-center text-xs text-subtle">By continuing you agree to the Terms and acknowledge the Privacy Policy.</p>
+        <p className="mt-4 text-center text-xs text-subtle">
+        By continuing you agree to the{" "}
+        <Link href="/terms" className="underline underline-offset-2 hover:text-fg">
+          Terms
+        </Link>{" "}
+        and acknowledge the{" "}
+        <Link href="/privacy" className="underline underline-offset-2 hover:text-fg">
+          Privacy Policy
+        </Link>
+        .
+      </p>
       </div>
       {demo && <DemoAccounts />}
       <p className="mt-8 text-center text-sm text-muted">

@@ -50,3 +50,6 @@ function useGeo(url: string | null): State & { retry: () => void } {
 
 export const useCountries = () => useGeo("/api/geo/countries");
 export const useRegions = (country: string) => useGeo(country ? `/api/geo/countries/${encodeURIComponent(country)}/regions` : null);
+/** Cities for a country (and region, when the country has them). Pass an empty country to skip. */
+export const useCities = (country: string, region: string) =>
+  useGeo(country ? `/api/geo/countries/${encodeURIComponent(country)}/cities${region ? `?region=${encodeURIComponent(region)}` : ""}` : null);

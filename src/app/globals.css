@@ -1,38 +1,48 @@
 @import "tailwindcss";
 
 /*
- * AutoApply design tokens.
+ * Skylark design tokens.
+ * An editorial, architectural system: charcoal on white and off-white, hairline rules,
+ * square corners, one crimson signal (the reference's #D81413) used sparingly for meaning.
  * Primitive values live on :root; Tailwind utilities map to them via @theme.
- * The product is dark-first; contrast pairs are tuned for #07080A.
  */
 :root {
-  --bg: #07080a;
-  --surface: #0c0d10;
-  --surface-2: #111317;
-  --surface-3: #171a1f;
-  --line: rgb(255 255 255 / 0.07);
-  --line-strong: rgb(255 255 255 / 0.12);
+  --bg: #ffffff;
+  --surface: #f7f7f7;
+  --surface-2: #f1f1f0;
+  --surface-3: #e9e9e7;
+  --line: #e6e6e4;
+  --line-strong: #d5d5d5;
 
-  --fg: #edeef0;
-  --muted: #9ba1ab;
-  --subtle: #747a86;
+  --fg: #2b2b2b;
+  --muted: #5c5c5c;
+  --subtle: #767676;
+  --faint: #aaaaaa;
+  --warm: #aaaaaa;
+  --ink: #1f1f1f;
 
-  --accent: #3d7bff;
-  --accent-hover: #5a8fff;
-  --accent-soft: rgb(61 123 255 / 0.12);
-  --accent-line: rgb(61 123 255 / 0.38);
+  /* Sky: shapes, numerals and large display use. Accent: text-size interactive use (AA on white). */
+  --sky: #d81413;
+  --accent: #d81413;
+  --accent-hover: #b51110;
+  --accent-soft: rgb(216 20 19 / 0.07);
+  --accent-line: rgb(216 20 19 / 0.3);
 
-  --success: #3dd68c;
-  --success-soft: rgb(61 214 140 / 0.1);
-  --warning: #f5b544;
-  --warning-soft: rgb(245 181 68 / 0.1);
-  --danger: #ff6369;
-  --danger-soft: rgb(255 99 105 / 0.1);
+  --success: #1f7a52;
+  --success-soft: rgb(31 122 82 / 0.08);
+  --warning: #6b6b6b;
+  --warning-soft: rgb(43 43 43 / 0.06);
+  --danger: #b8382f;
+  --danger-soft: rgb(184 56 47 / 0.07);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-editorial: cubic-bezier(0.76, 0, 0.24, 1);
 
-  color-scheme: dark;
+  --header-h: 72px;
+
+  color-scheme: light;
+  interpolate-size: allow-keywords;
 }
 
 @theme inline {
@@ -45,6 +55,10 @@
   --color-fg: var(--fg);
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
+  --color-faint: var(--faint);
+  --color-warm: var(--warm);
+  --color-ink: var(--ink);
+  --color-sky: var(--sky);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-soft: var(--accent-soft);
@@ -56,13 +70,15 @@
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter-tight), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-serif: var(--font-instrument-serif), "Times New Roman", serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  /* Architectural, nearly square corners throughout. */
+  --radius-sm: 1px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
 
   --ease-out-expo: var(--ease-out);
 
@@ -87,6 +103,12 @@
 @keyframes pop-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
 @keyframes sheet-left { from { transform: translateX(100%); } to { transform: none; } }
+/* Editorial line reveal: each headline line rises out of its own mask. */
+@keyframes line-up { from { transform: translateY(105%); } to { transform: none; } }
+/* Image reveal: a curtain lifts off the artwork. */
+@keyframes curtain { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes shape-in { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+@keyframes drift { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
 
 @keyframes scan {
   0% { transform: translateY(-100%); opacity: 0; }
@@ -106,19 +128,18 @@
     background: var(--bg);
     color: var(--fg);
     font-family: var(--font-sans);
-    font-feature-settings: "ss01", "cv11";
+    letter-spacing: -0.005em;
     min-height: 100dvh;
   }
 
   ::selection {
-    background: rgb(61 123 255 / 0.35);
-    color: #fff;
+    background: rgb(216 20 19 / 0.18);
+    color: var(--ink);
   }
 
   :focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
-    border-radius: 4px;
   }
 
   button:not(:disabled),
@@ -140,70 +161,119 @@
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgb(255 255 255 / 0.12) transparent;
+    scrollbar-color: rgb(0 0 0 / 0.16) transparent;
   }
 }
 
 @layer utilities {
   .tabular { font-variant-numeric: tabular-nums; }
 
-  /* Fine engineering grid, faded at the edges so it reads as atmosphere, not decoration. */
+  /* Display type: the reference's tight, heavy-tracked grotesk. */
+  .display {
+    font-weight: 500;
+    letter-spacing: -0.045em;
+    line-height: 0.86;
+  }
+  .headline {
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
+  }
+  .numeral {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.03em;
+    line-height: 0.9;
+  }
+  /* Small grey section marker used above editorial headlines. */
+  .kicker {
+    font-size: 13px;
+    letter-spacing: -0.01em;
+    color: var(--subtle);
+  }
+  .meta-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  /* Underlined text link with a 2px bar that retracts and redraws on hover. */
+  .ed-link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    padding-bottom: 3px;
+    font-size: 14px;
+    color: var(--fg);
+    background: linear-gradient(currentColor, currentColor) left bottom / 100% 1.5px no-repeat;
+    transition: color 200ms;
+  }
+  .ed-link:hover {
+    animation: ed-redraw 820ms var(--ease-editorial);
+  }
+
   .bg-grid {
     background-image:
-      linear-gradient(to right, rgb(255 255 255 / 0.045) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(255 255 255 / 0.045) 1px, transparent 1px);
+      linear-gradient(to right, rgb(0 0 0 / 0.045) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(0 0 0 / 0.045) 1px, transparent 1px);
     background-size: 56px 56px;
     mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 30%, transparent 75%);
   }
 
   .bg-dots {
-    background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px);
+    background-image: radial-gradient(rgb(0 0 0 / 0.08) 1px, transparent 1px);
     background-size: 18px 18px;
   }
 
-  /* Single restrained light source, used once per view at most. */
   .glow-top {
-    background: radial-gradient(ellipse 60% 50% at 50% -10%, rgb(61 123 255 / 0.16), transparent 70%);
+    background: radial-gradient(ellipse 60% 50% at 50% -10%, rgb(216 20 19 / 0.05), transparent 70%);
   }
 
-  .noise::after {
+  /* Film grain, used on art panels only. */
+  .grain::after {
     content: "";
-    position: fixed;
+    position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 100;
-    opacity: 0.035;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.18;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
   .glass {
-    background: rgb(17 19 23 / 0.72);
+    background: rgb(255 255 255 / 0.94);
     backdrop-filter: blur(14px) saturate(140%);
     -webkit-backdrop-filter: blur(14px) saturate(140%);
   }
 
   .hairline-top {
-    box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+    box-shadow: inset 0 1px 0 0 var(--line);
   }
 
   .skeleton {
-    background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%);
+    background: linear-gradient(90deg, var(--surface) 0%, var(--surface-3) 50%, var(--surface) 100%);
     background-size: 200% 100%;
     animation: var(--animate-shimmer);
     border-radius: var(--radius-md);
   }
 
   .text-gradient {
-    background: linear-gradient(180deg, #fff 0%, rgb(237 238 240 / 0.62) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: var(--fg);
   }
 
   .no-scrollbar { scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
 
   .safe-bottom { padding-bottom: max(env(safe-area-inset-bottom), 0px); }
+}
+
+@keyframes ed-redraw {
+  0% { background-size: 100% 1.5px; background-position: right bottom; }
+  45% { background-size: 0% 1.5px; background-position: right bottom; }
+  46% { background-size: 0% 1.5px; background-position: left bottom; }
+  100% { background-size: 100% 1.5px; background-position: left bottom; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -225,8 +295,21 @@
  * Below-the-fold reveals use scroll-driven animation where supported and are static elsewhere.
  */
 .reveal {
-  animation: rise-in 520ms var(--ease-out) both;
+  animation: rise-in 720ms var(--ease-out) both;
   animation-delay: var(--delay, 0ms);
+}
+
+/* Headline lines: wrap each line in .line > span to rise from a mask, sequenced by --i. */
+.lines .line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.08em;
+  margin-bottom: -0.08em;
+}
+.lines .line > span {
+  display: inline-block;
+  animation: line-up 1100ms var(--ease-editorial) both;
+  animation-delay: calc(120ms + var(--i, 0) * 110ms);
 }
 
 .stagger > * {
@@ -245,6 +328,51 @@
     animation: rise-in linear both;
     animation-timeline: view();
     animation-range: entry 0% entry 45%;
-    --rise: 16px;
+    --rise: 24px;
+  }
+  /* Artwork lifts its curtain as it enters. */
+  .curtain-in {
+    animation: curtain linear both;
+    animation-timeline: view();
+    animation-range: entry 5% cover 35%;
+  }
+  .shape-in {
+    animation: shape-in linear both;
+    animation-timeline: view();
+    animation-range: entry 20% cover 45%;
   }
 }
+
+/* FAQ accordion: the answer unfolds smoothly where ::details-content is supported. */
+details.faq::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition: block-size 520ms var(--ease-editorial), content-visibility 520ms allow-discrete;
+}
+details.faq[open]::details-content {
+  block-size: auto;
+}
+
+/* ---------- Skylark logo ----------
+ * Two mask layers (bird, wordmark) over solid colour. Grey at rest; on hover/focus of the logo or
+ * the link that holds it, the bird takes the brand orange and the wordmark the brand ink.
+ */
+:root { --brand-orange: #fb5235; --brand-ink: #1e1e1d; --brand-grey: #aaaaaa; }
+.sk-logo { display: inline-block; flex: none; position: relative; }
+.sk-logo--lockup { aspect-ratio: 1000 / 274; }
+.sk-logo--mark { aspect-ratio: 480 / 379; }
+.sk-logo__mark, .sk-logo__word {
+  background-color: var(--brand-grey);
+  inset: 0;
+  -webkit-mask-position: center; mask-position: center;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-size: contain; mask-size: contain;
+  position: absolute;
+  transition: background-color 0.6s cubic-bezier(0.5, 1, 0.89, 1);
+}
+.sk-logo--lockup .sk-logo__mark { -webkit-mask-image: url(/brand/skylark-lockup-mark.png); mask-image: url(/brand/skylark-lockup-mark.png); }
+.sk-logo--lockup .sk-logo__word { -webkit-mask-image: url(/brand/skylark-lockup-word.png); mask-image: url(/brand/skylark-lockup-word.png); }
+.sk-logo--mark .sk-logo__mark { -webkit-mask-image: url(/brand/skylark-mark.png); mask-image: url(/brand/skylark-mark.png); }
+.sk-logo:hover .sk-logo__mark, a:hover .sk-logo__mark, a:focus-visible .sk-logo__mark { background-color: var(--brand-orange); }
+.sk-logo:hover .sk-logo__word, a:hover .sk-logo__word, a:focus-visible .sk-logo__word { background-color: var(--brand-ink); }
+@media (forced-colors: active) { .sk-logo__mark, .sk-logo__word { background-color: CanvasText; } }

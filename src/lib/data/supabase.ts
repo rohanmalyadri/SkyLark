@@ -20,7 +20,9 @@ import type {
   Notification,
   Payment,
   Plan,
+  ProfileVerification,
   Resume,
+  SkillRequest,
   Subscription,
   TailoredDocument,
   User,
@@ -89,6 +91,31 @@ const fromProfile = (p: CandidateProfile): Row => ({
   links: p.links,
 });
 
+const toVerification = (r: Row): ProfileVerification => ({
+  userId: r.user_id,
+  status: r.status,
+  note: r.note,
+  flags: r.flags ?? [],
+  enrichment: r.enrichment ?? {},
+  submittedAt: r.submitted_at,
+  reviewedBy: r.reviewed_by,
+  reviewedAt: r.reviewed_at,
+  approvedSnapshot: r.approved_snapshot ?? null,
+  updatedAt: r.updated_at,
+});
+
+const toSkillRequest = (r: Row): SkillRequest => ({
+  id: r.id,
+  userId: r.user_id,
+  name: r.name,
+  context: r.context,
+  status: r.status,
+  note: r.note,
+  reviewedBy: r.reviewed_by,
+  reviewedAt: r.reviewed_at,
+  createdAt: r.created_at,
+});
+
 const toResume = (r: Row): Resume => ({ id: r.id, userId: r.user_id, name: r.name, fileName: r.file_name, storagePath: r.storage_path, mimeType: r.mime_type, sizeBytes: r.size_bytes, isPrimary: r.is_primary, parsedText: r.parsed_text, createdAt: r.created_at });
 
 const toCompany = (r: Row): Company => ({
@@ -142,6 +169,7 @@ const toJob = (r: Row): Job => ({
   fingerprint: r.fingerprint,
   status: r.status,
   postedAt: r.posted_at,
+  lastSeenAt: r.last_seen_at ?? r.created_at,
   createdAt: r.created_at,
 });
 
@@ -171,6 +199,7 @@ const fromJob = (j: Partial<Job>): Row => ({
   fingerprint: j.fingerprint,
   status: j.status,
   posted_at: j.postedAt,
+  ...(j.lastSeenAt ? { last_seen_at: j.lastSeenAt } : {}),
   ...(j.createdAt ? { created_at: j.createdAt } : {}),
 });
 
@@ -285,7 +314,8 @@ export class SupabaseRepository implements Repository {
     let q = this.db.from("users").select("*").order("created_at", { ascending: false }).limit(opts.limit ?? 200);
     if (opts.role) q = q.eq("role", opts.role);
     if (opts.search) {
-      const term = opts.search.replace(/[%,()]/g, "");
+      // Characters with meaning in PostgREST filter syntax are stripped so a search term can never alter the filter.
+      const term = opts.search.replace(/[%,()*\\"]/g, "").slice(0, 80);
       q = q.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
     }
     return check(await q, "listUsers").map(toUser);
@@ -306,6 +336,13 @@ export class SupabaseRepository implements Repository {
     return toUser(check(await this.db.from("users").update(row).eq("id", id).select().single(), "updateUser"));
   }
 
+  async deleteUserData(id: string) {
+    // Requires the service-role client. Deleting the auth user cascades to every owned row.
+    check(await this.db.from("audit_logs").update({ ip: null }).eq("actor_id", id), "anonymiseAudit");
+    const { error } = await this.db.auth.admin.deleteUser(id);
+    if (error) throw new Error(`[db:deleteUser] ${error.message}`);
+  }
+
   /* profiles */
   async getProfile(userId: string) {
     const r = check(await this.db.from("candidate_profiles").select("*").eq("user_id", userId).maybeSingle(), "getProfile");
@@ -317,6 +354,44 @@ export class SupabaseRepository implements Repository {
 
   async listProfiles(limit = 1000) {
     return check(await this.db.from("candidate_profiles").select("*").limit(limit), "listProfiles").map(toProfile);
+  }
+
+  /* profile verification */
+  async getVerification(userId: string) {
+    const r = check(await this.db.from("profile_verifications").select("*").eq("user_id", userId).maybeSingle(), "getVerification");
+    return r ? toVerification(r) : null;
+  }
+  async upsertVerification(v: Parameters<Repository["upsertVerification"]>[0]) {
+    const row = { user_id: v.userId, status: v.status, note: v.note, flags: v.flags, enrichment: v.enrichment, submitted_at: v.submittedAt, reviewed_by: v.reviewedBy, reviewed_at: v.reviewedAt, approved_snapshot: v.approvedSnapshot };
+    return toVerification(check(await this.db.from("profile_verifications").upsert(row).select().single(), "upsertVerification"));
+  }
+  /* skill review requests */
+  async createSkillRequest(r: Parameters<Repository["createSkillRequest"]>[0]) {
+    const row = { ...(r.id ? { id: r.id } : {}), user_id: r.userId, name: r.name, context: r.context, status: r.status, note: r.note, reviewed_by: r.reviewedBy, reviewed_at: r.reviewedAt };
+    return toSkillRequest(check(await this.db.from("skill_requests").insert(row).select().single(), "createSkillRequest"));
+  }
+  async getSkillRequest(id: string) {
+    const r = check(await this.db.from("skill_requests").select("*").eq("id", id).maybeSingle(), "getSkillRequest");
+    return r ? toSkillRequest(r) : null;
+  }
+  async listSkillRequests(opts: Parameters<Repository["listSkillRequests"]>[0] = {}) {
+    let q = this.db.from("skill_requests").select("*").order("created_at", { ascending: false }).limit(opts.limit ?? 500);
+    if (opts.status) q = q.in("status", opts.status);
+    if (opts.userId) q = q.eq("user_id", opts.userId);
+    return check(await q, "listSkillRequests").map(toSkillRequest);
+  }
+  async updateSkillRequest(id: string, patch: Parameters<Repository["updateSkillRequest"]>[1]) {
+    const row: Row = {};
+    if (patch.status !== undefined) row.status = patch.status;
+    if (patch.note !== undefined) row.note = patch.note;
+    if (patch.reviewedBy !== undefined) row.reviewed_by = patch.reviewedBy;
+    if (patch.reviewedAt !== undefined) row.reviewed_at = patch.reviewedAt;
+    return toSkillRequest(check(await this.db.from("skill_requests").update(row).eq("id", id).select().single(), "updateSkillRequest"));
+  }
+  async listVerifications(opts: Parameters<Repository["listVerifications"]>[0] = {}) {
+    let q = this.db.from("profile_verifications").select("*").order("submitted_at", { ascending: false }).limit(opts.limit ?? 1000);
+    if (opts.status) q = q.in("status", opts.status);
+    return check(await q, "listVerifications").map(toVerification);
   }
 
   /* resumes */
@@ -381,6 +456,23 @@ export class SupabaseRepository implements Repository {
   }
   async updateJob(id: string, patch: { status?: "active" | "closed" }) {
     check(await this.db.from("jobs").update(patch).eq("id", id), "updateJob");
+  }
+  async touchJobs(fingerprints: string[], seenAt: string) {
+    let n = 0;
+    for (let i = 0; i < fingerprints.length; i += 200) {
+      const rows = check(await this.db.from("jobs").update({ last_seen_at: seenAt, status: "active" }).in("fingerprint", fingerprints.slice(i, i + 200)).select("id"), "touchJobs");
+      n += rows.length;
+    }
+    return n;
+  }
+  async closeStaleJobs(opts: Parameters<Repository["closeStaleJobs"]>[0]) {
+    if (!opts.seenBefore && !opts.postedBefore) return 0;
+    let q = this.db.from("jobs").update({ status: "closed" }).eq("status", "active");
+    if (opts.source) q = q.eq("source", opts.source);
+    if (opts.seenBefore && opts.postedBefore) q = q.or(`last_seen_at.lt."${opts.seenBefore}",posted_at.lt."${opts.postedBefore}"`);
+    else if (opts.seenBefore) q = q.lt("last_seen_at", opts.seenBefore);
+    else q = q.lt("posted_at", opts.postedBefore!);
+    return check(await q.select("id"), "closeStaleJobs").length;
   }
 
   /* matches */
@@ -684,9 +776,10 @@ export class SupabaseRepository implements Repository {
       "addAudit",
     );
   }
-  async listAudit(opts: { limit?: number; entityType?: string; actorId?: string } = {}) {
+  async listAudit(opts: { limit?: number; entityType?: string; entityId?: string; actorId?: string } = {}) {
     let q = this.db.from("audit_logs").select("*").order("created_at", { ascending: false }).limit(opts.limit ?? 100);
     if (opts.entityType) q = q.eq("entity_type", opts.entityType);
+    if (opts.entityId) q = q.eq("entity_id", opts.entityId);
     if (opts.actorId) q = q.eq("actor_id", opts.actorId);
     return check(await q, "listAudit").map(toAudit);
   }

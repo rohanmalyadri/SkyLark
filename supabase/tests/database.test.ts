@@ -146,3 +146,48 @@ describe("pipeline functions", () => {
     expect(hits).toEqual([true, true, true, false]);
   });
 });
+
+describe("verification, skill requests and accounts", () => {
+  it("lets candidates read only their own verification and never write it", async () => {
+    await db.exec(`
+      insert into public.candidate_profiles (user_id) values ('${A}'), ('${B}') on conflict do nothing;
+      insert into public.profile_verifications (user_id, status, note) values ('${A}', 'pending', ''), ('${B}', 'pending', '') on conflict (user_id) do nothing;
+    `);
+    await asUser(A, async () => {
+      const rows = await db.query<{ user_id: string }>(`select user_id from public.profile_verifications`);
+      expect(rows.rows).toEqual([{ user_id: A }]);
+      await expect(db.query(`update public.profile_verifications set status = 'approved', reviewed_at = now() where user_id = '${A}'`)).rejects.toThrow(/permission denied/i);
+      await expect(db.query(`insert into public.skill_requests (user_id, name) values ('${A}', 'Self approved')`)).rejects.toThrow(/permission denied/i);
+    });
+    await asUser(STAFF, async () => {
+      expect((await db.query(`select 1 from public.profile_verifications`)).rows).toHaveLength(2);
+    });
+    const a = await db.query<{ status: string }>(`select status from public.profile_verifications where user_id = '${A}'`);
+    expect(a.rows[0]!.status).toBe("pending");
+  });
+
+  it("keeps review timestamps consistent with the decision", async () => {
+    await expect(db.query(`update public.profile_verifications set status = 'approved' where user_id = '${A}'`)).rejects.toThrow(/check constraint/i);
+    await db.query(`update public.profile_verifications set status = 'approved', reviewed_at = now(), reviewed_by = '${STAFF}' where user_id = '${A}'`);
+  });
+
+  it("scopes skill requests to their owner and staff, one pending request per skill", async () => {
+    await db.exec(`insert into public.skill_requests (user_id, name) values ('${A}', 'Hyperbaric welding'), ('${B}', 'Glassblowing')`);
+    await expect(db.exec(`insert into public.skill_requests (user_id, name) values ('${A}', 'hyperbaric WELDING')`)).rejects.toThrow(/duplicate key/i);
+    await asUser(A, async () => {
+      expect((await db.query<{ name: string }>(`select name from public.skill_requests`)).rows).toEqual([{ name: "Hyperbaric welding" }]);
+    });
+    await asUser(STAFF, async () => {
+      expect((await db.query(`select 1 from public.skill_requests`)).rows).toHaveLength(2);
+    });
+  });
+
+  it("allows one account per email regardless of case", async () => {
+    await expect(db.exec(`insert into auth.users (id, email) values ('00000000-0000-4000-8000-0000000000ff', 'A@EXAMPLE.COM')`)).rejects.toThrow(/duplicate key|unique/i);
+  });
+
+  it("tracks when listings were last seen at their source", async () => {
+    const r = await db.query<{ seen: boolean }>(`select last_seen_at is not null as seen from public.jobs limit 1`);
+    expect(r.rows[0]!.seen).toBe(true);
+  });
+});

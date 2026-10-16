@@ -9,18 +9,26 @@ import type {
   MatchBreakdown,
   MatchFactor,
 } from "@/lib/domain/types";
+import { requiredDegree } from "@/lib/pipeline/normalize-degree";
 import { clamp, normalizeSkill } from "@/lib/utils";
 
-export const MATCH_MODEL_VERSION = "match-v1.3";
+export const MATCH_MODEL_VERSION = "match-v2.0";
 
+/** Published weights: every score is the weighted sum of these factors (capped when ineligible). */
 export const FACTOR_WEIGHTS = {
-  skills: 0.32,
-  experience: 0.2,
+  skills: 0.3,
+  experience: 0.18,
+  education: 0.05,
   eligibility: 0.2,
   location: 0.12,
   sponsorship: 0.08,
-  preferences: 0.08,
+  preferences: 0.07,
 } as const;
+
+/** Evidence gathered outside the profile form, e.g. languages seen in public GitHub repositories. Explanatory only. */
+export interface MatchContext {
+  verifiedSkills?: string[];
+}
 
 /** Skills that partially substitute for each other. Half credit when only a sibling is present. */
 const SKILL_FAMILIES: string[][] = [
@@ -50,11 +58,13 @@ function familyOf(skill: string) {
   return SKILL_FAMILIES.find((f) => f.includes(skill));
 }
 
-function scoreSkills(profile: CandidateProfile, job: Job) {
+function scoreSkills(profile: CandidateProfile, job: Job, ctx: MatchContext) {
   const owned = new Map(profile.skills.map((s) => [normalizeSkill(s.name), s]));
+  const verified = new Set((ctx.verifiedSkills ?? []).map(normalizeSkill));
   const matched: string[] = [];
   const transferable: string[] = [];
   const missing: string[] = [];
+  const evidenced: string[] = [];
   let credit = 0;
 
   for (const raw of job.requiredSkills) {
@@ -63,8 +73,10 @@ function scoreSkills(profile: CandidateProfile, job: Job) {
     if (direct) {
       matched.push(raw);
       credit += 0.7 + 0.3 * (direct.level / 5);
+      if (verified.has(key)) evidenced.push(raw);
       continue;
     }
+    // Skills only seen on GitHub are evidence, not claims: they never add score on their own.
     const sibling = familyOf(key)?.find((k) => k !== key && owned.has(k));
     if (sibling) {
       transferable.push(raw);
@@ -74,18 +86,48 @@ function scoreSkills(profile: CandidateProfile, job: Job) {
     }
   }
 
+  if (job.requiredSkills.length === 0) {
+    // The listing names no specific skills: neutral rather than a perfect or failing score.
+    return { factor: factor("skills", "Skills", 60, "moderate", "The listing doesn't name specific skills, so this is a neutral estimate — check the original posting."), matched, transferable, missing, evidenced };
+  }
+
   const niceHits = job.niceToHaveSkills.filter((s) => owned.has(normalizeSkill(s))).length;
-  const required = Math.max(job.requiredSkills.length, 1);
+  const required = job.requiredSkills.length;
   const base = (credit / required) * 90;
   const bonus = job.niceToHaveSkills.length ? (niceHits / job.niceToHaveSkills.length) * 10 : 5;
   const score = Math.round(clamp(base + bonus, 0, 100));
 
-  const reason =
+  let reason =
     missing.length === 0
-      ? `Covers all ${job.requiredSkills.length} required skills${transferable.length ? `, ${transferable.length} via closely related experience` : ""}.`
-      : `Matches ${matched.length} of ${job.requiredSkills.length} required skills; missing ${missing.slice(0, 3).join(", ")}${missing.length > 3 ? ` +${missing.length - 3}` : ""}.`;
+      ? `Covers all ${required} skills the listing asks for${transferable.length ? `, ${transferable.length} via closely related experience` : ""}.`
+      : `Matches ${matched.length} of ${required} skills the listing asks for; missing ${missing.slice(0, 3).join(", ")}${missing.length > 3 ? ` +${missing.length - 3}` : ""}.`;
+  if (evidenced.length) reason += ` ${evidenced.slice(0, 3).join(", ")} also ${evidenced.length === 1 ? "appears" : "appear"} in your public GitHub repositories (supporting evidence, not a verified credential).`;
 
-  return { factor: factor("skills", "Skills", score, rate(score), reason), matched, transferable, missing };
+  return { factor: factor("skills", "Skills", score, rate(score), reason), matched, transferable, missing, evidenced };
+}
+
+const DEGREE_RANK: Record<string, number> = { "High school": 0, "Certificate or bootcamp": 1, Diploma: 1, Associate: 2, "Bachelor's": 3, "Master's": 4, MBA: 4, Doctorate: 5 };
+const REQUIRED_RANK = { any: 2, bachelor: 3, master: 4, doctorate: 5 } as const;
+const REQUIRED_LABEL = { any: "a degree", bachelor: "a bachelor's degree", master: "a master's degree", doctorate: "a doctorate" } as const;
+
+function scoreEducation(profile: CandidateProfile, job: Job) {
+  const need = requiredDegree(job);
+  const thisYear = new Date().getFullYear();
+  const completed = profile.education.filter((e) => e.year <= thisYear);
+  const best = completed.reduce((m, e) => Math.max(m, DEGREE_RANK[e.degree] ?? 0), -1);
+  const bestLabel = completed.find((e) => DEGREE_RANK[e.degree] === best);
+  if (!need) {
+    return factor("education", "Education", 80, "strong", "The listing doesn't state a degree requirement.");
+  }
+  if (best < 0) {
+    return factor("education", "Education", 40, "weak", `Asks for ${REQUIRED_LABEL[need]}; add your education so this can be checked.`);
+  }
+  if (best >= REQUIRED_RANK[need]) {
+    return factor("education", "Education", 100, "strong", `Asks for ${REQUIRED_LABEL[need]}; you have a ${bestLabel!.degree.toLowerCase()} in ${bestLabel!.field}.`);
+  }
+  const gap = REQUIRED_RANK[need] - best;
+  const score = gap === 1 ? 55 : 30;
+  return factor("education", "Education", score, rate(score), `Asks for ${REQUIRED_LABEL[need]}; your highest completed qualification is ${bestLabel!.degree.toLowerCase()}.`);
 }
 
 function scoreExperience(profile: CandidateProfile, job: Job) {
@@ -228,14 +270,15 @@ export interface MatchResult {
   breakdown: MatchBreakdown;
 }
 
-export function scoreMatch(profile: CandidateProfile, job: Job, company: Company): MatchResult {
-  const skills = scoreSkills(profile, job);
+export function scoreMatch(profile: CandidateProfile, job: Job, company: Company, ctx: MatchContext = {}): MatchResult {
+  const skills = scoreSkills(profile, job, ctx);
   const experience = scoreExperience(profile, job);
+  const education = scoreEducation(profile, job);
   const elig = scoreEligibility(profile, job, company);
   const location = scoreLocation(profile, job);
   const preferences = scorePreferences(profile, job);
 
-  const factors = [skills.factor, experience, elig.eligibilityFactor, location, elig.sponsorshipFactor, preferences];
+  const factors = [skills.factor, experience, education, elig.eligibilityFactor, location, elig.sponsorshipFactor, preferences];
   let score = factors.reduce((acc, f) => acc + f.score * f.weight, 0);
   if (elig.eligibility === "ineligible") score = Math.min(score, 35);
   score = Math.round(clamp(score, 0, 100));
@@ -257,6 +300,7 @@ export function scoreMatch(profile: CandidateProfile, job: Job, company: Company
       matchedSkills: skills.matched,
       missingSkills: skills.missing,
       transferableSkills: skills.transferable,
+      verifiedSkills: skills.evidenced,
       summary,
       modelVersion: MATCH_MODEL_VERSION,
     },

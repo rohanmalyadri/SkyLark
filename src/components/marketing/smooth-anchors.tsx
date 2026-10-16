@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { scrollToId, smoothScrollTo } from "@/lib/smooth-scroll";
 
-export const SECTION_NAV_EVENT = "autoapply:section-nav";
+export const SECTION_NAV_EVENT = "skylark:section-nav";
 
 function waitForElement(id: string, timeoutMs = 3000) {
   return new Promise<boolean>((resolve) => {

@@ -44,11 +44,15 @@ export interface Experience {
   skills: string[];
 }
 
+export const DEGREE_LEVELS = ["High school", "Certificate or bootcamp", "Diploma", "Associate", "Bachelor's", "Master's", "MBA", "Doctorate"] as const;
+export type DegreeLevel = (typeof DEGREE_LEVELS)[number];
+
 export interface Education {
   id: string;
   school: string;
-  degree: string;
+  degree: DegreeLevel;
   field: string;
+  /** Graduation year (or expected graduation year). */
   year: number;
 }
 
@@ -82,6 +86,82 @@ export interface CandidateProfile {
   education: Education[];
   salaryExpectation: SalaryExpectation | null;
   links: { linkedin?: string; github?: string; portfolio?: string };
+  updatedAt: string;
+}
+
+/* ---------- Skill review requests ---------- */
+
+export type SkillRequestStatus = "pending" | "approved" | "rejected";
+
+/** A skill missing from every recognised vocabulary, submitted by a candidate for staff review. */
+export interface SkillRequest {
+  id: string;
+  userId: string;
+  name: string;
+  /** Why the candidate thinks it's a real skill (optional context for reviewers). */
+  context: string;
+  status: SkillRequestStatus;
+  note: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+/* ---------- Profile verification ---------- */
+
+export type VerificationStatus = "pending" | "approved" | "changes_requested" | "rejected";
+
+export interface ProfileFlag {
+  code: string;
+  severity: "info" | "warning";
+  message: string;
+  field?: string;
+}
+
+export interface GithubProject {
+  name: string;
+  description: string;
+  url: string;
+  language: string | null;
+  stars: number;
+  topics: string[];
+  pushedAt: string;
+}
+
+/** Public GitHub data fetched through the official REST API. Never edited by the candidate. */
+export interface GithubEnrichment {
+  status: "verified" | "not_found" | "unavailable";
+  username: string;
+  profileUrl: string;
+  name: string | null;
+  bio: string | null;
+  publicRepos: number;
+  followers: number;
+  accountCreatedAt: string | null;
+  languages: { name: string; repos: number }[];
+  /** Canonical skills evidenced by the candidate's own public repositories. */
+  verifiedSkills: string[];
+  projects: GithubProject[];
+  fetchedAt: string;
+  error?: string;
+}
+
+export interface ProfileEnrichment {
+  github?: GithubEnrichment;
+}
+
+/** Human approval state of a candidate profile. Written only by the server and staff. */
+export interface ProfileVerification {
+  userId: string;
+  status: VerificationStatus;
+  note: string;
+  flags: ProfileFlag[];
+  enrichment: ProfileEnrichment;
+  submittedAt: string;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  /** What the reviewer saw when approving, so later additions aren't presented as reviewed. */
+  approvedSnapshot: { skills: string[]; links: string[] } | null;
   updatedAt: string;
 }
 
@@ -128,6 +208,8 @@ export interface Job {
   fingerprint: string;
   status: "active" | "closed";
   postedAt: string;
+  /** Last time the source still listed this posting; stale listings are closed. */
+  lastSeenAt: string;
   createdAt: string;
 }
 
@@ -137,7 +219,7 @@ export interface JobWithCompany extends Job {
 
 /* ---------- Matching ---------- */
 
-export type FactorKey = "skills" | "experience" | "eligibility" | "location" | "sponsorship" | "preferences";
+export type FactorKey = "skills" | "experience" | "education" | "eligibility" | "location" | "sponsorship" | "preferences";
 export type FactorRating = "strong" | "moderate" | "weak" | "blocked";
 export type Eligibility = "eligible" | "needs_sponsorship" | "ineligible";
 
@@ -156,6 +238,8 @@ export interface MatchBreakdown {
   matchedSkills: string[];
   missingSkills: string[];
   transferableSkills: string[];
+  /** Matched skills backed by the candidate's public GitHub repositories. */
+  verifiedSkills?: string[];
   summary: string;
   modelVersion: string;
 }

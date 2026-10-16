@@ -1,7 +1,9 @@
 /**
- * Seeds a Supabase project with the same realistic dataset the demo mode uses.
+ * Seeds a Supabase project with the fictional demo dataset (sample companies, sample job
+ * listings marked source = "sample", demo accounts). For demos and staging only: never run it
+ * against a production project. Real listings come from the ingestion pipeline.
  *
- *   npm run seed
+ *   npm run seed -- --demo
  *
  * Requires NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and SEED_DEMO_PASSWORD
  * (used for every seeded account). Safe to re-run: accounts are reused and rows upserted.
@@ -18,6 +20,7 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const password = process.env.SEED_DEMO_PASSWORD;
 
+if (!process.argv.includes("--demo")) throw new Error("This writes fictional demo data. Re-run with `npm run seed -- --demo` to confirm (staging/demo projects only).");
 if (!url || !serviceKey) throw new Error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (see .env.example).");
 if (!password || password.length < 10) throw new Error("Set SEED_DEMO_PASSWORD (10+ characters) for the seeded demo accounts.");
 
@@ -70,7 +73,8 @@ async function main() {
     if (error) throw error;
   }
   await repo.upsertMatches(d.matches);
-  console.log(`✓ ${d.profiles.length} profiles, ${d.matches.length} matches`);
+  for (const v of d.verifications) await repo.upsertVerification(v);
+  console.log(`✓ ${d.profiles.length} profiles (${d.verifications.length} verification records), ${d.matches.length} matches`);
 
   // Applications and tailored documents reference each other: insert apps first, link after.
   for (const a of d.applications) {
@@ -120,8 +124,8 @@ async function main() {
   for (const j of d.backgroundJobs) {
     await admin.from("background_jobs").upsert({ id: j.id, type: j.type, payload: j.payload, status: j.status, attempts: j.attempts, max_attempts: j.maxAttempts, last_error: j.lastError, idempotency_key: j.idempotencyKey, run_after: j.runAfter, started_at: j.startedAt, finished_at: j.finishedAt, created_at: j.createdAt }, { onConflict: "idempotency_key" });
   }
-  console.log("✓ billing, notifications, audit log and pipeline history");
-  console.log("\nSeed complete. Sign in as demo@autoapply.dev (candidate) or ops@autoapply.dev (admin) with SEED_DEMO_PASSWORD.");
+  console.log("✓ billing, notifications and audit log");
+  console.log("\nSeed complete. Sign in as demo@skylark.dev (candidate) or ops@skylark.dev (admin) with SEED_DEMO_PASSWORD.");
 }
 
 main().catch((err) => {

@@ -1,11 +1,26 @@
-import Image from "next/image";
 import { cn, initials } from "@/lib/utils";
 
-export function Logo({ className, wordmark = true }: { className?: string; wordmark?: boolean }) {
+/*
+ * The Skylark logo is drawn as CSS masks (public/brand/*.png) so its colour is pure CSS:
+ * grey at rest, the brand orange and ink on hover of the logo or its link (see .sk-logo in globals.css).
+ */
+
+/** The bird on its own. */
+export function SkylarkMark({ className }: { className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <Image src="/brand/logo-mark.png" alt="" width={512} height={512} sizes="32px" loading="eager" className="size-8 shrink-0" />
-      {wordmark && <span className="text-[15px] font-semibold tracking-[-0.02em] text-fg">AutoApply</span>}
+    <span className={cn("sk-logo sk-logo--mark", className)} aria-hidden>
+      <span className="sk-logo__mark" />
+    </span>
+  );
+}
+
+/** Bird and wordmark lockup, or the bird alone with `wordmark={false}`. */
+export function Logo({ className, wordmark = true }: { className?: string; wordmark?: boolean }) {
+  if (!wordmark) return <SkylarkMark className={cn("h-7", className)} />;
+  return (
+    <span className={cn("sk-logo sk-logo--lockup h-7", className)} role="img" aria-label="Skylark">
+      <span className="sk-logo__mark" />
+      <span className="sk-logo__word" />
     </span>
   );
 }
@@ -16,7 +31,7 @@ export function CompanyMark({ name, color, size = "md", className }: { name: str
   return (
     <span
       className={cn("inline-grid shrink-0 place-items-center border font-semibold tracking-tight", dims, className)}
-      style={{ color, background: `color-mix(in srgb, ${color} 12%, #0C0D10)`, borderColor: `color-mix(in srgb, ${color} 28%, transparent)` }}
+      style={{ color: `color-mix(in srgb, ${color} 70%, #1F1F1F)`, background: `color-mix(in srgb, ${color} 10%, #FFFFFF)`, borderColor: `color-mix(in srgb, ${color} 35%, transparent)` }}
       aria-hidden
     >
       {initials(name)}

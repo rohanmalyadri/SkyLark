@@ -12,7 +12,7 @@ import { PageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/states";
 import { requireCandidate } from "@/lib/auth/dal";
 import { userRepo } from "@/lib/data";
-import { countryName } from "@/lib/domain/constants";
+import { countryName, formatPlace } from "@/lib/domain/constants";
 
 export const metadata: Metadata = { title: "Tailor application" };
 
@@ -46,7 +46,7 @@ async function Tailor({ params }: { params: PageProps<"/jobs/[id]/tailor">["para
             </p>
             <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.02em]">{job.title}</h1>
             <p className="text-[13px] text-muted">
-              {job.company.name} · {job.locations.map((l) => `${l.city}, ${countryName(l.country)}`).join(" / ")}
+              {job.company.name} · {job.locations.map(formatPlace).join(" / ")}
             </p>
           </div>
         </div>

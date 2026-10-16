@@ -16,7 +16,7 @@ export function UserMenu({ name, email, role, avatarUrl }: { name: string; email
   return (
     <Menu>
       <MenuTrigger className="rounded-full" aria-label="Account menu">
-        <UserAvatar name={name} src={avatarUrl} className="size-7 transition-colors hover:border-white/25" />
+        <UserAvatar name={name} src={avatarUrl} className="size-7 transition-colors hover:border-fg/40" />
       </MenuTrigger>
       <MenuContent className="w-60">
         <div className="px-2.5 py-2">

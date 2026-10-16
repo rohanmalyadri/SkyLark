@@ -16,7 +16,9 @@ import type {
   Payment,
   PipelineStage,
   Plan,
+  ProfileVerification,
   Resume,
+  SkillRequest,
   ReviewStatus,
   Subscription,
   TailoredDocument,
@@ -24,6 +26,7 @@ import type {
   UserSettings,
 } from "@/lib/domain/types";
 import { jobFingerprint } from "@/lib/pipeline/normalize";
+import { SAMPLE_SOURCE } from "@/lib/pipeline/source-meta";
 import { scoreMatch } from "@/lib/services/matching/engine";
 import { COMPANIES, JOB_SEEDS, PLANS, ROLE_TEMPLATES, companyIdByKey, jobIdByKey } from "./catalog";
 import { daysAgo, daysFromNow, hoursAgo, seedId } from "./ids";
@@ -48,6 +51,8 @@ export interface Dataset {
   audit: AuditLog[];
   backgroundJobs: BackgroundJob[];
   ingestionRuns: IngestionRun[];
+  verifications: ProfileVerification[];
+  skillRequests: SkillRequest[];
 }
 
 export const defaultSettings = (userId: string): UserSettings => ({
@@ -114,12 +119,14 @@ export function buildDataset(base = Date.now()): Dataset {
       niceToHaveSkills: s.nice,
       minYears: s.minYears,
       visaSponsorship: s.sponsorship,
-      source: ["greenhouse", "lever", "ashby", "workable"][s.key.length % 4]!,
+      // Fictional listings for local demos, labelled as samples in the product.
+      source: SAMPLE_SOURCE,
       sourceUrl: `https://${company.domain}/careers/${s.key}`,
       externalId: s.key,
       fingerprint: jobFingerprint(company.domain, s.title, locations[0]!.country),
       status: "active",
       postedAt: daysAgo(s.postedDaysAgo, base),
+      lastSeenAt: now,
       createdAt: daysAgo(s.postedDaysAgo, base),
     };
   });
@@ -333,32 +340,29 @@ export function buildDataset(base = Date.now()): Dataset {
     createdAt: daysAgo(d, base),
   }));
 
-  const sources = ["greenhouse", "lever", "ashby", "workable"];
-  const ingestionRuns: IngestionRun[] = Array.from({ length: 10 }, (_, i) => {
-    const failed = i === 3;
-    const fetched = 40 + ((i * 17) % 35);
-    const duplicates = 6 + ((i * 5) % 9);
+  // Pipeline history is never fabricated: runs and queue entries come only from real ingestion.
+  const ingestionRuns: IngestionRun[] = [];
+  const backgroundJobs: BackgroundJob[] = [];
+
+  /* Verification: the demo candidate is approved; a few others wait in the review queue. */
+  const queued = new Set(["c-wei", "c-aisha", "c-hiro"]);
+  const verifications: ProfileVerification[] = profiles.map((p, i) => {
+    const key = PEOPLE.find((x) => userIdByKey(x.key) === p.userId)?.key ?? "";
+    const pending = queued.has(key);
+    const submittedAt = daysAgo(2 + i, base);
     return {
-      id: seedId(`run:${i}`),
-      source: sources[i % 4]!,
-      status: failed ? "failed" : "succeeded",
-      fetched: failed ? 0 : fetched,
-      normalized: failed ? 0 : fetched - 2,
-      duplicates: failed ? 0 : duplicates,
-      inserted: failed ? 0 : fetched - 2 - duplicates,
-      error: failed ? "Upstream returned 503 after 3 attempts" : null,
-      startedAt: hoursAgo(i * 7 + 1, base),
-      finishedAt: hoursAgo(i * 7 + 0.9, base),
+      userId: p.userId,
+      status: pending ? "pending" : "approved",
+      note: "",
+      flags: pending ? [{ code: "no_resume", severity: "info", message: "No resume uploaded." }] : [],
+      enrichment: {},
+      submittedAt,
+      reviewedBy: pending ? null : userIdByKey(DEMO_ADMIN_KEY),
+      reviewedAt: pending ? null : daysAgo(1 + i * 0.5, base),
+      approvedSnapshot: pending ? null : { skills: p.skills.map((s) => s.name), links: [] },
+      updatedAt: submittedAt,
     };
   });
 
-  const backgroundJobs: BackgroundJob[] = [
-    { id: seedId("bj:1"), type: "ingest_source", payload: { source: "workable" }, status: "dead", attempts: 3, maxAttempts: 3, lastError: "Upstream returned 503 Service Unavailable", idempotencyKey: "ingest:workable:seed-a", runAfter: hoursAgo(22, base), startedAt: hoursAgo(22, base), finishedAt: hoursAgo(21.9, base), createdAt: hoursAgo(22.5, base) },
-    { id: seedId("bj:2"), type: "tailor_application", payload: { applicationId: seedId("app:c-daniel:helix-platform") }, status: "failed", attempts: 1, maxAttempts: 3, lastError: "AI provider timeout after 90s", idempotencyKey: "tailor:seed-b", runAfter: hoursAgo(-0.2, base), startedAt: hoursAgo(1, base), finishedAt: hoursAgo(0.98, base), createdAt: hoursAgo(1.1, base) },
-    { id: seedId("bj:3"), type: "match_candidate", payload: { userId: demoId }, status: "succeeded", attempts: 1, maxAttempts: 3, lastError: null, idempotencyKey: "match:seed-c", runAfter: hoursAgo(2, base), startedAt: hoursAgo(2, base), finishedAt: hoursAgo(1.99, base), createdAt: hoursAgo(2, base) },
-    { id: seedId("bj:4"), type: "send_notification", payload: { userId: demoId }, status: "succeeded", attempts: 1, maxAttempts: 5, lastError: null, idempotencyKey: "notify:seed-d", runAfter: hoursAgo(2, base), startedAt: hoursAgo(2, base), finishedAt: hoursAgo(2, base), createdAt: hoursAgo(2, base) },
-    { id: seedId("bj:5"), type: "match_job", payload: { jobId: jobIdByKey("helix-sfe") }, status: "succeeded", attempts: 2, maxAttempts: 3, lastError: null, idempotencyKey: "matchjob:seed-e", runAfter: hoursAgo(26, base), startedAt: hoursAgo(26, base), finishedAt: hoursAgo(25.9, base), createdAt: hoursAgo(26, base) },
-  ];
-
-  return { users, profiles, resumes, companies, jobs, matches, applications, events, tailored, reviews, plans, subscriptions, payments, notifications, settings, audit, backgroundJobs, ingestionRuns };
+  return { users, profiles, resumes, companies, jobs, matches, applications, events, tailored, reviews, plans, subscriptions, payments, notifications, settings, audit, backgroundJobs, ingestionRuns, verifications, skillRequests: [] };
 }

@@ -23,7 +23,7 @@ export function DailyBars({ data, label, height = 140 }: { data: { date: string;
       <div className="relative" style={{ height }} onMouseLeave={() => setHover(null)}>
         {/* recessive gridlines */}
         {[0, 0.5, 1].map((t) => (
-          <div key={t} className="absolute inset-x-0 border-t border-white/[0.05]" style={{ bottom: `${t * 100}%` }} aria-hidden>
+          <div key={t} className="absolute inset-x-0 border-t border-black/[0.06]" style={{ bottom: `${t * 100}%` }} aria-hidden>
             {t > 0 && <span className="absolute -top-2 right-0 bg-surface pl-1 text-[10px] tabular text-subtle">{Math.round(niceMax * t)}</span>}
           </div>
         ))}
@@ -35,8 +35,8 @@ export function DailyBars({ data, label, height = 140 }: { data: { date: string;
             return (
               <g key={d.date}>
                 <rect x={i * w} y={0} width={w} height={height} fill="transparent" onMouseEnter={() => setHover(i)} />
-                {d.count > 0 && <rect x={x} y={height - h} width={bw} height={h} rx={0.9} className={cn("transition-[fill] duration-150", hover === i ? "fill-[#5A8FFF]" : "fill-[#3D7BFF]")} style={{ pointerEvents: "none" }} />}
-                {d.count === 0 && <rect x={x} y={height - 1} width={bw} height={1} className="fill-white/10" />}
+                {d.count > 0 && <rect x={x} y={height - h} width={bw} height={h} rx={0.9} className={cn("transition-[fill] duration-150", hover === i ? "fill-accent-hover" : "fill-sky")} style={{ pointerEvents: "none" }} />}
+                {d.count === 0 && <rect x={x} y={height - 1} width={bw} height={1} className="fill-black/10" />}
               </g>
             );
           })}
@@ -78,7 +78,7 @@ export function CategoryBars({ data }: { data: { label: string; value: number }[
       {data.map((d) => (
         <li key={d.label} className="grid grid-cols-[112px_1fr_56px] items-center gap-3 text-[13px]">
           <span className="truncate text-muted">{d.label}</span>
-          <span className="h-2 overflow-hidden rounded-sm bg-white/[0.05]" aria-hidden>
+          <span className="h-2 overflow-hidden rounded-sm bg-black/[0.06]" aria-hidden>
             <span className="block h-full rounded-r-[3px] bg-accent/80" style={{ width: `${(d.value / max) * 100}%` }} />
           </span>
           <span className="text-right tabular text-fg">

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Briefcase, ClipboardCheck, Gauge, KanbanSquare, LayoutGrid, Radar, ScrollText, Settings, ShieldCheck, Tag, Users, UserRound, Workflow } from "lucide-react";
+import { Activity, Briefcase, ClipboardCheck, Gauge, KanbanSquare, LayoutGrid, Radar, ScrollText, Settings, ShieldCheck, Sparkles, Tag, Users, UserRound, Workflow } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ export const ADMIN_NAV = [
   { href: "/admin", label: "Overview", icon: Gauge },
   { href: "/admin/reviews", label: "Review queue", short: "Reviews", icon: ClipboardCheck },
   { href: "/admin/candidates", label: "Candidates", icon: Users },
+  { href: "/admin/skills", label: "Skill requests", short: "Skills", icon: Sparkles },
   { href: "/admin/jobs", label: "Jobs & applications", short: "Jobs", icon: Briefcase },
   { href: "/admin/pipeline", label: "Pipeline", icon: Workflow },
   { href: "/admin/pricing", label: "Pricing", icon: Tag },

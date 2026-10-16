@@ -2,9 +2,11 @@ import { Clock, MapPin } from "lucide-react";
 import Link from "next/link";
 import { EligibilityBadge, FactorChips, StatusBadge } from "@/components/app/match";
 import { DismissButton, SaveJobButton } from "@/components/app/job-actions";
+import { Badge } from "@/components/ui/badge";
 import { CompanyMark } from "@/components/ui/marks";
 import { ScoreRing } from "@/components/ui/score";
-import { countryName } from "@/lib/domain/constants";
+import { countryName, formatPlace } from "@/lib/domain/constants";
+import { isSampleJob, sourceName } from "@/lib/pipeline/source-meta";
 import type { FeedItem } from "@/lib/services/jobs";
 import { formatSalaryRange, timeAgo } from "@/lib/utils";
 
@@ -12,7 +14,7 @@ const SPONSOR_LABEL = { yes: "Sponsors visas", no: "No sponsorship", unknown: "S
 
 export function JobRow({ item }: { item: FeedItem }) {
   const { job } = item;
-  const where = job.workMode === "remote" ? `Remote${job.remoteCountries.length ? ` · ${job.remoteCountries.map(countryName).slice(0, 2).join(", ")}` : " · Global"}` : job.locations.map((l) => `${l.city}, ${countryName(l.country)}`).join(" / ");
+  const where = job.workMode === "remote" ? `Remote${job.remoteCountries.length ? ` · ${job.remoteCountries.map(countryName).slice(0, 2).join(", ")}` : " · Global"}` : job.locations.map(formatPlace).join(" / ");
 
   return (
     <li className="group relative flex gap-4 px-4 py-4 transition-colors hover:bg-surface-2/40 sm:px-5">
@@ -21,7 +23,7 @@ export function JobRow({ item }: { item: FeedItem }) {
         <div className="flex items-start gap-3">
           <CompanyMark name={job.company.name} color={job.company.brandColor} size="sm" className="hidden sm:inline-grid" />
           <div className="min-w-0 flex-1">
-            <Link href={`/jobs/${job.id}`} prefetch className="line-clamp-1 text-sm font-medium text-fg after:absolute after:inset-0 group-hover:text-white">
+            <Link href={`/jobs/${job.id}`} prefetch className="line-clamp-1 text-sm font-medium text-fg after:absolute after:inset-0">
               {job.title}
             </Link>
             <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-muted">
@@ -39,6 +41,11 @@ export function JobRow({ item }: { item: FeedItem }) {
           <EligibilityBadge eligibility={item.breakdown.eligibility} />
           <span className="text-xs text-subtle">{SPONSOR_LABEL[job.visaSponsorship]}</span>
           {item.applicationStatus && <StatusBadge status={item.applicationStatus} />}
+          {isSampleJob(job) ? (
+            <Badge tone="neutral">Sample · not a real opening</Badge>
+          ) : (
+            <span className="text-xs text-subtle">via {sourceName(job.source)}</span>
+          )}
           <span className="ml-auto hidden items-center gap-1 text-xs text-subtle sm:flex">
             <Clock className="size-3" aria-hidden /> {timeAgo(job.postedAt)}
           </span>

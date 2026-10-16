@@ -14,7 +14,7 @@ describe("normalization", () => {
   });
 
   it("parses locations and work modes", () => {
-    expect(parseLocation("Berlin, Germany (Hybrid)")).toEqual({ places: [{ city: "Berlin", country: "DE" }], workMode: "hybrid", remoteCountries: [] });
+    expect(parseLocation("Berlin, Germany (Hybrid)")).toEqual({ places: [{ city: "Berlin", country: "DE" }], workMode: "hybrid", remoteCountries: [], global: false });
     expect(parseLocation("Austin, United States (Remote)").remoteCountries).toEqual(["US"]);
   });
 

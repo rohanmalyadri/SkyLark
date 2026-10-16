@@ -41,3 +41,11 @@ yarn-error.log*
 next-env.d.ts
 
 !.env.example
+
+# Third-party hero textures supplied locally (not ours to redistribute). The hero falls back
+# to the rendered set in public/art/hero/ when these are absent.
+/public/art/hero/source/
+
+# Playwright
+/test-results/
+/playwright-report/
