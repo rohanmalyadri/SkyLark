@@ -13,6 +13,18 @@ import { redirect } from "next/navigation";
 import * as tailoring from "@/lib/services/tailoring";
 import { audit } from "@/lib/services/audit";
 import { AppError } from "@/lib/infra/errors";
+import {
+  BackgroundAnswersSchema,
+  DeliveryPreferencesSchema,
+  EligibilityAnswersSchema,
+  PromoCodeInputSchema,
+  ScreeningAnswersSchema,
+  SelfIdentificationSchema,
+} from "@/lib/domain/schemas";
+import * as answers from "@/lib/services/answers";
+import * as delivery from "@/lib/services/delivery";
+import { listPlans } from "@/lib/services/billing";
+import { quoteDiscount } from "@/lib/services/partners";
 import { run } from "./_wrap";
 
 const id = z.string().min(1).max(64);
@@ -117,6 +129,50 @@ export async function rematchAction() {
   return run("matching.rematch", (u) => profile.rematchNow(u), { message: "Matches refreshed" });
 }
 
+/* ---------- application answers ---------- */
+
+export async function saveEligibilityAnswersAction(input: unknown) {
+  return run("answers.eligibility", (u) => answers.saveSection(u, "eligibility", EligibilityAnswersSchema.parse(input)), { message: "Work eligibility saved" });
+}
+
+export async function saveScreeningAnswersAction(input: unknown) {
+  return run("answers.screening", (u) => answers.saveSection(u, "screening", ScreeningAnswersSchema.parse(input)), { message: "Employer questions saved" });
+}
+
+export async function saveBackgroundAnswersAction(input: unknown) {
+  return run("answers.background", (u) => answers.saveSection(u, "background", BackgroundAnswersSchema.parse(input)), { message: "Background answers saved" });
+}
+
+export async function saveSelfIdentificationAction(input: unknown) {
+  return run("answers.selfId", (u) => answers.saveSection(u, "selfIdentification", SelfIdentificationSchema.parse(input)), { message: "Self-identification saved" });
+}
+
+export async function saveDeliveryPreferencesAction(input: unknown) {
+  return run("answers.delivery", (u) => answers.saveSection(u, "delivery", DeliveryPreferencesSchema.parse(input)), { message: "Preferences saved — your specialist has been told" });
+}
+
+/* ---------- managed delivery ---------- */
+
+export async function pauseDeliveryAction(reason: string) {
+  return run("delivery.pause", (u) => delivery.setPaused(u, true, z.string().trim().min(3, "Tell us why").max(200).parse(reason)), { message: "Applications paused" });
+}
+
+export async function resumeDeliveryAction() {
+  return run("delivery.resume", (u) => delivery.setPaused(u, false), { message: "Applications resumed — back to work tomorrow morning" });
+}
+
+/* ---------- promo codes ---------- */
+
+export async function applyPromoCodeAction(code: string, planId: string, interval: string) {
+  return run("promo.apply", async () => {
+    const plans = await listPlans();
+    const plan = plans.find((p) => p.id === z.enum(["entry", "professional", "executive"]).parse(planId));
+    if (!plan) throw new AppError("not_found", "That plan isn't available.");
+    const gross = z.enum(["month", "year"]).parse(interval) === "year" ? plan.priceYearly : plan.priceMonthly;
+    return quoteDiscount(PromoCodeInputSchema.parse(code), plan.id, gross, plan.currency);
+  }, { refresh: false });
+}
+
 /* ---------- settings & account ---------- */
 
 export async function updateSettingsAction(input: unknown) {
@@ -134,10 +190,12 @@ export async function updateAccountAction(fullName: string) {
   }, { message: "Account updated" });
 }
 
-export async function changePlanAction(planId: string, interval: string, acceptedTerms: boolean) {
+export async function changePlanAction(planId: string, interval: string, acceptedTerms: boolean, promoCode = "") {
   return run("billing.change", async (u) => {
     if (acceptedTerms !== true) throw new AppError("validation", "Please agree to the Terms & Conditions before paying.");
-    await changePlan(u, z.enum(["entry", "professional", "executive"]).parse(planId), z.enum(["month", "year"]).parse(interval));
+    const plan = z.enum(["entry", "professional", "executive"]).parse(planId);
+    const every = z.enum(["month", "year"]).parse(interval);
+    await changePlan(u, plan, every, PromoCodeInputSchema.parse(promoCode) || undefined);
     await audit(u, "billing.terms_accepted", "user", u.id, { planId, termsVersion: "2026-10-17" });
   }, { message: "Plan updated" });
 }

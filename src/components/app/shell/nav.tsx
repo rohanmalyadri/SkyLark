@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Briefcase, ClipboardCheck, Gauge, KanbanSquare, LayoutGrid, Radar, ScrollText, Settings, ShieldCheck, Sparkles, Tag, Users, UserRound, Workflow } from "lucide-react";
+import { Activity, Briefcase, ClipboardCheck, Gauge, Handshake, Inbox, KanbanSquare, LayoutGrid, ListChecks, Radar, ScrollText, Send, Settings, ShieldCheck, Sparkles, Tag, Users, UserRound, Workflow } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -10,18 +10,22 @@ export const CANDIDATE_NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutGrid },
   { href: "/jobs", label: "Job intelligence", short: "Jobs", icon: Radar },
   { href: "/applications", label: "Applications", icon: KanbanSquare },
+  { href: "/answers", label: "Application answers", short: "Answers", icon: ListChecks },
   { href: "/profile", label: "Profile & resumes", short: "Profile", icon: UserRound },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
 export const ADMIN_NAV = [
   { href: "/admin", label: "Overview", icon: Gauge },
+  { href: "/admin/delivery", label: "Delivery board", short: "Delivery", icon: Send },
   { href: "/admin/reviews", label: "Review queue", short: "Reviews", icon: ClipboardCheck },
   { href: "/admin/candidates", label: "Candidates", icon: Users },
   { href: "/admin/skills", label: "Skill requests", short: "Skills", icon: Sparkles },
   { href: "/admin/jobs", label: "Jobs & applications", short: "Jobs", icon: Briefcase },
   { href: "/admin/pipeline", label: "Pipeline", icon: Workflow },
   { href: "/admin/pricing", label: "Pricing", icon: Tag },
+  { href: "/admin/partners", label: "Partners & codes", short: "Partners", icon: Handshake },
+  { href: "/admin/leads", label: "Leads", icon: Inbox },
   { href: "/admin/audit", label: "Audit log", short: "Audit", icon: ScrollText },
   { href: "/admin/health", label: "System health", short: "Health", icon: Activity },
 ] as const;

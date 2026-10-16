@@ -1,10 +1,15 @@
 /** Marketing navigation, shared by the header (client) and footer (server). */
+/*
+ * Kept to seven: "Domains" and "Why trust us" are sections a visitor scrolls through on the
+ * way down, so they are reachable without spending a header slot on them.
+ */
 export const NAV = [
   { href: "/#about", label: "About" },
   { href: "/#how-it-works", label: "How it works" },
-  { href: "/#domains", label: "Domains" },
   { href: "/#pricing", label: "Pricing" },
+  { href: "/blog", label: "Writing" },
   { href: "/#faq", label: "FAQs" },
+  { href: "/#contact", label: "Contact" },
   { href: "/team", label: "Team" },
 ];
 

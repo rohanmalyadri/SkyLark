@@ -10,6 +10,8 @@ import { rateLimit } from "@/lib/infra/rate-limit";
 import { enqueueAndKick } from "@/lib/pipeline/queue";
 import { ALLOWED_DOCUMENT_TYPES, MAX_AVATAR_BYTES, MAX_DOCUMENT_BYTES, extractText, putAvatar, putDocument, removeAvatar, removeDocument, sniffDocumentType, sniffImageType } from "@/lib/storage";
 import { audit } from "./audit";
+import { attributeSignUp } from "./partners";
+import { clearReferralCookie, readReferralCookie } from "./referral-cookie";
 import { matchCandidate } from "./matching/service";
 import { checkReferenceData, recordSubmission, resolveGithub } from "./verification";
 
@@ -45,6 +47,15 @@ export async function updateProfile(user: User, input: unknown) {
 export async function completeOnboarding(user: User, input: unknown) {
   const { verification } = await saveValidated(user, input, { onboarding: true });
   await (await userRepo()).updateUser(user.id, { onboardedAt: new Date().toISOString() });
+
+  // Attribution is claimed here rather than at sign-up: in Supabase mode the user row only
+  // exists once the email is confirmed, so this is the first point a real account is certain.
+  const ref = await readReferralCookie();
+  if (ref) {
+    await attributeSignUp(user.id, ref);
+    await clearReferralCookie();
+  }
+
   // First ranking runs inline so the dashboard is populated the moment onboarding finishes.
   const result = await matchCandidate(user.id);
   await audit(user, "onboarding.completed", "user", user.id, { matches: result.scored, verification: verification.status });
