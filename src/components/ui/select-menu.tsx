@@ -11,10 +11,10 @@ export interface MenuOption {
 }
 
 const trigger =
-  "group flex h-9 w-full items-center justify-between gap-2 rounded-md border border-line-strong bg-surface-2 px-3 text-left text-sm text-fg transition-[border-color,box-shadow] duration-150 hover:border-white/20 focus:outline-none focus-visible:border-accent focus-visible:shadow-[0_0_0_3px_var(--accent-soft)] data-[state=open]:border-accent data-[state=open]:shadow-[0_0_0_3px_var(--accent-soft)] data-[placeholder]:text-subtle disabled:cursor-not-allowed disabled:opacity-50";
+  "group flex h-9 w-full items-center justify-between gap-2 rounded-md border border-line-strong bg-bg px-3 text-left text-sm text-fg transition-[border-color,box-shadow] duration-150 hover:border-fg/40 focus:outline-none focus-visible:border-accent focus-visible:shadow-[0_0_0_3px_var(--accent-soft)] data-[state=open]:border-accent data-[state=open]:shadow-[0_0_0_3px_var(--accent-soft)] data-[placeholder]:text-subtle disabled:cursor-not-allowed disabled:opacity-50";
 
 export const menuPanel =
-  "z-50 overflow-hidden rounded-lg border border-line-strong bg-surface-2 shadow-[0_18px_50px_rgb(0_0_0/0.55)] data-[state=open]:animate-[pop-in_140ms_ease-out]";
+  "z-50 overflow-hidden rounded-lg border border-line-strong bg-bg shadow-[0_18px_50px_rgb(0_0_0/0.12)] data-[state=open]:animate-[pop-in_140ms_ease-out]";
 
 export const menuItem =
   "relative flex cursor-pointer select-none items-center gap-2 rounded-md py-2 pl-8 pr-3 text-[13px] text-muted outline-none transition-colors data-[highlighted]:bg-accent-soft data-[highlighted]:text-fg data-[state=checked]:text-fg data-[disabled]:pointer-events-none data-[disabled]:opacity-40";

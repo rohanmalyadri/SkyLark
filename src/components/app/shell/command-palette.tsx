@@ -69,7 +69,7 @@ export function CommandPalette({ staff }: { staff: boolean }) {
       <D.Portal>
         <D.Overlay className="fixed inset-0 z-50 bg-black/60 data-[state=open]:animate-[fade-in_120ms_ease-out]" />
         <D.Content
-          className="fixed left-1/2 top-[12vh] z-50 w-[calc(100vw-24px)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-line-strong bg-surface shadow-[0_32px_100px_rgb(0_0_0/0.7)] focus:outline-none data-[state=open]:animate-[dialog-in_160ms_var(--ease-out)]"
+          className="fixed left-1/2 top-[12vh] z-50 w-[calc(100vw-24px)] max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-line-strong bg-surface shadow-[0_32px_100px_rgb(0_0_0/0.12)] focus:outline-none data-[state=open]:animate-[dialog-in_160ms_var(--ease-out)]"
           onKeyDown={(e) => {
             if (e.key === "ArrowDown") {
               e.preventDefault();
@@ -132,7 +132,7 @@ export function CommandTrigger() {
   return (
     <button
       onClick={() => window.dispatchEvent(new Event("open-command-palette"))}
-      className="flex h-8 w-full max-w-72 items-center gap-2 rounded-md border border-line-strong bg-surface px-2.5 text-[13px] text-subtle transition-colors hover:border-white/20 hover:text-muted"
+      className="flex h-8 w-full max-w-72 items-center gap-2 rounded-md border border-line-strong bg-surface px-2.5 text-[13px] text-subtle transition-colors hover:border-fg/40 hover:text-muted"
     >
       <Search className="size-3.5" aria-hidden />
       <span className="flex-1 text-left">Search or jump to…</span>

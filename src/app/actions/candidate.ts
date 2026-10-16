@@ -2,13 +2,17 @@
 
 import { z } from "zod";
 import { userRepo } from "@/lib/data";
-import { ApplicationStatusSchema, SettingsSchema } from "@/lib/domain/schemas";
+import { AccountNameSchema, ApplicationStatusSchema, SettingsSchema } from "@/lib/domain/schemas";
 import * as apps from "@/lib/services/applications";
 import { cancelSubscription, changePlan } from "@/lib/services/billing";
 import { setMatchVisibility } from "@/lib/services/jobs";
 import * as profile from "@/lib/services/profile";
+import * as skillsService from "@/lib/services/skills";
+import { deleteMyAccount } from "@/lib/services/privacy";
+import { redirect } from "next/navigation";
 import * as tailoring from "@/lib/services/tailoring";
 import { audit } from "@/lib/services/audit";
+import { AppError } from "@/lib/infra/errors";
 import { run } from "./_wrap";
 
 const id = z.string().min(1).max(64);
@@ -125,13 +129,17 @@ export async function updateSettingsAction(input: unknown) {
 
 export async function updateAccountAction(fullName: string) {
   return run("account.update", async (u) => {
-    await (await userRepo()).updateUser(u.id, { fullName: z.string().trim().min(2).max(80).parse(fullName) });
+    await (await userRepo()).updateUser(u.id, { fullName: AccountNameSchema.parse(fullName) });
     await audit(u, "account.updated", "user", u.id);
   }, { message: "Account updated" });
 }
 
-export async function changePlanAction(planId: string, interval: string) {
-  return run("billing.change", async (u) => void (await changePlan(u, z.enum(["entry", "professional", "executive"]).parse(planId), z.enum(["month", "year"]).parse(interval))), { message: "Plan updated" });
+export async function changePlanAction(planId: string, interval: string, acceptedTerms: boolean) {
+  return run("billing.change", async (u) => {
+    if (acceptedTerms !== true) throw new AppError("validation", "Please agree to the Terms & Conditions before paying.");
+    await changePlan(u, z.enum(["entry", "professional", "executive"]).parse(planId), z.enum(["month", "year"]).parse(interval));
+    await audit(u, "billing.terms_accepted", "user", u.id, { planId, termsVersion: "2026-10-17" });
+  }, { message: "Plan updated" });
 }
 
 export async function cancelPlanAction() {
@@ -140,4 +148,17 @@ export async function cancelPlanAction() {
 
 export async function markNotificationsReadAction(ids?: string[]) {
   return run("notifications.read", async (u) => (await userRepo()).markNotificationsRead(u.id, ids ? z.array(id).max(100).parse(ids) : undefined));
+}
+
+export async function requestSkillAction(name: string, context = "") {
+  return run("skills.request", async (u) => {
+    const r = await skillsService.requestSkill(u, { name, context });
+    return { id: r.id, name: r.name, status: r.status };
+  }, { message: "Sent for review — we'll notify you when it's decided" });
+}
+
+export async function deleteAccountAction(confirmation: string) {
+  const res = await run("privacy.delete", (u) => deleteMyAccount(u, z.string().max(20).parse(confirmation)), { refresh: false });
+  if (res.ok) redirect("/?account=deleted");
+  return res;
 }

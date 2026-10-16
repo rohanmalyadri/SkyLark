@@ -36,7 +36,7 @@ export type FeedItem = MatchWithJob & { applicationStatus: ApplicationStatus | n
 
 export async function jobFeed(user: User, f: JobFilters) {
   const repo = await userRepo();
-  const [matches, apps] = await Promise.all([repo.listMatches(user.id), repo.listApplications(user.id)]);
+  const [matches, apps] = await Promise.all([repo.listMatches(user.id, { limit: 2000 }), repo.listApplications(user.id)]);
   const appByJob = new Map(apps.map((a) => [a.jobId, a.status]));
   const q = f.q.toLowerCase();
 
@@ -46,7 +46,7 @@ export async function jobFeed(user: User, f: JobFilters) {
       if (f.view === "dismissed") return m.status === "dismissed";
       if (m.status === "dismissed") return false;
       if (f.view === "saved" && m.status !== "saved" && !m.applicationStatus) return false;
-      if (q && !`${m.job.title} ${m.job.company.name} ${m.job.requiredSkills.join(" ")}`.toLowerCase().includes(q)) return false;
+      if (q && !`${m.job.title} ${m.job.department} ${m.job.company.name} ${m.job.requiredSkills.join(" ")}`.toLowerCase().includes(q)) return false;
       if (f.country && !m.job.locations.some((l) => l.country === f.country) && !m.job.remoteCountries.includes(f.country)) return false;
       if (f.mode && m.job.workMode !== f.mode) return false;
       if (f.seniority && m.job.seniority !== f.seniority) return false;

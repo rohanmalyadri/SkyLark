@@ -96,7 +96,7 @@ export function Combobox({
         aria-controls={listId}
         aria-label={ariaLabel}
         aria-invalid={ariaInvalid || undefined}
-        className="group flex h-9 w-full items-center justify-between gap-2 rounded-md border border-line-strong bg-surface-2 px-3 text-left text-sm transition-[border-color,box-shadow] duration-150 hover:border-white/20 focus:outline-none focus-visible:border-accent focus-visible:shadow-[0_0_0_3px_var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-danger/60 data-[state=open]:border-accent data-[state=open]:shadow-[0_0_0_3px_var(--accent-soft)]"
+        className="group flex h-9 w-full items-center justify-between gap-2 rounded-md border border-line-strong bg-bg px-3 text-left text-sm transition-[border-color,box-shadow] duration-150 hover:border-fg/40 focus:outline-none focus-visible:border-accent focus-visible:shadow-[0_0_0_3px_var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-danger/60 data-[state=open]:border-accent data-[state=open]:shadow-[0_0_0_3px_var(--accent-soft)]"
       >
         <span className={cn("truncate", selected ? "text-fg" : "text-subtle")}>{selected?.label ?? (loading ? "Loading…" : placeholder)}</span>
         {loading ? <Spinner className="size-3.5 text-subtle" /> : <ChevronDown className="size-4 shrink-0 text-subtle transition-transform duration-200 group-data-[state=open]:rotate-180" />}

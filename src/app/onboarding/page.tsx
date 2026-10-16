@@ -13,8 +13,8 @@ export const metadata: Metadata = { title: "Set up your profile" };
 export default function OnboardingPage() {
   return (
     <div className="min-h-dvh">
-      <header className="flex h-16 items-center justify-between px-5 sm:px-8">
-        <Link href="/" aria-label="AutoApply home">
+      <header className="flex h-[var(--header-h)] items-center justify-between border-b border-line px-5 sm:px-9">
+        <Link href="/" aria-label="Skylark home">
           <Logo />
         </Link>
         <span className="text-xs text-subtle">About 5 minutes</span>

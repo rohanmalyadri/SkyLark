@@ -3,7 +3,7 @@ import { systemRepo } from "@/lib/data";
 import type { BackgroundJob, BackgroundJobType } from "@/lib/domain/types";
 import { logger } from "@/lib/infra/logger";
 import { backoffMs } from "@/lib/infra/retry";
-import { matchCandidate, matchJob } from "@/lib/services/matching/service";
+import { matchCandidate, matchJobs } from "@/lib/services/matching/service";
 import { notify } from "@/lib/services/notifications";
 import { runIngestion } from "./ingest";
 
@@ -17,7 +17,7 @@ const str = (v: unknown, name: string) => {
 const HANDLERS: Record<BackgroundJobType, Handler> = {
   ingest_source: (p) => runIngestion(str(p.source, "source")),
   match_candidate: (p) => matchCandidate(str(p.userId, "userId")),
-  match_job: (p) => matchJob(str(p.jobId, "jobId")),
+  match_job: (p) => (Array.isArray(p.jobIds) ? matchJobs(p.jobIds.map((id) => str(id, "jobIds[]"))) : matchJobs([str(p.jobId, "jobId")])),
   tailor_application: async (p) => {
     const { generateForApplication } = await import("@/lib/services/tailoring");
     return generateForApplication(str(p.applicationId, "applicationId"));

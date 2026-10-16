@@ -36,7 +36,8 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
 
 export async function requireUser(): Promise<User> {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  // A valid session for an account that no longer exists must be cleared, not bounced to /login.
+  if (!user) redirect((await getSessionUserId()) ? "/auth/reset" : "/login");
   return user;
 }
 

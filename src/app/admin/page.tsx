@@ -8,6 +8,7 @@ import { CompanyMark } from "@/components/ui/marks";
 import { PageHeader, Panel, PanelHeader } from "@/components/ui/panel";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/states";
+import { sourceName } from "@/lib/pipeline/source-meta";
 import { requireStaff } from "@/lib/auth/dal";
 import { REVIEW_STATUS_META, STATUS_META } from "@/lib/domain/constants";
 import { APPLICATION_STATUSES } from "@/lib/domain/types";
@@ -126,7 +127,7 @@ async function Overview() {
               {runs.map((r) => (
                 <li key={r.id} className="flex items-center gap-3 px-5 py-3 text-[13px]">
                   {r.status === "succeeded" ? <CheckCircle2 className="size-4 text-success" /> : r.status === "failed" ? <XCircle className="size-4 text-danger" /> : <span className="size-4 animate-pulse rounded-full bg-accent/40" />}
-                  <span className="w-20 capitalize text-fg">{r.source}</span>
+                  <span className="w-24 truncate text-fg">{sourceName(r.source)}</span>
                   <span className="flex-1 truncate text-xs text-subtle">{r.status === "failed" ? r.error : `${r.inserted} new · ${r.duplicates} dupes · ${r.fetched} fetched`}</span>
                   <span className="text-xs text-subtle">{timeAgo(r.startedAt)}</span>
                 </li>

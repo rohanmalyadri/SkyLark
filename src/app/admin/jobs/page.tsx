@@ -9,8 +9,9 @@ import { CompanyMark } from "@/components/ui/marks";
 import { PageHeader, Panel } from "@/components/ui/panel";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/states";
+import { sourceName } from "@/lib/pipeline/source-meta";
 import { requireStaff } from "@/lib/auth/dal";
-import { countryName, STAGE_META } from "@/lib/domain/constants";
+import { countryName, formatPlace, STAGE_META } from "@/lib/domain/constants";
 import { allApplications, jobsCatalog } from "@/lib/services/admin";
 import { cn, formatSalaryRange, timeAgo } from "@/lib/utils";
 
@@ -84,14 +85,14 @@ async function Jobs({ q }: { q?: string }) {
                     </div>
                   </td>
                   <td className="px-5 py-3 text-muted">
-                    {j.locations.map((l) => `${l.city}, ${countryName(l.country)}`).join(" / ")}
+                    {j.locations.map(formatPlace).join(" / ")}
                     <span className="block text-xs capitalize text-subtle">{j.workMode}</span>
                   </td>
                   <td className="px-5 py-3 tabular text-muted">{formatSalaryRange(j.salary) ?? "—"}</td>
                   <td className="px-5 py-3">
                     <Badge tone={j.visaSponsorship === "yes" ? "success" : j.visaSponsorship === "no" ? "danger" : "neutral"}>{j.visaSponsorship}</Badge>
                   </td>
-                  <td className="px-5 py-3 capitalize text-muted">{j.source}</td>
+                  <td className="px-5 py-3 text-muted">{sourceName(j.source)}</td>
                   <td className="px-5 py-3 font-mono text-[11px] text-subtle">{j.fingerprint.slice(0, 10)}</td>
                   <td className="px-5 py-3 text-muted">{timeAgo(j.postedAt)}</td>
                 </tr>

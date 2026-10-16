@@ -1,13 +1,14 @@
 <div align="center">
 
-<img src="docs/media/logo.png" alt="AutoApply logo" width="112" />
+<img src="docs/media/logo.png" alt="Skylark logo" width="112" />
 
-# AutoApply
+# Skylark
 
-### The career operating system for international talent.
+### Your next move, already in motion.
 
-AI finds and ranks the roles you can actually take: by skills, experience, work authorization, sponsorship and location.
-It tailors every application, and a human specialist reviews it before anything is sent.
+A human-assisted job application service. Share your profile once: Skylark ranks the roles you can actually take
+(skills, experience, work authorization, sponsorship and location), tailors every application, and a specialist
+reviews and submits it, so your time goes to interviews instead of forms.
 
 <br />
 
@@ -24,19 +25,19 @@ It tailors every application, and a human specialist reviews it before anything 
 
 <br />
 
-<img src="docs/media/tour.gif" alt="AutoApply product tour" width="860" />
+<img src="docs/media/tour.gif" alt="Skylark product tour" width="860" />
 
 </div>
 
 <br />
 
-## Why AutoApply
+## Why Skylark
 
 Most job boards optimise for volume. If you are looking for a job in another country, volume is the problem: most listings you see are roles you cannot legally take, at companies that will never sponsor you, and mass-applying burns your reputation with recruiters.
 
-AutoApply flips the model.
+Skylark flips the model.
 
-| | Typical job board | AutoApply |
+| | Typical job board | Skylark |
 |---|---|---|
 | **Eligibility** | Your problem | A first-class filter on every role |
 | **Match score** | A black-box percentage | Six weighted factors, each with a written reason |
@@ -72,7 +73,7 @@ Every application moves through the same visible pipeline, so you always know wh
 
 ### 1. A profile built for crossing borders
 
-Upload a resume and the skills, headline and experience are extracted for you. Then you tell AutoApply what matters: where you can already work, whether you need sponsorship, where you would relocate, and what you need to earn.
+Upload a resume and the skills, headline and experience are extracted for you. Then you tell Skylark what matters: where you can already work, whether you need sponsorship, where you would relocate, and what you need to earn.
 
 <div align="center">
 <img src="docs/media/dashboard.png" alt="Candidate dashboard" width="860" />
@@ -112,7 +113,7 @@ A role you are legally blocked from is capped at a low score no matter how good 
 
 ### 3. Tailoring where you stay in control
 
-AutoApply drafts a role-specific summary, rewrites resume bullets, writes a cover letter and shows a skill-gap table. **Nothing is applied until you accept or reject each suggestion**, and it never invents employers, titles or numbers.
+Skylark drafts a role-specific summary, rewrites resume bullets, writes a cover letter and shows a skill-gap table. **Nothing is applied until you accept or reject each suggestion**, and it never invents employers, titles or numbers.
 
 <div align="center">
 <img src="docs/media/tailoring-accepted.png" alt="AI tailoring workspace" width="860" />
@@ -241,7 +242,7 @@ flowchart LR
 | Retries | Exponential backoff with jitter, then a dead-letter state after the max attempts |
 | Idempotency | Every job carries a key, and enqueueing the same key twice creates one job |
 | Concurrency | `FOR UPDATE SKIP LOCKED` lets many workers drain the queue without double-processing |
-| Swapping sources | Each source implements one `JobSource` interface; the mock boards here are drop-in replaceable |
+| Swapping sources | Each source implements one `JobSource` interface (Arbeitnow, Adzuna, The Muse, Greenhouse, Lever); adding a board is one adapter |
 
 ### Swappable AI
 
@@ -301,6 +302,31 @@ Plus `background_jobs`, `ingestion_runs`, `idempotency_keys` and `rate_limits` f
 
 <br />
 
+## Data sources & verification
+
+Nothing in a profile or a job feed is invented. Every external source is a documented public API; nothing is scraped.
+
+| What | Source | Key needed |
+|---|---|---|
+| **Skills** | Curated taxonomy (~330 skills with synonyms, keyed to Stack Overflow tags) → [Stack Exchange tags API](https://api.stackexchange.com/docs/tags) → [ESCO](https://esco.ec.europa.eu/en/use-esco/use-esco-services-api) → [Lightcast Open Skills](https://lightcast.io/open-skills) | No (Lightcast optional) |
+| **Spelling help** | Edit-distance "did you mean" over the taxonomy and a bundled snapshot of the top 1,500 Stack Overflow tags (CC BY-SA 4.0) | No |
+| **Roles** | ESCO occupation suggestions | No |
+| **Locations** | [`country-state-city`](https://www.npmjs.com/package/country-state-city) (ISO 3166 + GeoNames cities) | No |
+| **Email** | Syntax, disposable-domain list, and a DNS MX/A lookup on the domain | No |
+| **GitHub** | [GitHub REST API](https://docs.github.com/rest): account exists, public languages and repositories | No (`GITHUB_TOKEN` raises limits) |
+| **LinkedIn** | URL format only. LinkedIn has no public profile API, so links are shown to reviewers as **self-reported** | — |
+| **Jobs** | [Arbeitnow](https://www.arbeitnow.com/blog/job-board-api) (on by default), [Adzuna](https://developer.adzuna.com), [The Muse](https://www.themuse.com/developers/api/v2), public Greenhouse / Lever boards | Arbeitnow: no. Others: yes |
+
+**Trust levels are kept separate.** Every skill is *self-reported* until a reviewer approves the profile (*reviewer-approved*, recorded as a snapshot so later additions aren't presented as reviewed). Skills that also appear in the candidate's public GitHub repositories are labelled as *evidence*, never as verified credentials, and they don't add to match scores.
+
+**Skills outside every vocabulary** can be sent for review from the skill search. Staff approve or reject them in **Operations → Skill requests**; approved skills join the shared vocabulary.
+
+**Jobs pipeline:** fetch → HTML-to-text → location resolution against the city dataset → de-duplication by company + title + country → insert → batched matching. Listings a source stops showing (on a complete fetch) or older than `JOB_MAX_AGE_DAYS` are closed. If no source has refreshed successfully in 24 hours, candidates see a clear **"Live job data is unavailable"** notice. Locally bundled fictional listings are labelled **Sample** and are never written to a real database unless you run the demo seed.
+
+**Human approval:** new and edited profiles enter a review queue with automatic flags (GitHub name mismatch, claimed years vs listed roles, skill years beyond total experience, missing resume…). Staff approve, reject or request changes with a note; the candidate is notified, every decision is audit-logged, and applications can only be sent for human review once the profile is approved.
+
+<br />
+
 ## Security model
 
 | Layer | What protects it |
@@ -313,6 +339,9 @@ Plus `background_jobs`, `ingestion_runs`, `idempotency_keys` and `rate_limits` f
 | **Abuse** | Postgres-backed fixed-window rate limits, safe-redirect validation, and idempotency keys on mutating API calls. |
 | **Observability** | Structured JSON logs with secret redaction, and an append-only audit trail of who did what. |
 | **Secrets** | Service credentials never reach the client; production fails closed without a session secret. |
+| **Input handling** | Every input is validated with Zod on the server (the browser runs the same rules for inline feedback). Queries go through the parameterised Supabase client; free-text search terms are stripped of filter syntax. Job HTML is reduced to plain text and only `http(s)` links are stored. |
+| **Verification data** | `profile_verifications` and `skill_requests` have no write policies at all: only the server writes them, after checking the reviewer's role. |
+| **Privacy** | Candidates can export everything held about them (`/api/me/export`) or delete their account from Settings; audit entries are kept without the IP address. |
 
 These are not just claims: the test suite boots the real migrations in an in-process Postgres and asserts them (see [Testing](#testing)).
 
@@ -344,9 +373,9 @@ Demo mode keeps data in memory, so it resets whenever the server restarts.
    cp .env.example .env.local
    ```
    Fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, and optionally `ANTHROPIC_API_KEY`.
-4. **Load the demo dataset** (optional):
+4. **Load the demo dataset** (staging or demo projects only; it contains fictional sample listings):
    ```bash
-   npm run seed
+   npm run seed -- --demo
    ```
 5. **Deploy.** [`vercel.json`](vercel.json) schedules the background worker every 5 minutes.
 
@@ -360,6 +389,15 @@ Demo mode keeps data in memory, so it resets whenever the server restarts.
 | `SESSION_SECRET` | demo in production | Signs demo-mode sessions |
 | `ADMIN_EMAILS` | optional | Comma-separated emails promoted to admin on sign-in |
 | `SEED_DEMO_PASSWORD` | for `npm run seed` | Password for seeded accounts |
+| `STACKEXCHANGE_KEY` | optional | Skill lookups: 10,000/day instead of 300/day per IP |
+| `LIGHTCAST_CLIENT_ID` / `LIGHTCAST_CLIENT_SECRET` | optional | Adds Lightcast Open Skills to search and verification |
+| `GITHUB_TOKEN` | optional | Scope-less token; GitHub checks at 5,000/hour instead of 60 |
+| `EMAIL_DOMAIN_CHECK` | optional | `off` disables the sign-up DNS check (offline sandboxes) |
+| `JOB_SOURCES` | optional | Allow-list of sources, e.g. `arbeitnow,adzuna` |
+| `JOB_MAX_AGE_DAYS` | optional | Close listings older than this (default 45) |
+| `ADZUNA_APP_ID` / `ADZUNA_APP_KEY` / `ADZUNA_COUNTRIES` | optional | Adzuna job search |
+| `MUSE_API_KEY` | optional | The Muse job listings |
+| `GREENHOUSE_BOARDS` / `LEVER_COMPANIES` | optional | Public company job boards to include |
 
 <br />
 
@@ -367,9 +405,16 @@ Demo mode keeps data in memory, so it resets whenever the server restarts.
 
 ```bash
 npm test          # unit tests + database / RLS tests
+npm run test:e2e  # Playwright end-to-end (uses installed Edge; PW_CHANNEL=chrome to change)
 npm run typecheck
 npm run lint
 ```
+
+- **Validation:** gibberish detection ("jhfavd"), names in any script, links, dates, education, duplicate skills.
+- **Skills:** synonyms, spelling suggestions, live verification with mocked APIs, fail-closed when every vocabulary is down, review requests and staff-only decisions.
+- **Jobs:** real-shaped Arbeitnow postings (escaped HTML, bare city names), de-duplication, expiry, failed fetches, the "live data unavailable" state.
+- **Verification & privacy:** automatic flags, status transitions, permission checks, data export isolation, account erasure.
+- **End to end:** invalid sign-up, duplicate accounts, missing onboarding fields, API failure handling, empty results, candidate access to admin pages, staff review flow, and phone-width layouts.
 
 - **Matching engine:** sponsorship rules, blocked-eligibility capping, transferable skills, ranking.
 - **Ingestion:** title cleaning, location and salary parsing, sponsorship detection, fingerprints.
@@ -385,7 +430,11 @@ npm run lint
 | `GET /api/v1/matches` | The signed-in candidate's ranked matches with per-factor explanations. Accepts the same filters as the UI. |
 | `GET /api/v1/applications` | The candidate's tracker. |
 | `POST /api/v1/applications` | Save a job. Requires an `Idempotency-Key` header; replays return the original response. |
-| `GET /api/resumes/:id` | Owner-only resume download. |
+| `GET /api/resumes/:id` | Owner download; staff can fetch a candidate's resume for verification (`?owner=`), which is audit-logged. |
+| `GET /api/skills/suggest?q=` | Skill suggestions with spelling hints and degraded-source reporting. Rate limited. |
+| `GET /api/roles/suggest?q=` | ESCO occupation suggestions. Rate limited. |
+| `GET /api/geo/countries/:code/cities?region=` | Cities for a country and state. |
+| `GET /api/me/export` | The signed-in person's data as JSON. |
 | `GET /api/cron/worker` | Bearer-token protected; enqueues hourly ingestion and drains due jobs. |
 | `GET /api/health` | Liveness probe. |
 
@@ -422,8 +471,11 @@ supabase/
 
 ## Design principles
 
-- **Typography and hierarchy first.** Near-black surfaces, a single electric-blue accent, hairlines instead of floating cards.
-- **Motion communicates state.** Short, purposeful transitions; everything respects `prefers-reduced-motion`.
+- **Editorial and architectural.** Charcoal on white and off-white, square corners, hairline rules instead of floating cards. Display type is Inter Tight with tight tracking; numerals are set in Instrument Serif.
+- **One signal colour, used sparingly.** Sky blue (`#2FA1D6`) appears only as flat shapes, figures and interactive emphasis.
+- **Original artwork.** The monochrome clouds, contour lines, flight paths and profile study in `public/art/` are generated procedurally for Skylark: no stock or third-party imagery.
+- **Honest content.** Figures on the homepage come from the code (match factors, review checklist, review SLA, location data), domains come from the live job catalog, and the product illustration is labelled as sample data.
+- **Motion communicates state.** Masked headline reveals, image curtains and stacking process panels built from CSS (scroll-driven where supported); nothing is hidden if JavaScript fails, and everything respects `prefers-reduced-motion`.
 - **Every action has four states:** loading, success, failure and empty.
 - **Accessible by default.** Visible focus, keyboard navigation, labelled controls, tables for chart data, and sensible contrast.
 - **The human stays in charge.** AI proposes. You decide. A specialist verifies.
@@ -436,6 +488,6 @@ supabase/
 
 ### Made with ❤️ by **Team Synapse**
 
-<sub>AutoApply is a capstone project. All companies, jobs and people shown are fictional.</sub>
+<sub>Skylark is a capstone project. All companies, jobs and people shown are fictional.</sub>
 
 </div>

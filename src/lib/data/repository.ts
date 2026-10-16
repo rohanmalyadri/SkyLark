@@ -20,13 +20,17 @@ import type {
   Payment,
   Plan,
   PlanId,
+  ProfileVerification,
   Resume,
+  SkillRequest,
+  SkillRequestStatus,
   ReviewStatus,
   Role,
   Subscription,
   TailoredDocument,
   User,
   UserSettings,
+  VerificationStatus,
 } from "@/lib/domain/types";
 
 export interface MatchQuery {
@@ -60,11 +64,24 @@ export interface Repository {
   listUsers(opts?: { role?: Role; search?: string; limit?: number }): Promise<User[]>;
   createUser(user: NewRow<User>): Promise<User>;
   updateUser(id: string, patch: Partial<Pick<User, "fullName" | "avatarUrl" | "onboardedAt" | "role">>): Promise<User>;
+  /** Erases an account and everything owned by it; audit entries are kept but stripped of the IP address. */
+  deleteUserData(id: string): Promise<void>;
 
   /* profiles */
   getProfile(userId: string): Promise<CandidateProfile | null>;
   upsertProfile(profile: CandidateProfile): Promise<CandidateProfile>;
   listProfiles(limit?: number): Promise<CandidateProfile[]>;
+
+  /* profile verification (server- and staff-written only) */
+  getVerification(userId: string): Promise<ProfileVerification | null>;
+  upsertVerification(v: Omit<ProfileVerification, "updatedAt">): Promise<ProfileVerification>;
+  listVerifications(opts?: { status?: VerificationStatus[]; limit?: number }): Promise<ProfileVerification[]>;
+
+  /* skill review requests (server-written) */
+  createSkillRequest(r: NewRow<SkillRequest>): Promise<SkillRequest>;
+  getSkillRequest(id: string): Promise<SkillRequest | null>;
+  listSkillRequests(opts?: { status?: SkillRequestStatus[]; userId?: string; limit?: number }): Promise<SkillRequest[]>;
+  updateSkillRequest(id: string, patch: Partial<Pick<SkillRequest, "status" | "note" | "reviewedBy" | "reviewedAt">>): Promise<SkillRequest>;
 
   /* resumes */
   listResumes(userId: string): Promise<Resume[]>;
@@ -81,6 +98,10 @@ export interface Repository {
   findJobsByFingerprint(fingerprints: string[]): Promise<string[]>;
   insertJobs(jobs: NewRow<Job>[]): Promise<Job[]>;
   updateJob(id: string, patch: Partial<Pick<Job, "status">>): Promise<void>;
+  /** Marks listings as still live at the source (re-opening any that had been closed). */
+  touchJobs(fingerprints: string[], seenAt: string): Promise<number>;
+  /** Closes active listings the source no longer shows, or that are too old to still be open. */
+  closeStaleJobs(opts: { source?: string; seenBefore?: string; postedBefore?: string }): Promise<number>;
 
   /* matches */
   listMatches(userId: string, query?: MatchQuery): Promise<MatchWithJob[]>;
@@ -131,7 +152,7 @@ export interface Repository {
 
   /* audit */
   addAudit(entry: NewRow<AuditLog>): Promise<void>;
-  listAudit(opts?: { limit?: number; entityType?: string; actorId?: string }): Promise<AuditLog[]>;
+  listAudit(opts?: { limit?: number; entityType?: string; entityId?: string; actorId?: string }): Promise<AuditLog[]>;
 
   /* background jobs */
   enqueue(job: Pick<BackgroundJob, "type" | "payload"> & Partial<Pick<BackgroundJob, "idempotencyKey" | "runAfter" | "maxAttempts">>): Promise<{ job: BackgroundJob; created: boolean }>;

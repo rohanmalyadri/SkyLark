@@ -1,82 +1,243 @@
+import "server-only";
+import { serverEnv } from "@/lib/env";
+import { getJson } from "@/lib/infra/http";
 import type { RawPosting } from "./normalize";
+import { SOURCE_META, type SourceId } from "./source-meta";
 
 /**
- * A job source adapter. Real integrations (Greenhouse/Lever/Ashby board APIs, partner feeds)
- * implement the same interface; the pipeline never knows which one it's talking to.
+ * A job source adapter. Each one talks to a documented public API and returns raw postings;
+ * the pipeline normalizes, de-duplicates and expires them. `complete` says whether the fetch
+ * covered the source's full current listing set, which is what allows stale listings to be closed.
  */
 export interface JobSource {
-  id: string;
+  id: SourceId;
   name: string;
-  fetchPostings(opts: { since: string; cursor?: string }): Promise<{ postings: RawPosting[]; nextCursor?: string }>;
+  fetchPostings(): Promise<{ postings: RawPosting[]; complete: boolean }>;
 }
 
-/* ---------- Mock board: deterministic, realistic, includes cross-posted duplicates ---------- */
+const EUROPE = ["DE", "GB", "NL", "FR", "CH", "AT", "IE", "ES", "IT", "BE", "PL", "SE", "DK", "PT", "CZ", "FI", "NO"];
 
-interface Template {
-  company: { name: string; domain: string };
-  title: string;
-  location: string;
-  salary?: string;
-  body: string;
-  department: string;
+/* ---------- Arbeitnow (keyless; https://www.arbeitnow.com/blog/job-board-api) ---------- */
+
+interface ArbeitnowPage {
+  data: { slug: string; company_name: string; title: string; description: string; remote: boolean; url: string; tags: string[]; job_types: string[]; location: string; created_at: number }[];
+  links: { next: string | null };
 }
 
-const POOL: Template[] = [
-  { company: { name: "Helix Payments", domain: "helixpay.example" }, title: "Senior Backend Engineer, Ledger", location: "Amsterdam, Netherlands (Hybrid)", salary: "€90k–€115k", department: "Engineering", body: "Helix is scaling its ledger to new markets. You'll design double-entry systems in Go and PostgreSQL on AWS with Kafka for event streaming. 6+ years of backend experience. Visa sponsorship is available and we offer relocation support. You will own critical services end to end and partner with finance teams on correctness." },
-  { company: { name: "Orbital Health", domain: "orbitalhealth.example" }, title: "Sr. Frontend Engineer (Hybrid)", location: "Berlin, Germany (Hybrid)", salary: "€75k–€95k", department: "Engineering", body: "Build researcher-facing tools in TypeScript, React and Next.js. Strong Accessibility and Design Systems skills matter here. 5+ years experience. We can sponsor visas for this role. You'll work closely with clinicians to make complex data legible." },
-  { company: { name: "Kestrel Analytics", domain: "kestrel.example" }, title: "Data Engineer, Supply Graph", location: "London, United Kingdom", salary: "£80k–£100k", department: "Data", body: "Own pipelines in Python and SQL with dbt, orchestrated on Kubernetes in AWS. 4+ years building production data systems. Visa sponsorship is available. You will improve the freshness and reliability of the supply graph used by 400 enterprises." },
-  { company: { name: "Saltmarsh Commerce", domain: "saltmarsh.example" }, title: "Staff Engineer, Platform APIs", location: "Dublin, Ireland", salary: "€130k–€160k", department: "Engineering", body: "Lead the evolution of our public GraphQL and REST APIs, built in TypeScript and Node.js on PostgreSQL and Redis. 9+ years of experience including technical leadership. Relocation and visa support is provided. You will set API standards used by 9,000 brands." },
-  { company: { name: "Nimbus Data", domain: "nimbus.example" }, title: "Full-Stack Engineer, Developer Experience", location: "Sydney, Australia (Hybrid)", salary: "AUD 150k–175k", department: "Engineering", body: "Shape the console our customers use every day with React, TypeScript and Node.js on AWS. 3+ years experience. We sponsor visas. You'll talk to developers weekly and ship improvements fast." },
-  { company: { name: "Arclight Security", domain: "arclight.example" }, title: "Detection Engineer", location: "Austin, United States (Remote)", salary: "$160k–$190k", department: "Security", body: "Write detections in Python and Go across AWS and Kubernetes telemetry. 5+ years in security engineering. Candidates must already have the right to work in the US; we are unable to sponsor visas. You will tune signal for regulated customers." },
-  { company: { name: "Fernway", domain: "fernway.example" }, title: "Senior Data Scientist, Emissions", location: "Toronto, Canada (Remote)", salary: "CAD 140k–165k", department: "Data", body: "Model supply-chain emissions with Python, SQL and Machine Learning. 5+ years. You will build estimation models customers rely on for compliance reporting and partner with climate scientists." },
-  { company: { name: "Quanta Freight", domain: "quanta.example" }, title: "Frontend Engineer, Booking", location: "Singapore, Singapore", salary: "SGD 90k–120k", department: "Engineering", body: "Build the booking experience in React and TypeScript with Data Visualization for lane analytics. 3+ years. Visa sponsorship is available for strong candidates. You'll ship weekly to shippers across Asia." },
-  { company: { name: "Verdant Energy", domain: "verdant.example" }, title: "Platform Engineer", location: "Lisbon, Portugal (Hybrid)", salary: "€60k–€78k", department: "Infrastructure", body: "Run our Kubernetes platform on GCP with Terraform. 4+ years in platform or SRE roles. We can sponsor visas and help with relocation. You'll own reliability for grid-critical workloads." },
-  { company: { name: "Parallax Studio", domain: "parallax.example" }, title: "Design Engineer", location: "Stockholm, Sweden (Hybrid)", salary: "€65k–€85k", department: "Design", body: "Bridge design and code: prototype in Figma, ship in React and TypeScript with WebGL for the canvas. 4+ years. Visa sponsorship is available. You'll define how motion feels across the product." },
-];
+class ArbeitnowSource implements JobSource {
+  id = "arbeitnow" as const;
+  name = SOURCE_META.arbeitnow.name;
+  constructor(private maxPages = 3) {}
 
-function hash(s: string) {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
-  return h >>> 0;
-}
-
-export class MockBoardSource implements JobSource {
-  constructor(
-    public id: string,
-    public name: string,
-  ) {}
-
-  async fetchPostings({ since }: { since: string }) {
-    // Each board exposes a rotating, overlapping slice of the pool so runs surface duplicates.
-    const seed = hash(`${this.id}:${since.slice(0, 13)}`);
-    const count = 4 + (seed % 4);
+  async fetchPostings() {
     const postings: RawPosting[] = [];
-    for (let i = 0; i < count; i++) {
-      const t = POOL[(seed + i * 3) % POOL.length]!;
-      postings.push({
-        source: this.id,
-        externalId: `${this.id}-${hash(t.title + t.company.domain).toString(36)}`,
-        url: `https://jobs.${this.id}.example/${t.company.domain.split(".")[0]}/${hash(t.title).toString(36)}`,
-        company: t.company,
-        title: i % 3 === 0 ? `${t.title} - ${t.location.includes("Remote") ? "Remote" : "Hybrid"}` : t.title,
-        location: t.location,
-        description: t.body,
-        salaryText: t.salary,
-        department: t.department,
-        postedAt: new Date(Date.now() - (i + 1) * 3_600_000).toISOString(),
-      });
+    let complete = false;
+    for (let page = 1; page <= this.maxPages; page++) {
+      const res = await getJson<ArbeitnowPage>("arbeitnow", `https://www.arbeitnow.com/api/job-board-api?page=${page}`, { timeoutMs: 15_000 });
+      for (const j of res.data) {
+        postings.push({
+          source: this.id,
+          externalId: j.slug,
+          url: j.url,
+          company: { name: j.company_name },
+          title: j.title,
+          location: j.location || (j.remote ? "Remote" : ""),
+          remote: j.remote,
+          description: j.description,
+          employmentType: j.job_types.some((t) => /part/i.test(t)) ? "part_time" : j.job_types.some((t) => /contract|freelance/i.test(t)) ? "contract" : undefined,
+          postedAt: new Date(j.created_at * 1000).toISOString(),
+          tags: j.tags,
+          countryHints: EUROPE,
+        });
+      }
+      if (!res.links.next || res.data.length === 0) {
+        complete = true;
+        break;
+      }
     }
-    // A malformed posting, which normalization must reject without failing the run.
-    postings.push({ source: this.id, externalId: `${this.id}-broken-${seed % 97}`, url: "https://example.com/x", company: { name: "?", domain: "unknown.example" }, title: "??", location: "", description: "n/a", postedAt: new Date().toISOString() } as RawPosting);
-    return { postings };
+    // Arbeitnow orders by recency; past the page cap the remainder is older and expires by age instead.
+    return { postings, complete };
   }
 }
 
-export const SOURCES: JobSource[] = [
-  new MockBoardSource("greenhouse", "Greenhouse boards"),
-  new MockBoardSource("lever", "Lever postings"),
-  new MockBoardSource("ashby", "Ashby job boards"),
-  new MockBoardSource("workable", "Workable feed"),
-];
+/* ---------- Adzuna (ADZUNA_APP_ID + ADZUNA_APP_KEY; https://developer.adzuna.com) ---------- */
 
-export const getSource = (id: string) => SOURCES.find((s) => s.id === id);
+interface AdzunaPage {
+  results: { id: string; title: string; description: string; redirect_url: string; created: string; company?: { display_name?: string }; location?: { display_name?: string; area?: string[] }; salary_min?: number; salary_max?: number; salary_is_predicted?: string | number; contract_time?: string; category?: { label?: string } }[];
+}
+const ADZUNA_CURRENCY: Record<string, string> = { gb: "GBP", us: "USD", de: "EUR", fr: "EUR", nl: "EUR", at: "EUR", it: "EUR", es: "EUR", be: "EUR", ca: "CAD", au: "AUD", in: "INR", sg: "SGD", ch: "CHF", pl: "PLN", nz: "NZD", za: "ZAR", br: "BRL", mx: "MXN" };
+
+class AdzunaSource implements JobSource {
+  id = "adzuna" as const;
+  name = SOURCE_META.adzuna.name;
+  async fetchPostings() {
+    const env = serverEnv();
+    const countries = env.ADZUNA_COUNTRIES.length ? env.ADZUNA_COUNTRIES.map((c) => c.toLowerCase()) : ["gb", "us", "de", "in"];
+    const postings: RawPosting[] = [];
+    for (const cc of countries) {
+      const q = new URLSearchParams({ app_id: env.ADZUNA_APP_ID!, app_key: env.ADZUNA_APP_KEY!, results_per_page: "50", max_days_old: String(env.JOB_MAX_AGE_DAYS), sort_by: "date", "content-type": "application/json" });
+      const res = await getJson<AdzunaPage>("adzuna", `https://api.adzuna.com/v1/api/jobs/${cc}/search/1?${q}`, { timeoutMs: 15_000 });
+      for (const j of res.results) {
+        const area = j.location?.area ?? [];
+        const predicted = String(j.salary_is_predicted ?? "0") === "1";
+        postings.push({
+          source: this.id,
+          externalId: `${cc}-${j.id}`,
+          url: j.redirect_url,
+          company: { name: j.company?.display_name?.trim() || "" },
+          title: j.title,
+          location: [area[area.length - 1], area[0]].filter(Boolean).join(", ") || j.location?.display_name || "",
+          description: j.description,
+          // Adzuna estimates some salaries; only employer-stated figures are shown as salary.
+          salary: !predicted && j.salary_min && j.salary_max ? { min: Math.round(j.salary_min), max: Math.round(j.salary_max), currency: ADZUNA_CURRENCY[cc] ?? "USD" } : null,
+          department: j.category?.label,
+          employmentType: j.contract_time === "part_time" ? "part_time" : j.contract_time === "contract" ? "contract" : undefined,
+          postedAt: j.created,
+          countryHints: [cc.toUpperCase()],
+        });
+      }
+    }
+    // Searches return the newest slice only, so stale listings expire by age, not by absence.
+    return { postings, complete: false };
+  }
+}
+
+/* ---------- The Muse (MUSE_API_KEY; https://www.themuse.com/developers/api/v2) ---------- */
+
+interface MusePage {
+  results: { id: number; name: string; contents: string; publication_date: string; refs: { landing_page: string }; company: { name: string }; locations: { name: string }[]; levels: { short_name: string }[]; categories: { name: string }[] }[];
+  page_count: number;
+}
+
+class MuseSource implements JobSource {
+  id = "themuse" as const;
+  name = SOURCE_META.themuse.name;
+  async fetchPostings() {
+    const postings: RawPosting[] = [];
+    for (let page = 0; page < 3; page++) {
+      const q = new URLSearchParams({ page: String(page), api_key: serverEnv().MUSE_API_KEY! });
+      const res = await getJson<MusePage>("themuse", `https://www.themuse.com/api/public/jobs?${q}`, { timeoutMs: 15_000 });
+      for (const j of res.results) {
+        postings.push({
+          source: this.id,
+          externalId: String(j.id),
+          url: j.refs.landing_page,
+          company: { name: j.company.name },
+          title: j.name,
+          location: j.locations.map((l) => l.name).join("; ") || "",
+          remote: j.locations.some((l) => /remote/i.test(l.name)),
+          description: j.contents,
+          department: j.categories[0]?.name,
+          postedAt: j.publication_date,
+          countryHints: ["US", "GB", "CA"],
+        });
+      }
+      if (page + 1 >= res.page_count) break;
+    }
+    return { postings, complete: false };
+  }
+}
+
+/* ---------- Greenhouse job boards (GREENHOUSE_BOARDS; https://developers.greenhouse.io/job-board.html) ---------- */
+
+interface GreenhouseBoard {
+  jobs: { id: number; title: string; absolute_url: string; updated_at: string; first_published?: string; location: { name: string }; content: string; departments?: { name: string }[] }[];
+}
+
+class GreenhouseSource implements JobSource {
+  id = "greenhouse" as const;
+  name = SOURCE_META.greenhouse.name;
+  async fetchPostings() {
+    const postings: RawPosting[] = [];
+    let complete = true;
+    for (const token of serverEnv().GREENHOUSE_BOARDS) {
+      try {
+        const [board, meta] = await Promise.all([
+          getJson<GreenhouseBoard>("greenhouse", `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(token)}/jobs?content=true`, { timeoutMs: 15_000 }),
+          getJson<{ name: string }>("greenhouse", `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(token)}`, { timeoutMs: 8_000 }),
+        ]);
+        for (const j of board.jobs) {
+          postings.push({
+            source: this.id,
+            externalId: `${token}-${j.id}`,
+            url: j.absolute_url,
+            company: { name: meta.name },
+            title: j.title,
+            location: j.location?.name ?? "",
+            description: j.content,
+            department: j.departments?.[0]?.name,
+            postedAt: j.first_published ?? j.updated_at,
+          });
+        }
+      } catch {
+        complete = false;
+      }
+    }
+    return { postings, complete };
+  }
+}
+
+/* ---------- Lever postings (LEVER_COMPANIES; https://github.com/lever/postings-api) ---------- */
+
+interface LeverPosting {
+  id: string;
+  text: string;
+  hostedUrl: string;
+  createdAt: number;
+  descriptionPlain?: string;
+  description?: string;
+  lists?: { text: string; content: string }[];
+  additionalPlain?: string;
+  categories: { location?: string; allLocations?: string[]; team?: string; commitment?: string };
+  workplaceType?: string;
+}
+
+class LeverSource implements JobSource {
+  id = "lever" as const;
+  name = SOURCE_META.lever.name;
+  async fetchPostings() {
+    const postings: RawPosting[] = [];
+    let complete = true;
+    for (const company of serverEnv().LEVER_COMPANIES) {
+      try {
+        const list = await getJson<LeverPosting[]>("lever", `https://api.lever.co/v0/postings/${encodeURIComponent(company)}?mode=json`, { timeoutMs: 15_000 });
+        for (const j of list) {
+          const lists = (j.lists ?? []).map((l) => `<h3>${l.text}</h3><ul>${l.content}</ul>`).join("");
+          postings.push({
+            source: this.id,
+            externalId: `${company}-${j.id}`,
+            url: j.hostedUrl,
+            company: { name: company.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) },
+            title: j.text,
+            location: (j.categories.allLocations?.length ? j.categories.allLocations : [j.categories.location ?? ""]).join("; "),
+            remote: j.workplaceType === "remote",
+            description: `${j.description ?? j.descriptionPlain ?? ""}${lists}`,
+            department: j.categories.team,
+            employmentType: /part/i.test(j.categories.commitment ?? "") ? "part_time" : /contract|intern/i.test(j.categories.commitment ?? "") ? "contract" : undefined,
+            postedAt: new Date(j.createdAt).toISOString(),
+          });
+        }
+      } catch {
+        complete = false;
+      }
+    }
+    return { postings, complete };
+  }
+}
+
+/** Sources with the credentials or configuration they need. Arbeitnow needs none and is on by default. */
+export function enabledSources(): JobSource[] {
+  const env = serverEnv();
+  const wanted = new Set(env.JOB_SOURCES.length ? env.JOB_SOURCES : ["arbeitnow", "adzuna", "themuse", "greenhouse", "lever"]);
+  const all: [boolean, () => JobSource][] = [
+    [true, () => new ArbeitnowSource()],
+    [!!env.ADZUNA_APP_ID && !!env.ADZUNA_APP_KEY, () => new AdzunaSource()],
+    [!!env.MUSE_API_KEY, () => new MuseSource()],
+    [env.GREENHOUSE_BOARDS.length > 0, () => new GreenhouseSource()],
+    [env.LEVER_COMPANIES.length > 0, () => new LeverSource()],
+  ];
+  const ids: SourceId[] = ["arbeitnow", "adzuna", "themuse", "greenhouse", "lever"];
+  return all.filter(([ok], i) => ok && wanted.has(ids[i]!)).map(([, make]) => make());
+}
+
+export const getSource = (id: string) => enabledSources().find((s) => s.id === id);

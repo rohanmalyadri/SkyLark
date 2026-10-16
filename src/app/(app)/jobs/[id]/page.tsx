@@ -12,10 +12,11 @@ import { Panel, PanelHeader, SectionLabel } from "@/components/ui/panel";
 import { ScoreRing, scoreTone } from "@/components/ui/score";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { requireCandidate } from "@/lib/auth/dal";
-import { AUTH_STATUS_LABEL, countryName, SENIORITY_LABEL } from "@/lib/domain/constants";
+import { AUTH_STATUS_LABEL, countryName, formatPlace, SENIORITY_LABEL } from "@/lib/domain/constants";
 import { AppError } from "@/lib/infra/errors";
+import { isSampleJob, sourceName } from "@/lib/pipeline/source-meta";
 import { jobDetail } from "@/lib/services/jobs";
-import { formatSalaryRange, timeAgo } from "@/lib/utils";
+import { formatDate, formatSalaryRange, timeAgo } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Job detail" };
 
@@ -65,7 +66,7 @@ async function JobDetail({ params }: { params: PageProps<"/jobs/[id]">["params"]
                 <Building2 className="size-3.5 text-subtle" /> {job.company.name}
               </span>
               <span className="flex items-center gap-1.5">
-                <MapPin className="size-3.5 text-subtle" /> {job.locations.map((l) => `${l.city}, ${countryName(l.country)}`).join(" / ")}
+                <MapPin className="size-3.5 text-subtle" /> {job.locations.map(formatPlace).join(" / ")}
               </span>
               <span className="capitalize">{job.workMode}</span>
               {job.salary && (
@@ -162,7 +163,7 @@ async function JobDetail({ params }: { params: PageProps<"/jobs/[id]">["params"]
           <Panel>
             <PanelHeader title="About the role" />
             <div className="space-y-6 p-5 text-sm leading-relaxed text-muted">
-              <p className="text-fg/90">{job.description}</p>
+              <p className="whitespace-pre-line text-fg/90">{job.description}</p>
               {job.responsibilities.length > 0 && (
                 <div>
                   <h3 className="mb-2.5 text-[13px] font-semibold text-fg">What you&apos;ll do</h3>
@@ -178,6 +179,15 @@ async function JobDetail({ params }: { params: PageProps<"/jobs/[id]">["params"]
               )}
               <div>
                 <h3 className="mb-2.5 text-[13px] font-semibold text-fg">Requirements</h3>
+                {job.requirements.length === 0 && <p className="text-[13px] text-subtle">The listing doesn&apos;t break requirements out as a list — see the original posting.</p>}
+                {job.requiredSkills.length > 0 && (
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <span className="text-[13px] text-subtle">Skills named in the listing:</span>
+                    {job.requiredSkills.map((s) => (
+                      <Badge key={s}>{s}</Badge>
+                    ))}
+                  </div>
+                )}
                 <ul className="space-y-2">
                   {job.requirements.map((r) => (
                     <li key={r} className="flex gap-2.5">
@@ -195,9 +205,19 @@ async function JobDetail({ params }: { params: PageProps<"/jobs/[id]">["params"]
                   ))}
                 </div>
               )}
-              <a href={job.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-fg">
-                View original listing on {job.source} <ExternalLink className="size-3.5" />
-              </a>
+              {isSampleJob(job) ? (
+                <p className="rounded-md border border-line bg-surface-2/60 px-3 py-2 text-[13px] text-muted">Sample listing for the demo. This company and role are fictional, so there is no original posting.</p>
+              ) : (
+                <div className="space-y-1">
+                  <a href={job.sourceUrl} target="_blank" rel="noopener noreferrer nofollow" className="inline-flex items-center gap-1.5 text-[13px] font-medium text-fg hover:underline">
+                    View the original posting on {sourceName(job.source)} <ExternalLink className="size-3.5" />
+                  </a>
+                  <p className="text-xs text-subtle">
+                    Posted {formatDate(job.postedAt, { month: "short", day: "numeric", year: "numeric" })} · last confirmed open {timeAgo(job.lastSeenAt)}
+                    {job.status === "closed" && " · no longer listed by the source"}. Apply and read the full description on the employer&apos;s page.
+                  </p>
+                </div>
+              )}
             </div>
           </Panel>
         </div>
@@ -245,15 +265,19 @@ async function JobDetail({ params }: { params: PageProps<"/jobs/[id]">["params"]
           </Panel>
 
           <Panel>
-            <PanelHeader title={job.company.name} description={`${job.company.industry} · ${job.company.size} employees`} />
+            <PanelHeader title={job.company.name} description={[job.company.industry, job.company.size && `${job.company.size} employees`].filter(Boolean).join(" · ") || undefined} />
             <div className="space-y-3 px-5 py-4 text-[13px] text-muted">
-              <p className="leading-relaxed">{job.company.description}</p>
-              <p className="flex items-center gap-2">
-                <MapPin className="size-3.5 text-subtle" /> HQ {job.company.headquarters.city}, {countryName(job.company.headquarters.country)}
-              </p>
-              <a href={job.company.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-fg">
-                <Globe className="size-3.5 text-subtle" /> {job.company.domain}
-              </a>
+              {job.company.description ? <p className="leading-relaxed">{job.company.description}</p> : <p className="leading-relaxed">Company details come from the listing. See the original posting for more about the employer.</p>}
+              {job.company.headquarters.country && (
+                <p className="flex items-center gap-2">
+                  <MapPin className="size-3.5 text-subtle" /> HQ {formatPlace(job.company.headquarters)}
+                </p>
+              )}
+              {job.company.website && (
+                <a href={job.company.website} target="_blank" rel="noopener noreferrer nofollow" className="flex items-center gap-2 hover:text-fg">
+                  <Globe className="size-3.5 text-subtle" /> {job.company.domain}
+                </a>
+              )}
             </div>
           </Panel>
 

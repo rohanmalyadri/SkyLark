@@ -11,7 +11,7 @@ import { Panel, PanelHeader, SectionLabel } from "@/components/ui/panel";
 import { ScoreRing } from "@/components/ui/score";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { requireStaff } from "@/lib/auth/dal";
-import { AUTH_STATUS_LABEL, countryName, REVIEW_STATUS_META, SENIORITY_LABEL } from "@/lib/domain/constants";
+import { AUTH_STATUS_LABEL, countryName, formatPlace, REVIEW_STATUS_META, SENIORITY_LABEL } from "@/lib/domain/constants";
 import { AppError } from "@/lib/infra/errors";
 import { reviewDetail } from "@/lib/services/reviews";
 import { cn, timeAgo } from "@/lib/utils";
@@ -52,7 +52,7 @@ async function Review({ params }: { params: PageProps<"/admin/reviews/[id]">["pa
             <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-subtle">Review for {review.candidate.fullName}</p>
             <h1 className="mt-1 text-[22px] font-semibold tracking-[-0.02em]">{job.title}</h1>
             <p className="text-[13px] text-muted">
-              {job.company.name} · {job.locations.map((l) => `${l.city}, ${countryName(l.country)}`).join(" / ")} · Visa sponsorship: {job.visaSponsorship}
+              {job.company.name} · {job.locations.map(formatPlace).join(" / ")} · Visa sponsorship: {job.visaSponsorship}
             </p>
           </div>
         </div>

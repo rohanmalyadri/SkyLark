@@ -8,6 +8,7 @@ import { markSubmitted } from "@/lib/services/applications";
 import * as reviews from "@/lib/services/reviews";
 import { runWorker } from "@/lib/pipeline/worker";
 import { audit } from "@/lib/services/audit";
+import { decideSkillRequest } from "@/lib/services/skills";
 import { run } from "./_wrap";
 
 const STAFF = ["reviewer", "admin"] as ("reviewer" | "admin")[];
@@ -61,4 +62,20 @@ export async function updatePlanAction(planId: string, input: unknown) {
     },
     { roles: ["admin"], message: "Pricing updated" },
   );
+}
+
+export async function decideVerificationAction(userId: string, decision: string, note: string) {
+  return run(
+    "verification.decide",
+    async (u) => void (await admin.decideVerification(u, id.parse(userId), { decision, note })),
+    { roles: STAFF, message: decision === "approved" ? "Profile approved" : decision === "rejected" ? "Profile rejected" : "Changes requested" },
+  );
+}
+
+export async function refreshEnrichmentAction(userId: string) {
+  return run("verification.refresh", async (u) => void (await admin.refreshCandidateEnrichment(u, id.parse(userId))), { roles: STAFF, message: "GitHub data refreshed" });
+}
+
+export async function decideSkillRequestAction(requestId: string, decision: string, note: string) {
+  return run("skills.decide", async (u) => void (await decideSkillRequest(u, id.parse(requestId), { decision, note })), { roles: STAFF, message: decision === "approved" ? "Skill approved" : "Request rejected" });
 }

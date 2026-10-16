@@ -140,8 +140,9 @@ export function SecurityPanel({ method, demo, google }: { method: string; demo: 
 export function BillingPanel({ plans, subscription, current, usage }: { plans: Plan[]; subscription: Subscription | null; current: Plan; usage: { tailored: number; reviews: number } }) {
   const [interval, setBillingInterval] = useState<"month" | "year">(subscription?.interval ?? "month");
   const [target, setTarget] = useState<Plan | null>(null);
+  const [agreed, setAgreed] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const change = useAction(changePlanAction, { onSuccess: () => setTarget(null) });
+  const change = useAction(changePlanAction, { onSuccess: () => (setTarget(null), setAgreed(false)) });
   const cancel = useAction(cancelPlanAction, { onSuccess: () => setCancelOpen(false) });
 
   const meter = (label: string, used: number, limit: number | null) => (
@@ -215,14 +216,24 @@ export function BillingPanel({ plans, subscription, current, usage }: { plans: P
         </div>
       </div>
 
-      <Dialog open={!!target} onOpenChange={(o) => !o && setTarget(null)}>
+      <Dialog open={!!target} onOpenChange={(o) => !o && (setTarget(null), setAgreed(false))}>
         <DialogContent title={`Switch to ${target?.name}?`} description={target ? `You'll be charged ${formatMoney(interval === "year" ? target.priceYearly : target.priceMonthly, target.currency)} today (${interval === "year" ? "annual" : "monthly"}). This demo uses a mock payment provider — no real charge is made.` : ""}>
+          <label className="mb-5 flex cursor-pointer items-start gap-3 rounded-md border border-[#e5e5e5] bg-[#f7f7f7] p-3 text-[13px] leading-relaxed text-[#555]">
+            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 size-4 shrink-0 cursor-pointer accent-[#aaaaaa]" />
+            <span>
+              I have read and agree to the{" "}
+              <a href="/terms" target="_blank" rel="noopener" className="text-[#2b2b2b] underline underline-offset-2 hover:text-black">
+                Terms &amp; Conditions
+              </a>
+              , including the one-time payment and no-refund policy.
+            </span>
+          </label>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setTarget(null)}>
+            <Button variant="ghost" onClick={() => (setTarget(null), setAgreed(false))}>
               Cancel
             </Button>
-            <Button loading={change.pending} onClick={() => target && void change.execute(target.id, interval)}>
-              Confirm change
+            <Button disabled={!agreed} loading={change.pending} onClick={() => target && agreed && void change.execute(target.id, interval, agreed)}>
+              Confirm and pay
             </Button>
           </div>
         </DialogContent>

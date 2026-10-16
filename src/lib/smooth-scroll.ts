@@ -11,6 +11,24 @@ const ease = (t: number) => (t < 0.5 ? 16 * t ** 5 : 1 - (-2 * t + 2) ** 5 / 2);
 
 let cancelActive: (() => void) | null = null;
 
+/** A smooth-scroll engine (Lenis on the marketing site) that owns the scroll position when present. */
+interface Scroller {
+  scrollTo(target: number, options: { duration?: number; easing?: (t: number) => number; onComplete?: () => void; force?: boolean }): void;
+  stop(): void;
+  start(): void;
+}
+let scroller: Scroller | null = null;
+export function registerScroller(s: Scroller | null) {
+  scroller = s;
+}
+
+/** Moves to `y` immediately (the reference's anchor behaviour), through the scroll engine when present. */
+export function jumpTo(y: number) {
+  cancelActive?.();
+  if (scroller) scroller.scrollTo(y, { duration: 0, force: true });
+  else window.scrollTo(0, y);
+}
+
 const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** Document Y that puts `el` just below the sticky header, honouring its CSS scroll-margin-top. */
@@ -33,6 +51,23 @@ export function smoothScrollTo(y: number): Promise<boolean> {
 
   // Longer jumps take a little longer, but never drag.
   const duration = Math.min(1150, Math.max(520, Math.sqrt(Math.abs(distance)) * 26));
+
+  if (scroller) {
+    const engine = scroller;
+    return new Promise((resolve) => {
+      const done = (completed: boolean) => {
+        window.removeEventListener("wheel", interrupt);
+        window.removeEventListener("touchstart", interrupt);
+        cancelActive = null;
+        resolve(completed);
+      };
+      const interrupt = () => done(false);
+      window.addEventListener("wheel", interrupt, { passive: true, once: true });
+      window.addEventListener("touchstart", interrupt, { passive: true, once: true });
+      cancelActive = interrupt;
+      engine.scrollTo(y, { duration: duration / 1000, easing: ease, force: true, onComplete: () => done(true) });
+    });
+  }
 
   return new Promise((resolve) => {
     let raf = 0;
@@ -76,7 +111,10 @@ export async function scrollToId(id: string) {
   if (!(await smoothScrollTo(targetY(el)))) return false;
   // Correct for content that shifted during the animation (lazy images, fonts).
   const settled = targetY(el);
-  if (Math.abs(window.scrollY - settled) > 2) window.scrollTo(0, settled);
+  if (Math.abs(window.scrollY - settled) > 2) {
+    if (scroller) scroller.scrollTo(settled, { duration: 0, force: true });
+    else window.scrollTo(0, settled);
+  }
   if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
   el.focus({ preventScroll: true });
   return true;

@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 export function scoreTone(score: number) {
   if (score >= 85) return { stroke: "var(--success)", text: "text-success", label: "Excellent fit" };
-  if (score >= 70) return { stroke: "var(--accent)", text: "text-[#8FB3FF]", label: "Strong fit" };
+  if (score >= 70) return { stroke: "var(--accent)", text: "text-accent", label: "Strong fit" };
   if (score >= 55) return { stroke: "var(--warning)", text: "text-warning", label: "Partial fit" };
   return { stroke: "var(--subtle)", text: "text-muted", label: "Low fit" };
 }
@@ -38,7 +38,7 @@ export function ScoreRing({ score, size = 44, className, label = true }: { score
 export function ScoreBar({ value, tone = "accent", className }: { value: number; tone?: "accent" | "success" | "warning" | "danger" | "neutral"; className?: string }) {
   const color = { accent: "bg-accent", success: "bg-success", warning: "bg-warning", danger: "bg-danger", neutral: "bg-subtle" }[tone];
   return (
-    <div className={cn("h-1 w-full overflow-hidden rounded-full bg-white/[0.06]", className)} aria-hidden>
+    <div className={cn("h-1 w-full overflow-hidden rounded-full bg-black/[0.06]", className)} aria-hidden>
       <div className={cn("h-full rounded-full transition-[width] duration-700 ease-out", color)} style={{ width: `${Math.max(2, value)}%` }} />
     </div>
   );

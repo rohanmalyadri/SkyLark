@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { RematchButton } from "@/components/app/job-actions";
 import { JobFiltersShell } from "@/components/app/jobs/job-filters";
+import { CatalogNotice } from "@/components/app/jobs/catalog-notice";
 import { JobRow } from "@/components/app/jobs/job-row";
 import { Button } from "@/components/ui/button";
 import { PageHeader, Panel, PanelHeader } from "@/components/ui/panel";
@@ -10,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/states";
 import { requireCandidate } from "@/lib/auth/dal";
 import { countryName } from "@/lib/domain/constants";
+import { catalogStatus, ensureFreshCatalog } from "@/lib/services/catalog";
 import { jobFeed, parseJobFilters, type FeedItem } from "@/lib/services/jobs";
 import Link from "next/link";
 
@@ -18,7 +20,7 @@ export const metadata: Metadata = { title: "Job intelligence" };
 export default function JobsPage({ searchParams }: PageProps<"/jobs">) {
   return (
     <>
-      <PageHeader eyebrow="Job intelligence" title="Matched for you" description="Every role is scored on skills, experience, eligibility, location, sponsorship and your preferences." actions={<RematchButton />} />
+      <PageHeader eyebrow="Job intelligence" title="Matched for you" description={<>Every role is scored on skills, experience, education, eligibility, location, sponsorship and your preferences. Open a role to see which requirements you meet. <Link href="/profile#preferences" className="text-fg underline underline-offset-2">Update your preferences</Link> to improve recommendations.</>} actions={<RematchButton />} />
       <Suspense fallback={<JobsSkeleton />}>
         <Jobs searchParams={searchParams} />
       </Suspense>
@@ -29,10 +31,12 @@ export default function JobsPage({ searchParams }: PageProps<"/jobs">) {
 async function Jobs({ searchParams }: { searchParams: PageProps<"/jobs">["searchParams"] }) {
   const user = await requireCandidate();
   const filters = parseJobFilters(await searchParams);
-  const feed = await jobFeed(user, filters);
+  await ensureFreshCatalog();
+  const [feed, catalog] = await Promise.all([jobFeed(user, filters), catalogStatus()]);
 
   return (
     <JobFiltersShell initial={filters} countries={feed.countries}>
+      <CatalogNotice status={catalog} className="mb-4" />
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
         <Panel>
           <div className="flex items-center justify-between border-b border-line px-5 py-3 text-[13px] text-muted">
@@ -45,7 +49,12 @@ async function Jobs({ searchParams }: { searchParams: PageProps<"/jobs">["search
             filters.view === "dismissed" ? (
               <EmptyState icon={<Radar />} title="Nothing hidden" description="Roles you mark as not interested will appear here so you can restore them." />
             ) : feed.total === 0 ? (
-              <EmptyState icon={<Radar />} title="No matches yet" description="Finish your profile — skills, work authorization and target countries — and we'll rank roles for you." action={<Button asChild size="sm"><Link href="/profile">Complete profile</Link></Button>} />
+              <EmptyState
+                icon={<Radar />}
+                title="No matches yet"
+                description={catalog.activeLiveJobs + catalog.activeSampleJobs === 0 ? "There are no open listings to match against yet. Live listings are being fetched — check back in a few minutes." : "Nothing currently open scores 40% or more for your profile. Adding skills, work authorization and target countries widens your matches."}
+                action={<Button asChild size="sm"><Link href="/profile">Review profile</Link></Button>}
+              />
             ) : (
               <EmptyState icon={<SearchX />} title="No roles match these filters" description="Try widening the country, eligibility or minimum fit filters." />
             )

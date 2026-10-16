@@ -26,6 +26,9 @@ export function memoryStore(): Store {
   if (!g.__autoapplyStore) {
     g.__autoapplyStore = { ...buildDataset(), idempotency: new Map(), passwords: new Map(), blobs: new Map() };
   }
+  // Stores created before verification existed (dev hot reload) get the new collection.
+  g.__autoapplyStore.verifications ??= [];
+  g.__autoapplyStore.skillRequests ??= [];
   return g.__autoapplyStore;
 }
 
@@ -79,6 +82,33 @@ export class MemoryRepository implements Repository {
     return clone(u);
   }
 
+  async deleteUserData(id: string) {
+    const s = this.s;
+    const appIds = new Set(s.applications.filter((a) => a.userId === id).map((a) => a.id));
+    s.users = s.users.filter((u) => u.id !== id);
+    s.profiles = s.profiles.filter((p) => p.userId !== id);
+    s.resumes = s.resumes.filter((r) => r.userId !== id);
+    s.matches = s.matches.filter((m) => m.userId !== id);
+    s.applications = s.applications.filter((a) => a.userId !== id);
+    s.events = s.events.filter((e) => !appIds.has(e.applicationId));
+    s.reviews = s.reviews.filter((r) => !appIds.has(r.applicationId));
+    s.tailored = s.tailored.filter((t) => t.userId !== id);
+    s.subscriptions = s.subscriptions.filter((x) => x.userId !== id);
+    s.payments = s.payments.filter((x) => x.userId !== id);
+    s.notifications = s.notifications.filter((n) => n.userId !== id);
+    s.settings = s.settings.filter((x) => x.userId !== id);
+    s.verifications = s.verifications.filter((v) => v.userId !== id);
+    s.skillRequests = s.skillRequests.filter((r) => r.userId !== id);
+    s.reviews.forEach((r) => r.reviewerId === id && (r.reviewerId = null));
+    s.audit.forEach((a) => {
+      if (a.actorId === id) {
+        a.actorId = null;
+        a.ip = null;
+      }
+    });
+    s.passwords.delete(id);
+  }
+
   /* profiles */
   async getProfile(userId: string) {
     return clone(this.s.profiles.find((p) => p.userId === userId) ?? null);
@@ -93,6 +123,49 @@ export class MemoryRepository implements Repository {
 
   async listProfiles(limit = 1000) {
     return clone(this.s.profiles.slice(0, limit));
+  }
+
+  /* profile verification */
+  async getVerification(userId: string) {
+    return clone(this.s.verifications.find((v) => v.userId === userId) ?? null);
+  }
+  async upsertVerification(v: Parameters<Repository["upsertVerification"]>[0]) {
+    const row = { ...clone(v), updatedAt: nowIso() };
+    const i = this.s.verifications.findIndex((x) => x.userId === v.userId);
+    if (i >= 0) this.s.verifications[i] = row;
+    else this.s.verifications.push(row);
+    return clone(row);
+  }
+  /* skill review requests */
+  async createSkillRequest(r: Parameters<Repository["createSkillRequest"]>[0]) {
+    const row = { ...r, id: r.id ?? randomUUID(), createdAt: r.createdAt ?? nowIso() };
+    this.s.skillRequests.push(row);
+    return clone(row);
+  }
+  async getSkillRequest(id: string) {
+    return clone(this.s.skillRequests.find((r) => r.id === id) ?? null);
+  }
+  async listSkillRequests(opts: Parameters<Repository["listSkillRequests"]>[0] = {}) {
+    return clone(
+      this.s.skillRequests
+        .filter((r) => (!opts.status || opts.status.includes(r.status)) && (!opts.userId || r.userId === opts.userId))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, opts.limit ?? 500),
+    );
+  }
+  async updateSkillRequest(id: string, patch: Parameters<Repository["updateSkillRequest"]>[1]) {
+    const r = this.s.skillRequests.find((x) => x.id === id);
+    if (!r) throw new Error("skill request not found");
+    Object.assign(r, patch);
+    return clone(r);
+  }
+  async listVerifications(opts: Parameters<Repository["listVerifications"]>[0] = {}) {
+    return clone(
+      this.s.verifications
+        .filter((v) => !opts.status || opts.status.includes(v.status))
+        .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))
+        .slice(0, opts.limit ?? 1000),
+    );
   }
 
   /* resumes */
@@ -149,6 +222,30 @@ export class MemoryRepository implements Repository {
   async updateJob(id: string, patch: { status?: "active" | "closed" }) {
     const j = this.s.jobs.find((x) => x.id === id);
     if (j) Object.assign(j, patch);
+  }
+  async touchJobs(fingerprints: string[], seenAt: string) {
+    const set = new Set(fingerprints);
+    let n = 0;
+    for (const j of this.s.jobs) {
+      if (!set.has(j.fingerprint)) continue;
+      j.lastSeenAt = seenAt;
+      j.status = "active";
+      n++;
+    }
+    return n;
+  }
+  async closeStaleJobs(opts: Parameters<Repository["closeStaleJobs"]>[0]) {
+    let n = 0;
+    for (const j of this.s.jobs) {
+      if (j.status !== "active" || (opts.source && j.source !== opts.source)) continue;
+      const unseen = opts.seenBefore && j.lastSeenAt < opts.seenBefore;
+      const old = opts.postedBefore && j.postedAt < opts.postedBefore;
+      if (unseen || old) {
+        j.status = "closed";
+        n++;
+      }
+    }
+    return n;
   }
 
   /* matches */
@@ -363,10 +460,10 @@ export class MemoryRepository implements Repository {
   async addAudit(entry: Parameters<Repository["addAudit"]>[0]) {
     this.s.audit.push({ ...entry, id: entry.id ?? randomUUID(), createdAt: entry.createdAt ?? nowIso() });
   }
-  async listAudit(opts: { limit?: number; entityType?: string; actorId?: string } = {}) {
+  async listAudit(opts: { limit?: number; entityType?: string; entityId?: string; actorId?: string } = {}) {
     return clone(
       this.s.audit
-        .filter((a) => (!opts.entityType || a.entityType === opts.entityType) && (!opts.actorId || a.actorId === opts.actorId))
+        .filter((a) => (!opts.entityType || a.entityType === opts.entityType) && (!opts.entityId || a.entityId === opts.entityId) && (!opts.actorId || a.actorId === opts.actorId))
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
         .slice(0, opts.limit ?? 100),
     );
