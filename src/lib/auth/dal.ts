@@ -36,9 +36,13 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
 
 export async function requireUser(): Promise<User> {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  // A valid session for an account that no longer exists must be cleared, not bounced to /login.
+  if (!user) redirect((await getSessionUserId()) ? "/auth/reset" : "/login");
   return user;
 }
+
+/** The roles that may see staff surfaces. Operators submit applications; reviewers approve them. */
+export const STAFF_ROLES = ["reviewer", "operator", "admin"] as const satisfies readonly User["role"][];
 
 /** Candidate surfaces: signed in and finished onboarding. */
 export async function requireCandidate(): Promise<User> {
@@ -49,11 +53,14 @@ export async function requireCandidate(): Promise<User> {
 
 export async function requireStaff(): Promise<User> {
   const user = await requireUser();
-  if (user.role !== "admin" && user.role !== "reviewer") redirect("/dashboard");
+  if (!isStaff(user)) redirect("/dashboard");
   return user;
 }
 
-export const isStaff = (u: User) => u.role === "admin" || u.role === "reviewer";
+export const isStaff = (u: User) => (STAFF_ROLES as readonly string[]).includes(u.role);
+
+/** Operators and admins may submit applications on a candidate's behalf. */
+export const isOperator = (u: User) => u.role === "operator" || u.role === "admin";
 
 /** For Server Actions / route handlers: throw instead of redirecting. */
 export async function authorize(roles?: User["role"][]): Promise<User> {

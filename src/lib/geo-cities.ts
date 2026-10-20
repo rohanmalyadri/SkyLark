@@ -1,0 +1,60 @@
+/** Approximate coordinates [lat, lon] for cities that appear in job listings, used to place map markers. */
+export const CITY_COORDS: Record<string, [number, number]> = {
+  "Amsterdam|NL": [52.37, 4.9],
+  "Berlin|DE": [52.52, 13.4],
+  "Munich|DE": [48.14, 11.58],
+  "Frankfurt|DE": [50.11, 8.68],
+  "Hamburg|DE": [53.55, 9.99],
+  "London|GB": [51.51, -0.13],
+  "Manchester|GB": [53.48, -2.24],
+  "Dublin|IE": [53.35, -6.26],
+  "Paris|FR": [48.86, 2.35],
+  "Madrid|ES": [40.42, -3.7],
+  "Barcelona|ES": [41.39, 2.17],
+  "Lisbon|PT": [38.72, -9.14],
+  "Milan|IT": [45.46, 9.19],
+  "Zurich|CH": [47.38, 8.54],
+  "Geneva|CH": [46.2, 6.14],
+  "Stockholm|SE": [59.33, 18.07],
+  "Copenhagen|DK": [55.68, 12.57],
+  "Oslo|NO": [59.91, 10.75],
+  "Helsinki|FI": [60.17, 24.94],
+  "Vienna|AT": [48.21, 16.37],
+  "Warsaw|PL": [52.23, 21.01],
+  "Brussels|BE": [50.85, 4.35],
+  "Toronto|CA": [43.65, -79.38],
+  "Vancouver|CA": [49.28, -123.12],
+  "Montreal|CA": [45.5, -73.57],
+  "New York|US": [40.71, -74.01],
+  "San Francisco|US": [37.77, -122.42],
+  "Seattle|US": [47.61, -122.33],
+  "Austin|US": [30.27, -97.74],
+  "Boston|US": [42.36, -71.06],
+  "Chicago|US": [41.88, -87.63],
+  "Los Angeles|US": [34.05, -118.24],
+  "Singapore|SG": [1.35, 103.82],
+  "Dubai|AE": [25.2, 55.27],
+  "Abu Dhabi|AE": [24.45, 54.38],
+  "Sydney|AU": [-33.87, 151.21],
+  "Melbourne|AU": [-37.81, 144.96],
+  "Tokyo|JP": [35.68, 139.69],
+  "Seoul|KR": [37.57, 126.98],
+  "Hong Kong|HK": [22.32, 114.17],
+  "Bengaluru|IN": [12.97, 77.59],
+  "Hyderabad|IN": [17.39, 78.49],
+  "Mumbai|IN": [19.08, 72.88],
+  "Delhi|IN": [28.61, 77.21],
+  "Tel Aviv|IL": [32.09, 34.78],
+  "São Paulo|BR": [-23.55, -46.63],
+  "Mexico City|MX": [19.43, -99.13],
+  "Cape Town|ZA": [-33.92, 18.42],
+  "Auckland|NZ": [-36.85, 174.76],
+};
+
+/** The map artwork is equirectangular over these bounds. */
+export const MAP_BOUNDS = { lon0: -125, lon1: 155, lat0: -45, lat1: 75 };
+
+export function mapPosition(lat: number, lon: number) {
+  const { lon0, lon1, lat0, lat1 } = MAP_BOUNDS;
+  return { x: ((lon - lon0) / (lon1 - lon0)) * 100, y: ((lat1 - lat) / (lat1 - lat0)) * 100 };
+}

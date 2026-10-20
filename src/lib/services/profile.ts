@@ -2,29 +2,42 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { withFallback } from "@/lib/ai";
 import { emptyProfile } from "@/lib/ai/heuristic";
-import { userRepo } from "@/lib/data";
-import { ProfileSchema, type ProfileInput } from "@/lib/domain/schemas";
+import { systemRepo, userRepo } from "@/lib/data";
+import { ProfileSchema } from "@/lib/domain/schemas";
 import type { CandidateProfile, User } from "@/lib/domain/types";
 import { AppError, notFound } from "@/lib/infra/errors";
 import { rateLimit } from "@/lib/infra/rate-limit";
 import { enqueueAndKick } from "@/lib/pipeline/queue";
-import { ALLOWED_DOCUMENT_TYPES, MAX_DOCUMENT_BYTES, extractText, putDocument, removeDocument, sniffDocumentType } from "@/lib/storage";
+import { ALLOWED_DOCUMENT_TYPES, MAX_AVATAR_BYTES, MAX_DOCUMENT_BYTES, extractText, putAvatar, putDocument, removeAvatar, removeDocument, sniffDocumentType, sniffImageType } from "@/lib/storage";
 import { audit } from "./audit";
+import { attributeSignUp } from "./partners";
+import { clearReferralCookie, readReferralCookie } from "./referral-cookie";
 import { matchCandidate } from "./matching/service";
+import { checkReferenceData, recordSubmission, resolveGithub } from "./verification";
 
 export async function getProfileBundle(user: User) {
   const repo = await userRepo();
-  const [profile, resumes] = await Promise.all([repo.getProfile(user.id), repo.listResumes(user.id)]);
-  return { profile: profile ?? emptyProfile(user.id, new Date().toISOString()), resumes, hasProfile: !!profile };
+  const [profile, resumes, verification] = await Promise.all([repo.getProfile(user.id), repo.listResumes(user.id), repo.getVerification(user.id)]);
+  return { profile: profile ?? emptyProfile(user.id, new Date().toISOString()), resumes, hasProfile: !!profile, verification };
+}
+
+/** Shared save path: schema → reference data → GitHub → persist → verification record. */
+async function saveValidated(user: User, input: unknown, opts: { onboarding: boolean }) {
+  const parsed = ProfileSchema.parse(input);
+  const data = await checkReferenceData(parsed, { requireLocation: opts.onboarding });
+  const repo = await userRepo();
+  const [current, verification, resumes] = await Promise.all([repo.getProfile(user.id), systemRepo().getVerification(user.id), repo.listResumes(user.id)]);
+  const github = await resolveGithub(user, data.links.github, verification?.enrichment.github);
+  const base = current ?? emptyProfile(user.id, new Date().toISOString());
+  const next: CandidateProfile = { ...base, ...data, links: data.links, userId: user.id, updatedAt: new Date().toISOString() };
+  const saved = await repo.upsertProfile(next);
+  const record = await recordSubmission(user, saved, github, { hasResume: resumes.length > 0 });
+  return { saved, verification: record };
 }
 
 export async function updateProfile(user: User, input: unknown) {
-  const data: ProfileInput = ProfileSchema.parse(input);
-  const repo = await userRepo();
-  const current = (await repo.getProfile(user.id)) ?? emptyProfile(user.id, new Date().toISOString());
-  const next: CandidateProfile = { ...current, ...data, links: data.links, userId: user.id, updatedAt: new Date().toISOString() };
-  const saved = await repo.upsertProfile(next);
-  await audit(user, "profile.updated", "candidate_profile", user.id);
+  const { saved, verification } = await saveValidated(user, input, { onboarding: false });
+  await audit(user, "profile.updated", "candidate_profile", user.id, { verification: verification.status, flags: verification.flags.map((f) => f.code) });
   // Re-rank in the background; the debounce window collapses rapid successive edits into one job.
   const bucket = Math.floor(Date.now() / 60_000);
   await enqueueAndKick({ type: "match_candidate", payload: { userId: user.id }, idempotencyKey: `match_candidate:${user.id}:${bucket}` });
@@ -32,14 +45,20 @@ export async function updateProfile(user: User, input: unknown) {
 }
 
 export async function completeOnboarding(user: User, input: unknown) {
-  const data = ProfileSchema.parse(input);
-  const repo = await userRepo();
-  const profile: CandidateProfile = { ...emptyProfile(user.id, new Date().toISOString()), ...data, userId: user.id };
-  await repo.upsertProfile(profile);
-  await repo.updateUser(user.id, { onboardedAt: new Date().toISOString() });
+  const { verification } = await saveValidated(user, input, { onboarding: true });
+  await (await userRepo()).updateUser(user.id, { onboardedAt: new Date().toISOString() });
+
+  // Attribution is claimed here rather than at sign-up: in Supabase mode the user row only
+  // exists once the email is confirmed, so this is the first point a real account is certain.
+  const ref = await readReferralCookie();
+  if (ref) {
+    await attributeSignUp(user.id, ref);
+    await clearReferralCookie();
+  }
+
   // First ranking runs inline so the dashboard is populated the moment onboarding finishes.
   const result = await matchCandidate(user.id);
-  await audit(user, "onboarding.completed", "user", user.id, { matches: result.scored });
+  await audit(user, "onboarding.completed", "user", user.id, { matches: result.scored, verification: verification.status });
   return result;
 }
 
@@ -102,4 +121,23 @@ export async function setPrimaryResume(user: User, resumeId: string) {
 export async function rematchNow(user: User) {
   await rateLimit("mutation", user.id);
   return matchCandidate(user.id);
+}
+
+export async function uploadAvatar(user: User, file: File) {
+  await rateLimit("upload", user.id);
+  if (!file || file.size === 0) throw new AppError("validation", "Choose an image to upload.");
+  if (file.size > MAX_AVATAR_BYTES) throw new AppError("validation", "Images must be 1 MB or smaller.");
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const mime = sniffImageType(bytes);
+  if (!mime) throw new AppError("validation", "Upload a PNG, JPEG or WebP image.");
+  const url = await putAvatar(user.id, bytes, mime);
+  await (await userRepo()).updateUser(user.id, { avatarUrl: url });
+  await audit(user, "avatar.updated", "user", user.id, { sizeBytes: file.size, mime });
+  return url;
+}
+
+export async function deleteAvatar(user: User) {
+  await removeAvatar(user.id);
+  await (await userRepo()).updateUser(user.id, { avatarUrl: null });
+  await audit(user, "avatar.removed", "user", user.id);
 }

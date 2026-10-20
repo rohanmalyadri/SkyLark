@@ -16,7 +16,7 @@ export function DialogContent({ title, description, children, className }: { tit
       <D.Overlay className="fixed inset-0 z-50 bg-black/60 backdrop-blur-[2px] data-[state=open]:animate-[fade-in_150ms_ease-out]" />
       <D.Content
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 w-[calc(100vw-32px)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-line-strong bg-surface p-6 shadow-[0_24px_80px_rgb(0_0_0/0.6)] focus:outline-none data-[state=open]:animate-[dialog-in_180ms_var(--ease-out)]",
+          "fixed left-1/2 top-1/2 z-50 w-[calc(100vw-32px)] max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl border border-line-strong bg-surface p-6 shadow-[0_24px_80px_rgb(0_0_0/0.12)] focus:outline-none data-[state=open]:animate-[dialog-in_180ms_var(--ease-out)]",
           className,
         )}
       >
@@ -40,13 +40,13 @@ export function Sheet({ open, onOpenChange, title, description, children, width 
         <D.Overlay className="fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-[fade-in_150ms_ease-out]" />
         <D.Content
           className={cn(
-            "fixed z-50 flex flex-col border-line-strong bg-surface shadow-[0_24px_80px_rgb(0_0_0/0.6)] focus:outline-none",
+            "fixed z-50 flex flex-col border-line-strong bg-surface shadow-[0_24px_80px_rgb(0_0_0/0.12)] focus:outline-none",
             "inset-x-0 bottom-0 max-h-[92dvh] rounded-t-2xl border-t data-[state=open]:animate-[sheet-up_280ms_var(--ease-out)] md:data-[state=open]:animate-[sheet-left_280ms_var(--ease-out)]",
             "md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-full md:rounded-none md:border-l md:border-t-0",
             width,
           )}
         >
-          <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-white/15 md:hidden" aria-hidden />
+          <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-black/15 md:hidden" aria-hidden />
           <div className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
             <div className="min-w-0">
               <D.Title className="truncate text-base font-semibold tracking-tight">{title}</D.Title>
@@ -74,7 +74,7 @@ export function MenuContent({ children, align = "end", className }: { children: 
       <DM.Content
         align={align}
         sideOffset={6}
-        className={cn("z-50 min-w-48 rounded-lg border border-line-strong bg-surface-2 p-1 shadow-[0_16px_48px_rgb(0_0_0/0.55)] data-[state=open]:animate-[pop-in_140ms_ease-out]", className)}
+        className={cn("z-50 min-w-48 rounded-lg border border-line-strong bg-bg p-1 shadow-[0_16px_48px_rgb(0_0_0/0.12)] data-[state=open]:animate-[pop-in_140ms_ease-out]", className)}
       >
         {children}
       </DM.Content>
@@ -106,7 +106,7 @@ export const PopoverTrigger = P.Trigger;
 export function PopoverContent({ children, className, align = "end" }: { children: React.ReactNode; className?: string; align?: "start" | "end" | "center" }) {
   return (
     <P.Portal>
-      <P.Content align={align} sideOffset={8} className={cn("z-50 w-80 rounded-xl border border-line-strong bg-surface-2 shadow-[0_16px_48px_rgb(0_0_0/0.55)] focus:outline-none data-[state=open]:animate-[pop-in_140ms_ease-out]", className)}>
+      <P.Content align={align} sideOffset={8} className={cn("z-50 w-80 rounded-xl border border-line-strong bg-bg shadow-[0_16px_48px_rgb(0_0_0/0.12)] focus:outline-none data-[state=open]:animate-[pop-in_140ms_ease-out]", className)}>
         {children}
       </P.Content>
     </P.Portal>

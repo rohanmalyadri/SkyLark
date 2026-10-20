@@ -11,12 +11,16 @@ export interface PersonSeed {
 
 export const DEMO_CANDIDATE_KEY = "demo";
 export const DEMO_ADMIN_KEY = "ops";
+/** The specialist who submits applications in the demo data. */
+export const DEMO_OPERATOR_KEY = "op-nadia";
 
 export const PEOPLE: PersonSeed[] = [
-  { key: DEMO_CANDIDATE_KEY, email: "demo@autoapply.dev", fullName: "Ananya Rao", role: "candidate", createdDaysAgo: 34 },
-  { key: DEMO_ADMIN_KEY, email: "ops@autoapply.dev", fullName: "Jordan Ellis", role: "admin", createdDaysAgo: 210 },
-  { key: "rev-sam", email: "sam.okoye@autoapply.dev", fullName: "Sam Okoye", role: "reviewer", createdDaysAgo: 160 },
-  { key: "rev-lena", email: "lena.fischer@autoapply.dev", fullName: "Lena Fischer", role: "reviewer", createdDaysAgo: 120 },
+  { key: DEMO_CANDIDATE_KEY, email: "demo@skylark.dev", fullName: "Ananya Rao", role: "candidate", createdDaysAgo: 34 },
+  { key: DEMO_ADMIN_KEY, email: "ops@skylark.dev", fullName: "Jordan Ellis", role: "admin", createdDaysAgo: 210 },
+  { key: "rev-sam", email: "sam.okoye@skylark.dev", fullName: "Sam Okoye", role: "reviewer", createdDaysAgo: 160 },
+  { key: "rev-lena", email: "lena.fischer@skylark.dev", fullName: "Lena Fischer", role: "reviewer", createdDaysAgo: 120 },
+  { key: DEMO_OPERATOR_KEY, email: "nadia.haddad@skylark.dev", fullName: "Nadia Haddad", role: "operator", createdDaysAgo: 140 },
+  { key: "op-tom", email: "tom.ferreira@skylark.dev", fullName: "Tom Ferreira", role: "operator", createdDaysAgo: 95 },
   { key: "c-mateo", email: "mateo.silva@example.com", fullName: "Mateo Silva", role: "candidate", createdDaysAgo: 22 },
   { key: "c-wei", email: "wei.chen@example.com", fullName: "Wei Chen", role: "candidate", createdDaysAgo: 18 },
   { key: "c-fatima", email: "fatima.alsayed@example.com", fullName: "Fatima Al-Sayed", role: "candidate", createdDaysAgo: 15 },
@@ -38,7 +42,7 @@ export function demoProfile(now: string): CandidateProfile {
     headline: "Senior Full-Stack Engineer",
     summary:
       "Full-stack engineer with seven years building payments and commerce platforms in India's fastest-growing fintech market. I care about reliable systems, clean interfaces and teams that ship. Looking to relocate to Europe or Canada with an employer that sponsors.",
-    location: { city: "Bengaluru", country: "IN" },
+    location: { city: "Bengaluru", region: "Karnataka", country: "IN" },
     citizenship: ["IN"],
     workAuthorizations: [{ country: "IN", status: "citizen" }],
     requiresSponsorship: true,
@@ -105,9 +109,10 @@ export function demoProfile(now: string): CandidateProfile {
         skills: ["Python", "PostgreSQL"],
       },
     ],
-    education: [{ id: seedId("edu:demo:1"), school: "National Institute of Technology Karnataka", degree: "B.Tech", field: "Computer Science", year: 2017 }],
+    education: [{ id: seedId("edu:demo:1"), school: "National Institute of Technology Karnataka", degree: "Bachelor's", field: "Computer Science", year: 2017 }],
     salaryExpectation: { min: 85000, currency: "EUR" },
-    links: { linkedin: "https://linkedin.com/in/ananya-rao-demo", github: "https://github.com/ananya-rao-demo" },
+    // Fictional person: no external profile links that could point at a real account.
+    links: {},
     updatedAt: now,
   };
 }
@@ -141,7 +146,7 @@ export function otherProfiles(now: string): CandidateProfile[] {
     userId: userIdByKey(o.key),
     headline: o.headline,
     summary: `${o.headline} with ${o.years} years of experience, looking for international opportunities in ${o.targets.join(", ")}.`,
-    location: { city: o.city, country: o.country },
+    location: { city: o.city, region: "", country: o.country },
     citizenship: o.auth.slice(0, 1),
     workAuthorizations: o.auth.map((country) => ({ country, status: "citizen" as const })),
     requiresSponsorship: true,

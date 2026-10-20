@@ -1,40 +1,69 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Logo } from "@/components/ui/marks";
+import { AutoCarousel } from "./motion";
 
-const COLUMNS = [
-  { title: "Product", links: [["How it works", "/#how-it-works"], ["Matching engine", "/#matching"], ["Pricing", "/pricing"], ["Security", "/#security"]] },
-  { title: "Candidates", links: [["Create account", "/signup"], ["Sign in", "/login"], ["International search", "/#international"]] },
-  { title: "Company", links: [["Operations console", "/admin"], ["System status", "/api/health"]] },
+const TILES = ["/art/land/land-04.jpg", "/art/land/land-09.jpg", "/art/land/land-13.jpg", "/art/land/land-02.jpg", "/art/land/land-07.jpg", "/art/land/land-15.jpg"];
+
+const LINKS = [
+  ["How it works", "/#how-it-works"],
+  ["Pricing", "/pricing"],
+  ["Sign in", "/login"],
+  ["Privacy", "/privacy"],
+  ["Terms & Conditions", "/terms"],
+  ["Operations console", "/admin"],
+  ["System status", "/api/health"],
 ] as const;
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-line">
-      <div className="mx-auto grid max-w-[1200px] gap-10 px-4 py-14 sm:px-6 md:grid-cols-[1.4fr_repeat(3,1fr)]">
-        <div className="max-w-xs">
-          <Logo />
-          <p className="mt-4 text-[13px] leading-relaxed text-muted">
-            AI-powered, human-assisted job search for candidates building a career across borders.
-          </p>
-        </div>
-        {COLUMNS.map((c) => (
-          <div key={c.title}>
-            <p className="text-[13px] font-medium text-fg">{c.title}</p>
-            <ul className="mt-3 space-y-2.5">
-              {c.links.map(([label, href]) => (
-                <li key={href}>
-                  <Link href={href} className="text-[13px] text-muted transition-colors hover:text-fg">
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+    <footer className="footer" id="footer">
+      <div className="wrap --full">
+        <div className="top">
+          <div className="first">
+            <div className="text-block-center">
+              <h2 className="display --large --fill">Less time applying, more time for the interviews that matter</h2>
+              <div className="actions">
+                <Link href="/signup" className="link">
+                  <span className="t">
+                    Get started
+                    <span className="underline" aria-hidden />
+                  </span>
+                </Link>
+              </div>
+            </div>
+            <AutoCarousel>
+              <div className="inner" aria-hidden>
+                {[...TILES, ...TILES].map((src, i) => (
+                  <div key={i} className="image">
+                    <Image src={src} alt="" fill sizes="(min-width: 1101px) 10vw, 20vw" />
+                  </div>
+                ))}
+              </div>
+            </AutoCarousel>
           </div>
-        ))}
-      </div>
-      <div className="mx-auto flex max-w-[1200px] flex-col justify-between gap-2 border-t border-line px-4 py-6 text-xs text-subtle sm:flex-row sm:px-6">
-        <p>© 2026 AutoApply. A capstone project.</p>
-        <p>Nothing is ever submitted without your approval.</p>
+          <div className="social">
+          </div>
+        </div>
+        <hr />
+        <div className="bottom">
+          <ul className="legal">
+            {LINKS.map(([label, href]) => (
+              <li key={href}>
+                <Link href={href}>{label}</Link>
+              </li>
+            ))}
+          </ul>
+          <div className="copyright text --xsmall">
+            <p>© 2026 Skylark. All rights reserved.</p>
+            <p>
+              Made with{" "}
+              <span className="heart" role="img" aria-label="love">
+                ♥
+              </span>{" "}
+              by <Link href="/team" className="team-link">Team Synapse X</Link>
+            </p>
+          </div>
+        </div>
       </div>
     </footer>
   );

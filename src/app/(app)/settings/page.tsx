@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { PrivacyPanel } from "@/components/app/settings/privacy-panel";
 import { AccountForm, BillingPanel, PreferencesForm, SecurityPanel } from "@/components/app/settings/settings-forms";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, Panel, PanelHeader } from "@/components/ui/panel";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth/dal";
 import { userRepo } from "@/lib/data";
-import { isDemoMode } from "@/lib/env";
+import { googleSignInAvailable, isDemoMode } from "@/lib/env";
 import { billingOverview, listPlans } from "@/lib/services/billing";
 import { formatDate, formatMoney } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ export const metadata: Metadata = { title: "Settings" };
 const NAV = [
   ["account", "Account"],
   ["notifications", "Notifications"],
+  ["privacy", "Your data"],
   ["security", "Security"],
   ["billing", "Subscription"],
 ] as const;
@@ -51,7 +53,8 @@ async function Settings() {
       <div className="min-w-0 space-y-6">
         <AccountForm name={user.fullName} email={user.email} />
         <PreferencesForm settings={settings} />
-        <SecurityPanel method={demo ? "Demo session" : "Email & password"} demo={demo} />
+        <PrivacyPanel canDelete={user.role === "candidate"} />
+        <SecurityPanel method={demo ? "Signed session" : "Supabase session"} demo={demo} google={googleSignInAvailable()} />
         <BillingPanel plans={plans} subscription={billing.subscription} current={billing.plan} usage={{ tailored: billing.tailored, reviews: billing.reviews }} />
         <Panel>
           <PanelHeader title="Payment history" />

@@ -1,7 +1,9 @@
 /**
- * Seeds a Supabase project with the same realistic dataset the demo mode uses.
+ * Seeds a Supabase project with the fictional demo dataset (sample companies, sample job
+ * listings marked source = "sample", demo accounts). For demos and staging only: never run it
+ * against a production project. Real listings come from the ingestion pipeline.
  *
- *   npm run seed
+ *   npm run seed -- --demo
  *
  * Requires NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY and SEED_DEMO_PASSWORD
  * (used for every seeded account). Safe to re-run: accounts are reused and rows upserted.
@@ -18,6 +20,7 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const password = process.env.SEED_DEMO_PASSWORD;
 
+if (!process.argv.includes("--demo")) throw new Error("This writes fictional demo data. Re-run with `npm run seed -- --demo` to confirm (staging/demo projects only).");
 if (!url || !serviceKey) throw new Error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (see .env.example).");
 if (!password || password.length < 10) throw new Error("Set SEED_DEMO_PASSWORD (10+ characters) for the seeded demo accounts.");
 
@@ -70,7 +73,8 @@ async function main() {
     if (error) throw error;
   }
   await repo.upsertMatches(d.matches);
-  console.log(`✓ ${d.profiles.length} profiles, ${d.matches.length} matches`);
+  for (const v of d.verifications) await repo.upsertVerification(v);
+  console.log(`✓ ${d.profiles.length} profiles (${d.verifications.length} verification records), ${d.matches.length} matches`);
 
   // Applications and tailored documents reference each other: insert apps first, link after.
   for (const a of d.applications) {
@@ -120,8 +124,109 @@ async function main() {
   for (const j of d.backgroundJobs) {
     await admin.from("background_jobs").upsert({ id: j.id, type: j.type, payload: j.payload, status: j.status, attempts: j.attempts, max_attempts: j.maxAttempts, last_error: j.lastError, idempotency_key: j.idempotencyKey, run_after: j.runAfter, started_at: j.startedAt, finished_at: j.finishedAt, created_at: j.createdAt }, { onConflict: "idempotency_key" });
   }
-  console.log("✓ billing, notifications, audit log and pipeline history");
-  console.log("\nSeed complete. Sign in as demo@autoapply.dev (candidate) or ops@autoapply.dev (admin) with SEED_DEMO_PASSWORD.");
+  console.log("✓ billing, notifications and audit log");
+
+  // Managed service: answer vaults, the delivery record, partners and marketing leads.
+  for (const a of d.answers) {
+    const { error } = await admin.from("application_answers").upsert({
+      user_id: a.userId,
+      eligibility: a.eligibility,
+      screening: a.screening,
+      background: a.background,
+      self_identification: a.selfIdentification,
+      delivery: a.delivery,
+      updated_at: a.updatedAt,
+    });
+    if (error) throw error;
+  }
+  for (const r of d.deliveryRuns) {
+    const { error } = await admin.from("delivery_runs").upsert({
+      id: r.id,
+      user_id: r.userId,
+      day: r.day,
+      target: r.target,
+      submitted: r.submitted,
+      status: r.status,
+      operator_id: r.operatorId,
+      note: r.note,
+      started_at: r.startedAt,
+      completed_at: r.completedAt,
+      created_at: r.createdAt,
+    });
+    if (error) throw error;
+  }
+  // Partners before promo codes and referrals, which both reference them.
+  for (const pt of d.partners) {
+    const { error } = await admin.from("partners").upsert({
+      id: pt.id,
+      user_id: pt.userId,
+      name: pt.name,
+      email: pt.email,
+      promo_code: pt.promoCode,
+      link_token: pt.linkToken,
+      status: pt.status,
+      payout: pt.payout,
+      note: pt.note,
+      created_by: pt.createdBy,
+      created_at: pt.createdAt,
+    });
+    if (error) throw error;
+  }
+  for (const c of d.promoCodes) {
+    const { error } = await admin.from("promo_codes").upsert({
+      code: c.code,
+      kind: c.kind,
+      value: c.value,
+      currency: c.currency,
+      description: c.description,
+      partner_id: c.partnerId,
+      applies_to_plans: c.appliesToPlans,
+      first_period_only: c.firstPeriodOnly,
+      max_redemptions: c.maxRedemptions,
+      redemptions: c.redemptions,
+      starts_at: c.startsAt,
+      expires_at: c.expiresAt,
+      active: c.active,
+      created_at: c.createdAt,
+    });
+    if (error) throw error;
+  }
+  for (const r of d.referrals) {
+    const { error } = await admin.from("referrals").upsert({
+      id: r.id,
+      partner_id: r.partnerId,
+      user_id: r.userId,
+      promo_code: r.promoCode,
+      status: r.status,
+      plan_id: r.planId,
+      amount: r.amount,
+      currency: r.currency,
+      converted_at: r.convertedAt,
+      created_at: r.createdAt,
+    });
+    if (error) throw error;
+  }
+  for (const l of d.leads) {
+    const { error } = await admin.from("leads").upsert({
+      id: l.id,
+      name: l.name,
+      email: l.email,
+      phone: l.phone,
+      city: l.city,
+      country: l.country,
+      message: l.message,
+      source: l.source,
+      promo_code: l.promoCode,
+      status: l.status,
+      owner_id: l.ownerId,
+      note: l.note,
+      created_at: l.createdAt,
+      updated_at: l.updatedAt,
+    });
+    if (error) throw error;
+  }
+  console.log("✓ answer vaults, delivery runs, partners, promo codes and leads");
+  console.log("\nSeed complete. Sign in as demo@skylark.dev (candidate) or ops@skylark.dev (admin) with SEED_DEMO_PASSWORD.");
 }
 
 main().catch((err) => {

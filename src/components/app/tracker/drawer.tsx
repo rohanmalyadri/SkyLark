@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Circle, FileText, Send, Sparkles, UserCheck } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Circle, FileText, Send, Sparkles, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -27,9 +27,40 @@ export interface DrawerData {
 const ACTOR = {
   ai: { icon: Sparkles, cls: "text-accent", label: "AI" },
   reviewer: { icon: UserCheck, cls: "text-success", label: "Specialist" },
+  operator: { icon: UserCheck, cls: "text-accent", label: "Specialist" },
   candidate: { icon: FileText, cls: "text-muted", label: "You" },
   system: { icon: Circle, cls: "text-subtle", label: "System" },
-} as const;
+} as const satisfies Record<ApplicationEvent["actor"], { icon: React.ComponentType<{ className?: string }>; cls: string; label: string }>;
+
+/**
+ * What a specialist recorded when they submitted. This is the whole point of the
+ * done-for-you promise: the count on the dashboard is only worth anything if the candidate
+ * can open an application and see the portal and reference behind it.
+ */
+function SubmissionReceipt({ proof }: { proof: NonNullable<ApplicationWithJob["proof"]> }) {
+  return (
+    <div className="rounded-lg border border-success/25 bg-success-soft/40 px-4 py-3">
+      <p className="flex items-center gap-2 text-[13px] font-medium text-fg">
+        <BadgeCheck className="size-4 text-success" aria-hidden />
+        {proof.submittedBy === "specialist" ? "Submitted for you" : "You submitted this"}
+      </p>
+      <dl className="mt-2 grid gap-x-6 gap-y-1 text-[13px] sm:grid-cols-2">
+        <div className="flex justify-between gap-3">
+          <dt className="text-muted">Portal</dt>
+          <dd className="text-fg">{proof.portal || "—"}</dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-muted">Confirmation</dt>
+          <dd className="font-mono text-xs text-fg">{proof.confirmationRef || "None issued"}</dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-muted">Submitted</dt>
+          <dd className="text-fg">{formatDate(proof.submittedAt, { month: "short", day: "numeric", year: "numeric" })}</dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
 
 export function ApplicationDrawer({ data }: { data: DrawerData | null }) {
   const router = useRouter();
@@ -91,6 +122,8 @@ function DrawerBody({ app, events, review, document }: Omit<DrawerData, "applica
       <div className="overflow-x-auto no-scrollbar">
         <PipelineStepper stage={app.stage} className="min-w-[520px]" />
       </div>
+
+      {app.proof && <SubmissionReceipt proof={app.proof} />}
 
       <div className="flex flex-wrap gap-2">
         <Button asChild size="sm" variant="secondary">

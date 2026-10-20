@@ -124,7 +124,7 @@ function Column({ status, apps, dragging, onOpen, onMove }: { status: Applicatio
         {apps.map((a) => (
           <DraggableCard key={a.id} app={a} onOpen={() => onOpen(a.id)} onMove={(to) => onMove(a, to)} />
         ))}
-        {apps.length === 0 && <li className={cn("grid flex-1 place-items-center rounded-md border border-dashed px-3 py-8 text-center text-xs text-subtle", allowed ? "border-accent-line text-[#8FB3FF]" : "border-line")}>{allowed ? "Drop here" : STATUS_META[status].description}</li>}
+        {apps.length === 0 && <li className={cn("grid flex-1 place-items-center rounded-md border border-dashed px-3 py-8 text-center text-xs text-subtle", allowed ? "border-accent-line text-accent" : "border-line")}>{allowed ? "Drop here" : STATUS_META[status].description}</li>}
       </ul>
     </section>
   );
@@ -143,7 +143,7 @@ function CardBody({ app, onOpen, onMove, handleProps, overlay }: { app: Applicat
   const stageIndex = PIPELINE_STAGES.indexOf(app.stage);
   const targets = APPLICATION_STATUSES.filter((s) => canMove(app.status, s));
   return (
-    <div className={cn("group relative rounded-md border border-line bg-surface-2 p-3 transition-colors hover:border-line-strong", overlay && "rotate-[1.5deg] border-line-strong shadow-[0_20px_50px_rgb(0_0_0/0.6)]")}>
+    <div className={cn("group relative rounded-md border border-line bg-surface-2 p-3 transition-colors hover:border-line-strong", overlay && "rotate-[1.5deg] border-line-strong shadow-[0_20px_50px_rgb(0_0_0/0.12)]")}>
       <div className="flex items-start gap-2.5">
         <CompanyMark name={app.job.company.name} color={app.job.company.brandColor} size="sm" />
         <div className="min-w-0 flex-1">
@@ -152,12 +152,12 @@ function CardBody({ app, onOpen, onMove, handleProps, overlay }: { app: Applicat
           </button>
           <p className="mt-0.5 truncate text-xs text-muted">{app.job.company.name}</p>
         </div>
-        {app.score !== null && <span className={cn("text-xs font-semibold tabular", app.score >= 85 ? "text-success" : app.score >= 70 ? "text-[#8FB3FF]" : "text-muted")}>{app.score}</span>}
+        {app.score !== null && <span className={cn("text-xs font-semibold tabular", app.score >= 85 ? "text-success" : app.score >= 70 ? "text-accent" : "text-muted")}>{app.score}</span>}
       </div>
 
       <div className="mt-3 flex items-center gap-1" aria-label={`Pipeline stage ${stageIndex + 1} of 5`}>
         {PIPELINE_STAGES.map((s, i) => (
-          <span key={s} className={cn("h-0.5 flex-1 rounded-full", i <= stageIndex ? (i >= 3 ? "bg-success" : "bg-accent") : "bg-white/10")} aria-hidden />
+          <span key={s} className={cn("h-0.5 flex-1 rounded-full", i <= stageIndex ? (i >= 3 ? "bg-success" : "bg-accent") : "bg-black/10")} aria-hidden />
         ))}
       </div>
 

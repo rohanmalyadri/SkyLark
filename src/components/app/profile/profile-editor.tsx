@@ -4,17 +4,20 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { updateProfileAction } from "@/app/actions/candidate";
 import { Button } from "@/components/ui/button";
-import { Field, Input, Select, Textarea } from "@/components/ui/input";
+import { Field, Input, Textarea } from "@/components/ui/input";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { Switch } from "@/components/ui/switch";
 import type { CandidateProfile } from "@/lib/domain/types";
 import { useAction } from "@/lib/hooks/use-action";
-import { AuthorizationEditor, CountryChips, CountrySelect, CURRENCIES, ExperienceEditor, Segmented, SenioritySelect, SkillsEditor, TagInput, cleanDraft, toDraft, type ProfileDraft } from "./fields";
+import { AvatarField } from "./avatar-field";
+import { textProblem } from "@/lib/validation/text";
+import { AuthorizationEditor, CountryChips, CurrencySelect, EducationEditor, ExperienceEditor, LinkFields, LocationFields, RolesInput, Segmented, SenioritySelect, SkillsEditor, cleanDraft, toDraft, type ProfileDraft, type SkillRequestView } from "./fields";
 
-export function ProfileEditor({ profile }: { profile: CandidateProfile }) {
+export function ProfileEditor({ profile, fullName, avatarUrl, evidence = [], reviewed = [], skillRequests = [] }: { profile: CandidateProfile; fullName: string; avatarUrl: string | null; evidence?: string[]; reviewed?: string[]; skillRequests?: SkillRequestView[] }) {
   const initial = useMemo(() => toDraft(profile), [profile]);
   const [d, setD] = useState<ProfileDraft>(initial);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [headlineTouched, setHeadlineTouched] = useState(false);
   const dirty = JSON.stringify(d) !== JSON.stringify(initial);
   const set = <K extends keyof ProfileDraft>(k: K, v: ProfileDraft[K]) => setD((p) => ({ ...p, [k]: v }));
   const save = useAction(updateProfileAction);
@@ -24,38 +27,41 @@ export function ProfileEditor({ profile }: { profile: CandidateProfile }) {
     const res = await save.execute(clean);
     setErrors(!res.ok && res.fieldErrors ? res.fieldErrors : {});
     if (res.ok) setD(clean);
+    else if (res.fieldErrors) {
+      const top = Object.keys(res.fieldErrors)[0]?.split(".")[0];
+      const section = top === "skills" || top === "experience" || top === "education" ? top : top === "preferredRoles" ? "preferences" : "basics";
+      document.getElementById(section)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
   const err = (k: string) => errors[k]?.[0];
+  const headlineProblem = headlineTouched ? textProblem(d.headline, "Headline") : null;
 
   return (
     <div className="space-y-6">
       <Panel id="basics" className="scroll-mt-20">
         <PanelHeader title="Basics" description="How you introduce yourself to employers" />
+        <div className="border-b border-line p-5">
+          <AvatarField name={fullName} avatarUrl={avatarUrl} />
+        </div>
         <div className="grid gap-4 p-5 sm:grid-cols-2">
-          <Field label="Headline" htmlFor="headline" error={err("headline")} className="sm:col-span-2">
-            <Input id="headline" value={d.headline} onChange={(e) => set("headline", e.target.value)} placeholder="Senior Full-Stack Engineer" maxLength={140} />
+          <Field label="Headline" htmlFor="headline" error={headlineProblem ?? err("headline")} className="sm:col-span-2">
+            <Input id="headline" value={d.headline} onChange={(e) => set("headline", e.target.value)} onBlur={() => setHeadlineTouched(true)} placeholder="Senior Full-Stack Engineer" maxLength={140} aria-invalid={!!(headlineProblem ?? err("headline")) || undefined} />
           </Field>
           <Field label="Summary" htmlFor="summary" hint={`${d.summary.length}/2000`} error={err("summary")} className="sm:col-span-2">
             <Textarea id="summary" value={d.summary} onChange={(e) => set("summary", e.target.value)} maxLength={2000} className="min-h-28" />
           </Field>
-          <Field label="City" htmlFor="city">
-            <Input id="city" value={d.location.city} onChange={(e) => set("location", { ...d.location, city: e.target.value })} autoComplete="address-level2" />
-          </Field>
-          <Field label="Country" htmlFor="country">
-            <CountrySelect id="country" value={d.location.country} onChange={(country) => set("location", { ...d.location, country })} />
-          </Field>
+          <div className="sm:col-span-2">
+            <LocationFields idPrefix="p" value={d.location} onChange={(location) => set("location", location)} errors={{ country: err("location.country"), region: err("location.region"), city: err("location.city") }} />
+          </div>
           <Field label="Seniority" htmlFor="seniority">
             <SenioritySelect id="seniority" value={d.seniority} onChange={(v) => set("seniority", v)} />
           </Field>
           <Field label="Years of experience" htmlFor="years" error={err("yearsExperience")}>
             <Input id="years" type="number" min={0} max={60} value={d.yearsExperience} onChange={(e) => set("yearsExperience", Math.max(0, Number(e.target.value)))} />
           </Field>
-          <Field label="LinkedIn" htmlFor="linkedin" optional error={err("links.linkedin")}>
-            <Input id="linkedin" type="url" value={d.links.linkedin ?? ""} onChange={(e) => set("links", { ...d.links, linkedin: e.target.value })} placeholder="https://linkedin.com/in/…" />
-          </Field>
-          <Field label="GitHub or portfolio" htmlFor="github" optional error={err("links.github")}>
-            <Input id="github" type="url" value={d.links.github ?? ""} onChange={(e) => set("links", { ...d.links, github: e.target.value })} placeholder="https://github.com/…" />
-          </Field>
+          <div className="sm:col-span-2">
+            <LinkFields value={d.links} onChange={(links) => set("links", links)} errors={errors} />
+          </div>
         </div>
       </Panel>
 
@@ -92,8 +98,8 @@ export function ProfileEditor({ profile }: { profile: CandidateProfile }) {
       <Panel id="preferences" className="scroll-mt-20">
         <PanelHeader title="Job preferences" />
         <div className="space-y-5 p-5">
-          <Field label="Preferred roles" htmlFor="roles" hint="Press Enter after each role." error={err("preferredRoles")}>
-            <TagInput id="roles" value={d.preferredRoles} onChange={(v) => set("preferredRoles", v)} placeholder="e.g. Senior Software Engineer" />
+          <Field label="Preferred roles" htmlFor="roles" hint="Pick a suggestion or type a job title and press Enter." error={err("preferredRoles")}>
+            <RolesInput id="roles" value={d.preferredRoles} onChange={(v) => set("preferredRoles", v)} errors={errors} />
           </Field>
           <Field label="Target countries" htmlFor="targets">
             <CountryChips label="Target countries" value={d.preferredCountries} onChange={(v) => set("preferredCountries", v)} />
@@ -104,11 +110,7 @@ export function ProfileEditor({ profile }: { profile: CandidateProfile }) {
             </Field>
             <Field label="Minimum salary (annual)" htmlFor="salary" optional>
               <div className="flex gap-2">
-                <Select aria-label="Currency" className="w-24" value={d.salaryExpectation?.currency ?? "USD"} onChange={(e) => set("salaryExpectation", { min: d.salaryExpectation?.min ?? 0, currency: e.target.value })}>
-                  {CURRENCIES.map((c) => (
-                    <option key={c}>{c}</option>
-                  ))}
-                </Select>
+                <CurrencySelect value={d.salaryExpectation?.currency ?? "USD"} onChange={(currency) => set("salaryExpectation", { min: d.salaryExpectation?.min ?? 0, currency })} />
                 <Input id="salary" type="number" min={0} step={1000} value={d.salaryExpectation?.min ?? ""} onChange={(e) => set("salaryExpectation", e.target.value ? { min: Number(e.target.value), currency: d.salaryExpectation?.currency ?? "USD" } : null)} placeholder="80000" />
               </div>
             </Field>
@@ -117,23 +119,30 @@ export function ProfileEditor({ profile }: { profile: CandidateProfile }) {
       </Panel>
 
       <Panel id="skills" className="scroll-mt-20">
-        <PanelHeader title="Skills" description="Proficiency (1–5) and years. Skills drive 32% of every match score." />
+        <PanelHeader title="Skills" description="Search recognised skills, then set proficiency (1–5) and years. Skills drive 30% of every match score." />
         <div className="p-5">
-          <SkillsEditor value={d.skills} onChange={(v) => set("skills", v)} />
+          <SkillsEditor value={d.skills} onChange={(v) => set("skills", v)} errors={errors} evidence={evidence} reviewed={reviewed} requests={skillRequests} />
         </div>
       </Panel>
 
       <Panel id="experience" className="scroll-mt-20">
         <PanelHeader title="Experience" description="Highlights are what tailoring rewrites — be specific." />
         <div className="p-5">
-          <ExperienceEditor value={d.experience} onChange={(v) => set("experience", v)} />
+          <ExperienceEditor value={d.experience} onChange={(v) => set("experience", v)} errors={errors} />
+        </div>
+      </Panel>
+
+      <Panel id="education" className="scroll-mt-20">
+        <PanelHeader title="Education" description="Matched against degree requirements stated in listings." />
+        <div className="p-5">
+          <EducationEditor value={d.education} onChange={(v) => set("education", v)} errors={errors} />
         </div>
       </Panel>
 
       <AnimatePresence>
         {dirty && (
           <motion.div initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }} transition={{ duration: 0.25 }} className="fixed inset-x-3 bottom-20 z-40 md:bottom-6 md:left-[calc(232px+2rem)] md:right-8">
-            <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-3 rounded-lg border border-line-strong bg-surface-2 px-4 py-3 shadow-[0_20px_60px_rgb(0_0_0/0.6)]">
+            <div className="mx-auto flex max-w-[1240px] items-center justify-between gap-3 rounded-lg border border-line-strong bg-surface-2 px-4 py-3 shadow-[0_20px_60px_rgb(0_0_0/0.12)]">
               <p className="text-[13px] text-muted">
                 <span className="mr-2 inline-block size-1.5 rounded-full bg-warning align-middle" aria-hidden />
                 Unsaved changes {Object.keys(errors).length > 0 && <span className="text-danger">· fix highlighted fields</span>}
