@@ -22,14 +22,22 @@ import type {
   Plan,
   ProfileVerification,
   Resume,
+  AnswerSection,
+  ApplicationAnswers,
+  DeliveryRun,
+  DeliveryRunWithContext,
+  Lead,
+  Partner,
+  PromoCode,
+  Referral,
   SkillRequest,
   Subscription,
   TailoredDocument,
   User,
   UserSettings,
 } from "@/lib/domain/types";
-import { defaultSettings } from "@/lib/seed/dataset";
-import type { AdminStats, Repository } from "./repository";
+import { defaultSettings, emptySelfIdentification } from "@/lib/seed/dataset";
+import type { AdminStats, Repository, DeliveryRunQuery, LeadQuery} from "./repository";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Row = Record<string, any>;
@@ -114,6 +122,98 @@ const toSkillRequest = (r: Row): SkillRequest => ({
   reviewedBy: r.reviewed_by,
   reviewedAt: r.reviewed_at,
   createdAt: r.created_at,
+});
+
+/**
+ * Columns a browser session is allowed to read. `self_identification` is deliberately absent:
+ * Postgres revokes it from `authenticated`, so `select *` here would fail outright.
+ */
+const ANSWER_COLUMNS = "user_id, eligibility, screening, background, delivery, updated_at";
+
+const toAnswers = (r: Row): ApplicationAnswers => ({
+  userId: r.user_id,
+  eligibility: r.eligibility ?? {},
+  screening: r.screening ?? {},
+  background: r.background ?? {},
+  // Read separately, through the privileged repository, by getSelfIdentification.
+  selfIdentification: r.self_identification ?? emptySelfIdentification(),
+  delivery: r.delivery ?? {},
+  updatedAt: r.updated_at,
+});
+
+const toDeliveryRun = (r: Row): DeliveryRun => ({
+  id: r.id,
+  userId: r.user_id,
+  day: typeof r.day === "string" ? r.day.slice(0, 10) : r.day,
+  target: r.target,
+  submitted: r.submitted,
+  status: r.status,
+  operatorId: r.operator_id,
+  note: r.note,
+  startedAt: r.started_at,
+  completedAt: r.completed_at,
+  createdAt: r.created_at,
+});
+
+const toPartner = (r: Row): Partner => ({
+  id: r.id,
+  userId: r.user_id,
+  name: r.name,
+  email: r.email,
+  promoCode: r.promo_code,
+  linkToken: r.link_token,
+  status: r.status,
+  payout: r.payout,
+  note: r.note,
+  createdBy: r.created_by,
+  createdAt: r.created_at,
+});
+
+const toReferral = (r: Row): Referral => ({
+  id: r.id,
+  partnerId: r.partner_id,
+  userId: r.user_id,
+  promoCode: r.promo_code,
+  status: r.status,
+  planId: r.plan_id,
+  amount: Number(r.amount),
+  currency: r.currency,
+  convertedAt: r.converted_at,
+  createdAt: r.created_at,
+});
+
+const toPromoCode = (r: Row): PromoCode => ({
+  code: r.code,
+  kind: r.kind,
+  value: Number(r.value),
+  currency: r.currency,
+  description: r.description,
+  partnerId: r.partner_id,
+  appliesToPlans: r.applies_to_plans ?? [],
+  firstPeriodOnly: r.first_period_only,
+  maxRedemptions: r.max_redemptions,
+  redemptions: r.redemptions,
+  startsAt: r.starts_at,
+  expiresAt: r.expires_at,
+  active: r.active,
+  createdAt: r.created_at,
+});
+
+const toLead = (r: Row): Lead => ({
+  id: r.id,
+  name: r.name,
+  email: r.email,
+  phone: r.phone,
+  city: r.city,
+  country: r.country,
+  message: r.message,
+  source: r.source,
+  promoCode: r.promo_code,
+  status: r.status,
+  ownerId: r.owner_id,
+  note: r.note,
+  createdAt: r.created_at,
+  updatedAt: r.updated_at,
 });
 
 const toResume = (r: Row): Resume => ({ id: r.id, userId: r.user_id, name: r.name, fileName: r.file_name, storagePath: r.storage_path, mimeType: r.mime_type, sizeBytes: r.size_bytes, isPrimary: r.is_primary, parsedText: r.parsed_text, createdAt: r.created_at });
@@ -833,6 +933,271 @@ export class SupabaseRepository implements Repository {
     return check(await this.db.from("ingestion_runs").select("*").order("started_at", { ascending: false }).limit(limit), "listRuns").map(toRun);
   }
 
+  /* application answers */
+  async getAnswers(userId: string) {
+    const r = check(await this.db.from("application_answers").select(ANSWER_COLUMNS).eq("user_id", userId).maybeSingle(), "getAnswers");
+    return r ? toAnswers(r) : null;
+  }
+  async getSelfIdentification(userId: string) {
+    // Only reachable with the service role; a session client is refused by the column grant.
+    const r = check(await this.db.from("application_answers").select("self_identification").eq("user_id", userId).maybeSingle(), "getSelfIdentification");
+    return r ? (r.self_identification ?? emptySelfIdentification()) : null;
+  }
+  async upsertAnswers(answers: Omit<ApplicationAnswers, "updatedAt">) {
+    const row = {
+      user_id: answers.userId,
+      eligibility: answers.eligibility,
+      screening: answers.screening,
+      background: answers.background,
+      self_identification: answers.selfIdentification,
+      delivery: answers.delivery,
+      updated_at: new Date().toISOString(),
+    };
+    return toAnswers(check(await this.db.from("application_answers").upsert(row).select(ANSWER_COLUMNS).single(), "upsertAnswers"));
+  }
+  async patchAnswerSection<K extends AnswerSection>(userId: string, section: K, value: ApplicationAnswers[K]) {
+    const column = { eligibility: "eligibility", screening: "screening", background: "background", selfIdentification: "self_identification", delivery: "delivery" }[section];
+    const row = { user_id: userId, [column]: value, updated_at: new Date().toISOString() };
+    return toAnswers(check(await this.db.from("application_answers").upsert(row).select(ANSWER_COLUMNS).single(), "patchAnswerSection"));
+  }
+
+  /* managed delivery */
+  async getDeliveryRun(userId: string, day: string) {
+    const r = check(await this.db.from("delivery_runs").select("*").eq("user_id", userId).eq("day", day).maybeSingle(), "getDeliveryRun");
+    return r ? toDeliveryRun(r) : null;
+  }
+  async getDeliveryRunById(id: string) {
+    const r = check(
+      await this.db
+        .from("delivery_runs")
+        .select("*, candidate:users!delivery_runs_user_id_fkey(full_name, email), operator:users!delivery_runs_operator_id_fkey(full_name)")
+        .eq("id", id)
+        .maybeSingle(),
+      "getDeliveryRunById",
+    );
+    if (!r) return null;
+    return { ...toDeliveryRun(r), candidateName: r.candidate?.full_name ?? "Unknown", candidateEmail: r.candidate?.email ?? "", operatorName: r.operator?.full_name ?? null };
+  }
+  async createDeliveryRun(run: Parameters<Repository["createDeliveryRun"]>[0]) {
+    const row = {
+      ...(run.id ? { id: run.id } : {}),
+      user_id: run.userId,
+      day: run.day,
+      target: run.target,
+      submitted: run.submitted,
+      status: run.status,
+      operator_id: run.operatorId,
+      note: run.note,
+      started_at: run.startedAt,
+      completed_at: run.completedAt,
+      ...(run.createdAt ? { created_at: run.createdAt } : {}),
+    };
+    return toDeliveryRun(check(await this.db.from("delivery_runs").insert(row).select().single(), "createDeliveryRun"));
+  }
+  async updateDeliveryRun(id: string, patch: Parameters<Repository["updateDeliveryRun"]>[1]) {
+    const row: Row = {};
+    if (patch.target !== undefined) row.target = patch.target;
+    if (patch.submitted !== undefined) row.submitted = patch.submitted;
+    if (patch.status !== undefined) row.status = patch.status;
+    if (patch.operatorId !== undefined) row.operator_id = patch.operatorId;
+    if (patch.note !== undefined) row.note = patch.note;
+    if (patch.startedAt !== undefined) row.started_at = patch.startedAt;
+    if (patch.completedAt !== undefined) row.completed_at = patch.completedAt;
+    return toDeliveryRun(check(await this.db.from("delivery_runs").update(row).eq("id", id).select().single(), "updateDeliveryRun"));
+  }
+  async listDeliveryRuns(query: DeliveryRunQuery = {}) {
+    let q = this.db.from("delivery_runs").select("*, candidate:users!delivery_runs_user_id_fkey(full_name, email), operator:users!delivery_runs_operator_id_fkey(full_name)").order("day", { ascending: false });
+    if (query.userId) q = q.eq("user_id", query.userId);
+    if (query.day) q = q.eq("day", query.day);
+    if (query.since) q = q.gte("day", query.since);
+    if (query.status?.length) q = q.in("status", query.status);
+    if (query.operatorId) q = q.eq("operator_id", query.operatorId);
+    q = q.limit(query.limit ?? 500);
+    return check(await q, "listDeliveryRuns").map(
+      (r: Row): DeliveryRunWithContext => ({
+        ...toDeliveryRun(r),
+        candidateName: r.candidate?.full_name ?? "Unknown",
+        candidateEmail: r.candidate?.email ?? "",
+        operatorName: r.operator?.full_name ?? null,
+      }),
+    );
+  }
+  async candidatesNeedingDelivery(day: string, limit: number) {
+    const scheduled = new Set<string>(check(await this.db.from("delivery_runs").select("user_id").eq("day", day), "candidatesNeedingDelivery.scheduled").map((r: Row) => r.user_id));
+    const subs = check(await this.db.from("subscriptions").select("user_id, plan_id").in("status", ["active", "trialing"]), "candidatesNeedingDelivery.subs");
+    const eligible = subs.filter((r: Row) => !scheduled.has(r.user_id)).slice(0, limit * 2);
+    if (eligible.length === 0) return [];
+    // Honour a candidate's pause before scheduling a day of work for them.
+    const paused = new Set<string>(
+      check(
+        await this.db
+          .from("application_answers")
+          .select("user_id, delivery")
+          .in("user_id", eligible.map((r: Row) => r.user_id)),
+        "candidatesNeedingDelivery.paused",
+      )
+        .filter((r: Row) => r.delivery?.paused)
+        .map((r: Row) => r.user_id),
+    );
+    return eligible
+      .filter((r: Row) => !paused.has(r.user_id))
+      .slice(0, limit)
+      .map((r: Row) => ({ userId: r.user_id, planId: r.plan_id }));
+  }
+
+  /* partners & referrals */
+  async getPartner(id: string) {
+    const r = check(await this.db.from("partners").select("*").eq("id", id).maybeSingle(), "getPartner");
+    return r ? toPartner(r) : null;
+  }
+  async getPartnerByPromoCode(code: string) {
+    const r = check(await this.db.from("partners").select("*").eq("promo_code", code.toUpperCase()).maybeSingle(), "getPartnerByPromoCode");
+    return r ? toPartner(r) : null;
+  }
+  async getPartnerByLinkToken(token: string) {
+    const r = check(await this.db.from("partners").select("*").eq("link_token", token).maybeSingle(), "getPartnerByLinkToken");
+    return r ? toPartner(r) : null;
+  }
+  async getPartnerForUser(userId: string) {
+    const r = check(await this.db.from("partners").select("*").eq("user_id", userId).maybeSingle(), "getPartnerForUser");
+    return r ? toPartner(r) : null;
+  }
+  async listPartners(opts: Parameters<Repository["listPartners"]>[0] = {}) {
+    let q = this.db.from("partners").select("*").order("created_at", { ascending: false }).limit(opts.limit ?? 200);
+    if (opts.status) q = q.eq("status", opts.status);
+    return check(await q, "listPartners").map(toPartner);
+  }
+  async createPartner(partner: Parameters<Repository["createPartner"]>[0]) {
+    const row = {
+      ...(partner.id ? { id: partner.id } : {}),
+      user_id: partner.userId,
+      name: partner.name,
+      email: partner.email,
+      promo_code: partner.promoCode,
+      link_token: partner.linkToken,
+      status: partner.status,
+      payout: partner.payout,
+      note: partner.note,
+      created_by: partner.createdBy,
+      ...(partner.createdAt ? { created_at: partner.createdAt } : {}),
+    };
+    return toPartner(check(await this.db.from("partners").insert(row).select().single(), "createPartner"));
+  }
+  async updatePartner(id: string, patch: Parameters<Repository["updatePartner"]>[1]) {
+    const row: Row = {};
+    if (patch.name !== undefined) row.name = patch.name;
+    if (patch.email !== undefined) row.email = patch.email;
+    if (patch.status !== undefined) row.status = patch.status;
+    if (patch.payout !== undefined) row.payout = patch.payout;
+    if (patch.note !== undefined) row.note = patch.note;
+    if (patch.userId !== undefined) row.user_id = patch.userId;
+    return toPartner(check(await this.db.from("partners").update(row).eq("id", id).select().single(), "updatePartner"));
+  }
+  async createReferral(referral: Parameters<Repository["createReferral"]>[0]) {
+    const row = {
+      ...(referral.id ? { id: referral.id } : {}),
+      partner_id: referral.partnerId,
+      user_id: referral.userId,
+      promo_code: referral.promoCode,
+      status: referral.status,
+      plan_id: referral.planId,
+      amount: referral.amount,
+      currency: referral.currency,
+      converted_at: referral.convertedAt,
+      ...(referral.createdAt ? { created_at: referral.createdAt } : {}),
+    };
+    return toReferral(check(await this.db.from("referrals").insert(row).select().single(), "createReferral"));
+  }
+  async getReferral(partnerId: string, userId: string) {
+    const r = check(await this.db.from("referrals").select("*").eq("partner_id", partnerId).eq("user_id", userId).maybeSingle(), "getReferral");
+    return r ? toReferral(r) : null;
+  }
+  async listReferrals(opts: Parameters<Repository["listReferrals"]>[0] = {}) {
+    let q = this.db.from("referrals").select("*").order("created_at", { ascending: false }).limit(opts.limit ?? 1000);
+    if (opts.partnerId) q = q.eq("partner_id", opts.partnerId);
+    if (opts.userId) q = q.eq("user_id", opts.userId);
+    if (opts.status?.length) q = q.in("status", opts.status);
+    return check(await q, "listReferrals").map(toReferral);
+  }
+  async updateReferral(id: string, patch: Parameters<Repository["updateReferral"]>[1]) {
+    const row: Row = {};
+    if (patch.status !== undefined) row.status = patch.status;
+    if (patch.userId !== undefined) row.user_id = patch.userId;
+    if (patch.planId !== undefined) row.plan_id = patch.planId;
+    if (patch.amount !== undefined) row.amount = patch.amount;
+    if (patch.currency !== undefined) row.currency = patch.currency;
+    if (patch.convertedAt !== undefined) row.converted_at = patch.convertedAt;
+    return toReferral(check(await this.db.from("referrals").update(row).eq("id", id).select().single(), "updateReferral"));
+  }
+
+  /* promo codes */
+  async getPromoCode(code: string) {
+    const r = check(await this.db.from("promo_codes").select("*").eq("code", code.toUpperCase()).maybeSingle(), "getPromoCode");
+    return r ? toPromoCode(r) : null;
+  }
+  async listPromoCodes(opts: Parameters<Repository["listPromoCodes"]>[0] = {}) {
+    let q = this.db.from("promo_codes").select("*").order("created_at", { ascending: false }).limit(opts.limit ?? 200);
+    if (opts.activeOnly) q = q.eq("active", true);
+    return check(await q, "listPromoCodes").map(toPromoCode);
+  }
+  async upsertPromoCode(code: Parameters<Repository["upsertPromoCode"]>[0]) {
+    const row = {
+      code: code.code.toUpperCase(),
+      kind: code.kind,
+      value: code.value,
+      currency: code.currency,
+      description: code.description,
+      partner_id: code.partnerId,
+      applies_to_plans: code.appliesToPlans,
+      first_period_only: code.firstPeriodOnly,
+      max_redemptions: code.maxRedemptions,
+      starts_at: code.startsAt,
+      expires_at: code.expiresAt,
+      active: code.active,
+    };
+    return toPromoCode(check(await this.db.from("promo_codes").upsert(row, { onConflict: "code" }).select().single(), "upsertPromoCode"));
+  }
+  async redeemPromoCode(code: string) {
+    // Counted in the database so two concurrent checkouts cannot both take the last redemption.
+    const res = await this.db.rpc("redeem_promo_code", { p_code: code.toUpperCase() });
+    if (res.error) throw new Error(`redeemPromoCode: ${res.error.message}`);
+    return res.data === true;
+  }
+
+  /* leads */
+  async createLead(lead: Parameters<Repository["createLead"]>[0]) {
+    const row = {
+      ...(lead.id ? { id: lead.id } : {}),
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      city: lead.city,
+      country: lead.country,
+      message: lead.message,
+      source: lead.source,
+      promo_code: lead.promoCode,
+      status: lead.status,
+      owner_id: lead.ownerId,
+      note: lead.note,
+      ...(lead.createdAt ? { created_at: lead.createdAt } : {}),
+    };
+    return toLead(check(await this.db.from("leads").insert(row).select().single(), "createLead"));
+  }
+  async listLeads(query: LeadQuery = {}) {
+    let q = this.db.from("leads").select("*").order("created_at", { ascending: false }).limit(query.limit ?? 200);
+    if (query.status?.length) q = q.in("status", query.status);
+    const term = query.search?.trim();
+    if (term) q = q.or(`name.ilike.%${term}%,email.ilike.%${term}%,city.ilike.%${term}%`);
+    return check(await q, "listLeads").map(toLead);
+  }
+  async updateLead(id: string, patch: Parameters<Repository["updateLead"]>[1]) {
+    const row: Row = { updated_at: new Date().toISOString() };
+    if (patch.status !== undefined) row.status = patch.status;
+    if (patch.ownerId !== undefined) row.owner_id = patch.ownerId;
+    if (patch.note !== undefined) row.note = patch.note;
+    return toLead(check(await this.db.from("leads").update(row).eq("id", id).select().single(), "updateLead"));
+  }
+
   /* idempotency & analytics */
   async getIdempotentResponse(key: string) {
     const r = check(await this.db.from("idempotency_keys").select("response").eq("key", key).maybeSingle(), "getIdem");
@@ -844,7 +1209,7 @@ export class SupabaseRepository implements Repository {
   async adminStats(now: string): Promise<AdminStats> {
     const since = new Date(new Date(now).getTime() - 13 * 86_400_000).toISOString().slice(0, 10);
     const head = { count: "exact" as const, head: true };
-    const [candidates, activeJobs, applications, reviewQueue, overdue, failed, apps, recentApps, recentMatches] = await Promise.all([
+    const [candidates, activeJobs, applications, reviewQueue, overdue, failed, apps, recentApps, recentMatches, runs, newLeads] = await Promise.all([
       this.db.from("users").select("id", head).eq("role", "candidate"),
       this.db.from("jobs").select("id", head).eq("status", "active"),
       this.db.from("applications").select("id", head),
@@ -854,6 +1219,8 @@ export class SupabaseRepository implements Repository {
       this.db.from("applications").select("status"),
       this.db.from("applications").select("created_at").gte("created_at", since),
       this.db.from("matches").select("created_at").gte("created_at", since),
+      this.db.from("delivery_runs").select("status, submitted, target").eq("day", now.slice(0, 10)),
+      this.db.from("leads").select("id", head).eq("status", "new"),
     ]);
     const byStatus = Object.fromEntries(APPLICATION_STATUSES.map((s) => [s, 0])) as Record<ApplicationStatus, number>;
     (apps.data ?? []).forEach((r: Row) => byStatus[r.status as ApplicationStatus]++);
@@ -869,6 +1236,17 @@ export class SupabaseRepository implements Repository {
       applicationsByStatus: byStatus,
       applicationsPerDay: perDay(recentApps.data),
       matchesPerDay: perDay(recentMatches.data),
+      delivery: (runs.data ?? []).reduce(
+        (acc: AdminStats["delivery"], r: Row) => ({
+          runs: acc.runs + 1,
+          delivered: acc.delivered + (r.status === "delivered" ? 1 : 0),
+          short: acc.short + (r.status === "short" ? 1 : 0),
+          submitted: acc.submitted + (r.submitted ?? 0),
+          target: acc.target + (r.target ?? 0),
+        }),
+        { runs: 0, delivered: 0, short: 0, submitted: 0, target: 0 },
+      ),
+      newLeads: newLeads.count ?? 0,
     };
   }
 }

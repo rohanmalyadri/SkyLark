@@ -3,7 +3,9 @@ import { randomUUID } from "node:crypto";
 import { systemRepo, userRepo } from "@/lib/data";
 import type { Plan, PlanId, User } from "@/lib/domain/types";
 import { AppError } from "@/lib/infra/errors";
+import { logger } from "@/lib/infra/logger";
 import { audit } from "./audit";
+import { quoteDiscount, recordConversion } from "./partners";
 import { notify } from "./notifications";
 
 /* ---------- Payment provider abstraction ---------- */
@@ -71,7 +73,7 @@ export async function usage(userId: string) {
   return { plan, subscription, tailored, reviews };
 }
 
-export async function changePlan(user: User, planId: PlanId, interval: "month" | "year") {
+export async function changePlan(user: User, planId: PlanId, interval: "month" | "year", promoCode?: string) {
   const repo = systemRepo();
   const plan = (await repo.listPlans()).find((p) => p.id === planId);
   if (!plan) throw new AppError("not_found", "That plan isn't available.");
@@ -80,9 +82,13 @@ export async function changePlan(user: User, planId: PlanId, interval: "month" |
     throw new AppError("conflict", `You're already on ${plan.name}.`);
   }
 
-  const amount = interval === "year" ? plan.priceYearly : plan.priceMonthly;
+  const gross = interval === "year" ? plan.priceYearly : plan.priceMonthly;
+  // A code is priced before the charge and only redeemed after it succeeds, so a failed
+  // payment never burns a redemption.
+  const quote = promoCode ? await quoteDiscount(promoCode, planId, gross, plan.currency) : null;
+  const amount = quote?.net ?? gross;
   const idempotencyKey = randomUUID();
-  const charge = await payments.charge({ userId: user.id, amount, currency: plan.currency, description: `${plan.name} — ${interval}ly`, idempotencyKey });
+  const charge = await payments.charge({ userId: user.id, amount, currency: plan.currency, description: `${plan.name} — ${interval}ly${quote ? ` (${quote.code})` : ""}`, idempotencyKey });
   const periodEnd = new Date(Date.now() + (interval === "year" ? 365 : 30) * 86_400_000).toISOString();
 
   const subscription = await repo.upsertSubscription({ userId: user.id, planId, status: charge.ok ? "active" : "past_due", interval, currentPeriodEnd: periodEnd, cancelAtPeriodEnd: false });
@@ -94,10 +100,16 @@ export async function changePlan(user: User, planId: PlanId, interval: "month" |
     status: charge.ok ? "succeeded" : "failed",
     provider: payments.name,
     providerRef: charge.providerRef,
-    description: `${plan.name} — ${interval === "year" ? "annual" : "monthly"}`,
+    description: `${plan.name} — ${interval === "year" ? "annual" : "monthly"}${quote ? ` with ${quote.code}` : ""}`,
   });
-  await audit(user, "subscription.changed", "subscription", subscription.id, { from: current?.planId ?? null, to: planId, interval });
+  await audit(user, "subscription.changed", "subscription", subscription.id, { from: current?.planId ?? null, to: planId, interval, promoCode: quote?.code ?? null, discount: quote?.discount ?? 0 });
   if (!charge.ok) throw new AppError("internal", charge.error ?? "Payment failed. Please try another method.");
+
+  // Attribution and redemption happen only on a successful charge.
+  const conversion = await recordConversion(user.id, { planId, amount, currency: plan.currency, promoCode: quote?.code });
+  if (!conversion.converted && conversion.reason === "promo_unavailable") {
+    logger.warn("billing.promo_exhausted", { userId: user.id, code: quote?.code });
+  }
   await notify(user.id, { type: "billing", title: `You're on ${plan.name}`, body: `Your plan changed to ${plan.name}. Receipt is in Settings.`, href: "/settings#billing" });
   return subscription;
 }

@@ -1,9 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { DEMO_SESSION_COOKIE, demoSessionSecret, verifyDemoToken } from "@/lib/auth/demo-session";
+import { POSTS } from "@/lib/content/posts";
 
 const PROTECTED = ["/dashboard", "/jobs", "/applications", "/profile", "/settings", "/onboarding", "/admin"];
 const AUTH_PAGES = ["/login", "/signup"];
+
+/** The blog is compiled in, so the full set of valid slugs is known here too. */
+const POST_SLUGS = new Set(POSTS.map((p) => p.slug));
 
 const supabaseConfigured = () =>
   !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY && process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -39,6 +43,16 @@ export async function proxy(request: NextRequest) {
   }
 
   const path = request.nextUrl.pathname;
+
+  // A dead article URL must answer 404 on its first request, not stream a 200 shell.
+  const blogSlug = path.startsWith("/blog/") ? path.slice("/blog/".length) : null;
+  if (blogSlug && !blogSlug.includes("/") && !POST_SLUGS.has(blogSlug)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/blog-not-found";
+    url.search = "";
+    return NextResponse.rewrite(url);
+  }
+
   if (!signedIn && PROTECTED.some((p) => path === p || path.startsWith(`${p}/`))) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

@@ -1,5 +1,6 @@
 import "server-only";
 import { getAIProvider } from "@/lib/ai";
+import { isStaff } from "@/lib/auth/dal";
 import { systemRepo } from "@/lib/data";
 import { PlanUpdateSchema, VerificationDecisionSchema } from "@/lib/domain/schemas";
 import { profileCompleteness } from "@/lib/domain/profile";
@@ -135,7 +136,7 @@ const DECISION_COPY = {
 } as const;
 
 const assertStaff = (u: User) => {
-  if (u.role !== "admin" && u.role !== "reviewer") throw new AppError("forbidden", "Only staff can review profiles.");
+  if (!isStaff(u)) throw new AppError("forbidden", "Only staff can review profiles.");
 };
 
 /** Approve, reject or request changes. Staff only, enforced here regardless of the caller. */

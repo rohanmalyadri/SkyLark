@@ -49,3 +49,6 @@ next-env.d.ts
 # Playwright
 /test-results/
 /playwright-report/
+
+# graphify knowledge-graph output (generated, regenerate locally)
+/graphify-out/

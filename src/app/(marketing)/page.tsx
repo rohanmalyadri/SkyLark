@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -5,11 +6,16 @@ import { FaqList } from "@/components/marketing/faq";
 import { HeroScene } from "@/components/marketing/hero-scene";
 import { MapLocations, type MapLocation } from "@/components/marketing/map-locations";
 import { Draggable, HomeMotion } from "@/components/marketing/motion";
+import { ContactForm } from "@/components/marketing/contact-form";
 import { PricingTable } from "@/components/marketing/pricing-table";
+import { TrustWall } from "@/components/marketing/trust-wall";
+import { allPosts, readingMinutes } from "@/lib/content/posts";
+import { formatDate } from "@/lib/utils";
 import { countryName, DEFAULT_REVIEW_CHECKLIST, REVIEW_SLA_HOURS } from "@/lib/domain/constants";
 import { listCountries } from "@/lib/geo";
 import { CITY_COORDS, mapPosition } from "@/lib/geo-cities";
 import { FACTOR_WEIGHTS, MATCH_MODEL_VERSION } from "@/lib/services/matching/engine";
+import { exchangeRates } from "@/lib/services/fx";
 import { publicCatalogStats, publicDomains, publicPlans } from "@/lib/services/public";
 
 export const metadata: Metadata = {
@@ -211,6 +217,50 @@ export default function LandingPage() {
         </p>
       </section>
 
+      {/* Trust wall: checkable commitments rather than quotes */}
+      <section id="trust" className="component component--textblocklarge" aria-labelledby="trust-title">
+        <div className="wrap --full">
+          <div className="text-block-center">
+            <p className="label">Why trust us</p>
+            <h2 id="trust-title" className="display --large --fill">
+              Six promises you can check inside the product, not six testimonials
+            </h2>
+          </div>
+        </div>
+      </section>
+      <section className="component component--trust" aria-label="Our commitments">
+        <TrustWall />
+      </section>
+
+      {/* Lead capture */}
+      <section id="contact" className="component component--contact" aria-labelledby="contact-title">
+        <div className="contact">
+          <div className="contact__intro">
+            <p className="label">Talk to us</p>
+            <h2 id="contact-title" className="display --large --fill">
+              Not sure which plan fits, or whether we can apply for your kind of role?
+            </h2>
+            <p className="text --medium">
+              Tell us what you&apos;re looking for and a person will reply within one working day. No sales call unless you ask for one.
+            </p>
+          </div>
+          <ContactForm />
+        </div>
+      </section>
+
+      {/* Writing */}
+      <section id="writing" className="component component--textblocklarge" aria-labelledby="writing-title">
+        <div className="wrap --full">
+          <div className="text-block-center">
+            <p className="label">Writing</p>
+            <h2 id="writing-title" className="display --large --fill">
+              Practical notes on looking for work in a country that is not yours yet
+            </h2>
+          </div>
+        </div>
+      </section>
+      <LatestWriting />
+
       {/* 09 — FAQ */}
       <section id="faq" className="component component--faq" aria-labelledby="faq-title">
         <div className="text-block-center faq-head">
@@ -368,6 +418,38 @@ async function Disciplines() {
 }
 
 async function Plans() {
-  const plans = await publicPlans();
-  return <PricingTable plans={plans} />;
+  const [plans, fx] = await Promise.all([publicPlans(), exchangeRates()]);
+  return <PricingTable plans={plans} fx={fx} />;
+}
+
+/** The three most recent posts, read from the same content source as /blog. */
+function LatestWriting() {
+  const posts = allPosts().slice(0, 3);
+  return (
+    <section className="component component--posts" aria-label="Latest writing">
+      <div className="posts">
+        <div className="posts-grid">
+          {posts.map((post) => (
+            <article key={post.slug} className="post-card">
+              <p className="post-card__meta text --xsmall">
+                <time dateTime={post.publishedAt}>{formatDate(post.publishedAt, { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })}</time>
+                <span aria-hidden> · </span>
+                {readingMinutes(post)} min read
+              </p>
+              <h3 className="title --medium">
+                <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+              </h3>
+              <p className="text --small post-card__excerpt">{post.description}</p>
+              <Link href={`/blog/${post.slug}`} className="post-card__more text --xsmall">
+                Read it <ArrowRight aria-hidden />
+              </Link>
+            </article>
+          ))}
+        </div>
+        <p className="posts__all text --small">
+          <Link href="/blog">Everything we have written</Link>
+        </p>
+      </div>
+    </section>
+  );
 }

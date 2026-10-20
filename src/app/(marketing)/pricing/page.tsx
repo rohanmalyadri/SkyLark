@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { FaqList } from "@/components/marketing/faq";
 import { PageMotion } from "@/components/marketing/motion";
 import { PricingTable } from "@/components/marketing/pricing-table";
 import type { Plan } from "@/lib/domain/types";
+import { exchangeRates } from "@/lib/services/fx";
 import { publicPlans } from "@/lib/services/public";
 
 export const metadata: Metadata = { title: "Pricing", description: "Skylark plans: self-serve matching and tailoring, specialist-submitted applications, or a dedicated application specialist." };
@@ -12,10 +14,13 @@ const ROWS: { label: string; get: (p: Plan) => string }[] = [
   { label: "Tailored applications", get: (p) => (p.limits.tailoredPerMonth === null ? "Unlimited" : `${p.limits.tailoredPerMonth} / month`) },
   { label: "Specialist-reviewed & submitted", get: (p) => (p.limits.humanReviewsPerMonth === null ? "Unlimited" : p.limits.humanReviewsPerMonth === 0 ? "—" : `${p.limits.humanReviewsPerMonth} / month`) },
   { label: "Eligibility & sponsorship screening", get: () => "Included" },
+  { label: "Applications submitted for you", get: (p) => `${p.limits.applicationsPerDay} / working day` },
+  { label: "Proof of submission", get: () => "Included" },
+  { label: "Reusable application answers", get: () => "Included" },
   { label: "Application tracker", get: () => "Included" },
 ];
 
-export default function PricingPage() {
+export default function PricingPage({ searchParams }: { searchParams: Promise<{ promo?: string }> }) {
   return (
     <>
       <section className="component component--textblocklarge page-head" aria-labelledby="pricing-title">
@@ -27,7 +32,10 @@ export default function PricingPage() {
         </div>
       </section>
       <section className="component component--pricing" aria-label="Plans">
-        <PlansAndComparison />
+        {/* A partner's ?promo= code makes this subtree dynamic; the rest of the page still prerenders. */}
+        <Suspense fallback={<PlansAndComparison searchParams={Promise.resolve({})} />}>
+          <PlansAndComparison searchParams={searchParams} />
+        </Suspense>
       </section>
       <section className="component component--faq" aria-labelledby="faq-title">
         <div className="text-block-center faq-head">
@@ -43,11 +51,14 @@ export default function PricingPage() {
   );
 }
 
-async function PlansAndComparison() {
-  const plans = await publicPlans();
+async function PlansAndComparison({ searchParams }: { searchParams: Promise<{ promo?: string }> }) {
+  const [plans, params, fx] = await Promise.all([publicPlans(), searchParams, exchangeRates()]);
+  // A partner link lands here with its code already in the URL, so the discount is visible
+  // before the visitor does anything.
+  const promo = (params.promo ?? "").slice(0, 24).toUpperCase();
   return (
     <>
-      <PricingTable plans={plans} />
+      <PricingTable plans={plans} initialPromoCode={promo} fx={fx} />
       <div className="compare">
         <table>
           <caption className="sr-only">Plan comparison</caption>

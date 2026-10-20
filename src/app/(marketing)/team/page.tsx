@@ -12,16 +12,26 @@ const MEMBERS = [
   {
     name: "Rohan Malyadri",
     role: "CEO & CTO",
-    work: ["Full-stack development", "UI and UX design"],
+    work: [
+      "Full-stack development",
+      "UI & UX",
+      "Product Strategy",
+      "Cloud & DevOps",
+    ],
     photo: "/team/rohan-malyadri.jpg",
     portfolio: "https://www.rohanmalyadri.in/",
   },
   {
     name: "Abhiram Meda",
     role: "CFO & COO",
-    work: ["Graphic design", "Data research"],
+    work: [
+      "Graphic Design",
+      "Research",
+      "Visual Design",
+      "Operations Management",
+    ],
     photo: "/team/abhiram-meda.jpg",
-    portfolio: null,
+    portfolio: "https://github.com/medaabhiram046/",
   },
 ];
 
