@@ -1,0 +1,86 @@
+---
+source_file: "package.json"
+type: "concept"
+community: "Button"
+location: "L31"
+tags:
+  - graphify/concept
+  - graphify/EXTRACTED
+  - community/Button
+---
+
+# react
+
+## Connections
+- [[(app)jobspage.tsx]] - `imports_from` [EXTRACTED]
+- [[(marketing)pricingpage.tsx]] - `imports_from` [EXTRACTED]
+- [[admin-controls.tsx]] - `imports_from` [EXTRACTED]
+- [[adminjobspage.tsx]] - `imports_from` [EXTRACTED]
+- [[adminpage.tsx]] - `imports_from` [EXTRACTED]
+- [[adminpricingpage.tsx]] - `imports_from` [EXTRACTED]
+- [[answer-vault.tsx]] - `imports_from` [EXTRACTED]
+- [[answerspage.tsx]] - `imports_from` [EXTRACTED]
+- [[app-shell.tsx]] - `imports_from` [EXTRACTED]
+- [[applicationspage.tsx]] - `imports_from` [EXTRACTED]
+- [[auditpage.tsx]] - `imports_from` [EXTRACTED]
+- [[auth-forms.tsx]] - `imports_from` [EXTRACTED]
+- [[avatar-field.tsx]] - `imports_from` [EXTRACTED]
+- [[board.tsx]] - `imports_from` [EXTRACTED]
+- [[button.tsx]] - `imports_from` [EXTRACTED]
+- [[candidatesidpage.tsx]] - `imports_from` [EXTRACTED]
+- [[candidatespage.tsx]] - `imports_from` [EXTRACTED]
+- [[charts.tsx]] - `imports_from` [EXTRACTED]
+- [[combobox.tsx]] - `imports_from` [EXTRACTED]
+- [[command-palette.tsx]] - `imports_from` [EXTRACTED]
+- [[contact-form.tsx]] - `imports_from` [EXTRACTED]
+- [[dal.ts]] - `imports_from` [EXTRACTED]
+- [[dashboardpage.tsx]] - `imports_from` [EXTRACTED]
+- [[delivery-board.tsx]] - `imports_from` [EXTRACTED]
+- [[delivery-card.tsx]] - `imports_from` [EXTRACTED]
+- [[deliverypage.tsx]] - `imports_from` [EXTRACTED]
+- [[drawer.tsx]] - `imports_from` [EXTRACTED]
+- [[error.tsx]] - `imports_from` [EXTRACTED]
+- [[fields.tsx]] - `imports_from` [EXTRACTED]
+- [[healthpage.tsx]] - `imports_from` [EXTRACTED]
+- [[hero-scene.tsx]] - `imports_from` [EXTRACTED]
+- [[input.tsx]] - `imports_from` [EXTRACTED]
+- [[job-actions.tsx]] - `imports_from` [EXTRACTED]
+- [[job-filters.tsx]] - `imports_from` [EXTRACTED]
+- [[jobsidpage.tsx]] - `imports_from` [EXTRACTED]
+- [[lead-inbox.tsx]] - `imports_from` [EXTRACTED]
+- [[leadspage.tsx]] - `imports_from` [EXTRACTED]
+- [[loginpage.tsx]] - `imports_from` [EXTRACTED]
+- [[map-locations.tsx]] - `imports_from` [EXTRACTED]
+- [[marketingmotion.tsx]] - `imports_from` [EXTRACTED]
+- [[onboardingpage.tsx]] - `imports_from` [EXTRACTED]
+- [[package.json]] - `imports` [EXTRACTED]
+- [[partner-controls.tsx]] - `imports_from` [EXTRACTED]
+- [[partnerpage.tsx]] - `imports_from` [EXTRACTED]
+- [[partnerspage.tsx]] - `imports_from` [EXTRACTED]
+- [[pipelinepage.tsx]] - `imports_from` [EXTRACTED]
+- [[pricing-table.tsx]] - `imports_from` [EXTRACTED]
+- [[privacy-panel.tsx]] - `imports_from` [EXTRACTED]
+- [[profile-editor.tsx]] - `imports_from` [EXTRACTED]
+- [[profilepage.tsx]] - `imports_from` [EXTRACTED]
+- [[providers.tsx]] - `imports_from` [EXTRACTED]
+- [[resume-manager.tsx]] - `imports_from` [EXTRACTED]
+- [[review-actions.tsx]] - `imports_from` [EXTRACTED]
+- [[reviewsidpage.tsx]] - `imports_from` [EXTRACTED]
+- [[reviewspage.tsx]] - `imports_from` [EXTRACTED]
+- [[settings-forms.tsx]] - `imports_from` [EXTRACTED]
+- [[settingspage.tsx]] - `imports_from` [EXTRACTED]
+- [[signuppage.tsx]] - `imports_from` [EXTRACTED]
+- [[site-header.tsx]] - `imports_from` [EXTRACTED]
+- [[skillspage.tsx]] - `imports_from` [EXTRACTED]
+- [[smooth-anchors.tsx]] - `imports_from` [EXTRACTED]
+- [[suggest-input.tsx]] - `imports_from` [EXTRACTED]
+- [[tailorpage.tsx]] - `imports_from` [EXTRACTED]
+- [[use-action.ts]] - `imports_from` [EXTRACTED]
+- [[use-geo.ts]] - `imports_from` [EXTRACTED]
+- [[user-avatar.tsx]] - `imports_from` [EXTRACTED]
+- [[user-controls.tsx]] - `imports_from` [EXTRACTED]
+- [[verification-controls.tsx]] - `imports_from` [EXTRACTED]
+- [[wizard.tsx]] - `imports_from` [EXTRACTED]
+- [[workspace.tsx]] - `imports_from` [EXTRACTED]
+
+#graphify/concept #graphify/EXTRACTED #community/Button

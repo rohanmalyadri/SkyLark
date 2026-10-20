@@ -1,0 +1,87 @@
+---
+source_file: "src/lib/infra/errors.ts"
+type: "code"
+community: "systemRepo"
+location: "L18"
+tags:
+  - graphify/code
+  - graphify/EXTRACTED
+  - community/systemRepo
+---
+
+# AppError
+
+## Connections
+- [[dot-constructor()]] - `method` [EXTRACTED]
+- [[dot-status()]] - `method` [EXTRACTED]
+- [[POST()]] - `calls` [EXTRACTED]
+- [[answers.ts]] - `imports` [EXTRACTED]
+- [[answersForStaff()]] - `calls` [EXTRACTED]
+- [[applications.ts]] - `imports` [EXTRACTED]
+- [[applicationspage.tsx]] - `imports` [EXTRACTED]
+- [[applicationsroute.ts]] - `imports` [EXTRACTED]
+- [[applyPromoCodeAction()]] - `calls` [EXTRACTED]
+- [[approveDocument()]] - `calls` [EXTRACTED]
+- [[assertReadyToSubmit()]] - `calls` [EXTRACTED]
+- [[assertStaff()]] - `calls` [EXTRACTED]
+- [[assertWithinLimit()]] - `calls` [EXTRACTED]
+- [[authorize()]] - `calls` [EXTRACTED]
+- [[billing.ts]] - `imports` [EXTRACTED]
+- [[board()]] - `calls` [EXTRACTED]
+- [[buildAndStore()]] - `calls` [EXTRACTED]
+- [[cancelSubscription()]] - `calls` [EXTRACTED]
+- [[candidate.ts]] - `imports` [EXTRACTED]
+- [[candidatesidpage.tsx]] - `imports` [EXTRACTED]
+- [[changePlan()]] - `calls` [EXTRACTED]
+- [[changePlanAction()]] - `calls` [EXTRACTED]
+- [[claimReview()]] - `calls` [EXTRACTED]
+- [[claimRun()]] - `calls` [EXTRACTED]
+- [[closeRun()]] - `calls` [EXTRACTED]
+- [[completeReview()]] - `calls` [EXTRACTED]
+- [[createPartner()]] - `calls` [EXTRACTED]
+- [[dal.ts]] - `imports` [EXTRACTED]
+- [[decideBullet()]] - `calls` [EXTRACTED]
+- [[decideSkillRequest()]] - `calls` [EXTRACTED]
+- [[decideVerification()]] - `calls` [EXTRACTED]
+- [[deleteMyAccount()]] - `calls` [EXTRACTED]
+- [[delivery.ts]] - `imports` [EXTRACTED]
+- [[demoSignIn()_1]] - `calls` [EXTRACTED]
+- [[errors.ts]] - `contains` [EXTRACTED]
+- [[exchangeOAuthCode()]] - `calls` [EXTRACTED]
+- [[fieldErrors()]] - `calls` [EXTRACTED]
+- [[forbidden()]] - `calls` [EXTRACTED]
+- [[googlecallbackroute.ts]] - `imports` [EXTRACTED]
+- [[googleSignInUrl()]] - `calls` [EXTRACTED]
+- [[jobsidpage.tsx]] - `imports` [EXTRACTED]
+- [[leads.ts]] - `imports` [EXTRACTED]
+- [[listLeads()]] - `calls` [EXTRACTED]
+- [[markSubmitted()]] - `calls` [EXTRACTED]
+- [[moveApplication()]] - `calls` [EXTRACTED]
+- [[notFound()]] - `calls` [EXTRACTED]
+- [[partners.ts]] - `imports` [EXTRACTED]
+- [[privacy.ts]] - `imports` [EXTRACTED]
+- [[quoteDiscount()]] - `calls` [EXTRACTED]
+- [[rate-limit.ts]] - `imports` [EXTRACTED]
+- [[rateLimit()]] - `calls` [EXTRACTED]
+- [[recordSubmission()_1]] - `calls` [EXTRACTED]
+- [[refreshCandidateEnrichment()]] - `calls` [EXTRACTED]
+- [[requestSkill()]] - `calls` [EXTRACTED]
+- [[reviews.ts]] - `imports` [EXTRACTED]
+- [[reviewsidpage.tsx]] - `imports` [EXTRACTED]
+- [[servicesadmin.ts]] - `imports` [EXTRACTED]
+- [[servicesauth.ts]] - `imports` [EXTRACTED]
+- [[servicesprofile.ts]] - `imports` [EXTRACTED]
+- [[signIn()]] - `calls` [EXTRACTED]
+- [[signUp()_2]] - `calls` [EXTRACTED]
+- [[skills.ts]] - `imports` [EXTRACTED]
+- [[submitForReview()]] - `calls` [EXTRACTED]
+- [[tailoring.ts]] - `imports` [EXTRACTED]
+- [[toggleChecklist()]] - `calls` [EXTRACTED]
+- [[triggerIngestion()]] - `calls` [EXTRACTED]
+- [[updateCoverLetter()]] - `calls` [EXTRACTED]
+- [[updateLead()]] - `calls` [EXTRACTED]
+- [[updatePlan()]] - `calls` [EXTRACTED]
+- [[uploadAvatar()]] - `calls` [EXTRACTED]
+- [[uploadResume()]] - `calls` [EXTRACTED]
+
+#graphify/code #graphify/EXTRACTED #community/systemRepo

@@ -1,0 +1,18 @@
+---
+source_file: "src/lib/hooks/use-geo.ts"
+type: "code"
+community: "fields.tsx"
+location: "L15"
+tags:
+  - graphify/code
+  - graphify/EXTRACTED
+  - community/fieldstsx
+---
+
+# load()
+
+## Connections
+- [[use-geo.ts]] - `contains` [EXTRACTED]
+- [[useGeo()]] - `calls` [EXTRACTED]
+
+#graphify/code #graphify/EXTRACTED #community/fieldstsx

@@ -43,6 +43,9 @@ Skylark flips the model.
 | **Match score** | A black-box percentage | Six weighted factors, each with a written reason |
 | **Applications** | Spray and pray | Tailored per role, approved by you |
 | **Quality control** | None | A human specialist reviews before submission |
+| **The forms themselves** | Retyped for every employer | Answered once, reused everywhere |
+| **Who applies** | You, every evening | A specialist, 10-40 roles every working day |
+| **Did it happen?** | Take our word for it | Portal and confirmation reference on every application |
 | **Tracking** | A spreadsheet | A board with notes, next steps and full history |
 
 <br />
@@ -149,6 +152,84 @@ Approved applications enter a review queue with a 24-hour SLA. A specialist clai
 
 <br />
 
+### 6. Answer the forms once
+
+Every employer portal asks the same two dozen questions: are you over 18, do you need
+sponsorship now and later, have you worked here before, are you related to an employee, will
+you consent to a background check, and the voluntary EEO questions at the end. Answer them
+once in the **answer vault** and a specialist can complete any form without coming back to you.
+
+The rule the whole feature is built on: **an unanswered question stays unanswered**. Nothing
+defaults to "No", because a wrong answer on an employer form is worse than a blank one. Each
+section tracks its own completeness, follow-up questions appear only when the trigger answer
+is "yes", and applications cannot be submitted for you until the required questions are done.
+
+Voluntary self-identification is handled differently from everything else in the product:
+
+- it never reaches match scoring, ranking, or any AI prompt;
+- the column is **revoked from every browser session in Postgres**, so no session can read it
+  — not even the row's owner's;
+- the owner sees their own answers because the *server* fetches them after authenticating the
+  session, so the data subject can always check what is held about them;
+- a specialist can only read it by naming the form that needs it, and every unlock is written
+  to the audit log.
+
+### 7. Applications submitted for you, with proof
+
+Each plan carries a **daily application quota** (10, 25 or 40 a working day). A *delivery run*
+is one candidate's working day: the target taken from their plan, what was actually submitted,
+and the reason when it falls short. Weekends are skipped, and a candidate can pause without
+touching their subscription or lower their own target below the plan maximum.
+
+Specialists work from a **delivery board**, and recording a submission is the only thing that
+moves the counter — so the number on a dashboard is always backed by a real application row
+carrying the portal and the employer's confirmation reference. Candidates see that receipt in
+the application drawer. A short day is reported as a short day with its reason, rather than
+padded with applications nobody wanted.
+
+### 8. Partners, referrals and promo codes
+
+Partners get a promo code for their audience and a share link (`/r/<token>`) that credits
+every sign-up back to them for 30 days. Codes are priced **server-side against real plan
+prices**, so a visitor can try one without it being trusted or consumed; redemption happens
+only when a payment succeeds, and the cap is enforced inside Postgres so two concurrent
+checkouts can never both take the last one. Partners see their own sign-ups, conversions and
+earnings; payout terms stay staff-only.
+
+Attribution is parked in a signed, httpOnly cookie rather than `sessionStorage`, so it
+survives the real journey — land, read, sign up, confirm email, onboard — and cannot be
+forged from the page.
+
+### 9. Prices in your own currency
+
+Plan prices are authored and charged in USD. A visitor can switch the pricing table to any of
+twelve currencies and see an indicative figure beside what will actually be billed — pulled
+from the ECB's daily reference rates, cached for hours because the ECB publishes once a
+working day.
+
+Three rules keep this honest rather than merely convenient:
+
+- a converted figure is always marked `≈` and rounded to whole units, because a daily
+  reference rate does not justify showing cents;
+- every converted price states the amount that will be charged, in the billing currency;
+- if the rates cannot be fetched, the table silently stays in USD. **No stale or invented
+  rate is ever attached to a price** — the same fail-closed rule the job catalog follows.
+
+The currency is never auto-detected from the browser locale. Quietly restating a price in a
+currency we do not charge in is the kind of helpfulness that becomes a complaint.
+
+### 10. Writing
+
+Four long-form articles on the things candidates actually get wrong: reading sponsorship
+signals in a job ad, the questions every application form asks, what a realistic application
+volume looks like, and how to read a match score.
+
+Posts are authored **in the repository as typed content blocks**, not Markdown or HTML. Each
+block kind maps to real elements, so the blog renders with no `dangerouslySetInnerHTML`
+anywhere, has no HTML-injection surface, and carries no Markdown dependency to keep patched.
+Every post is prerendered, carries its own metadata and `BlogPosting` structured data built
+from the same source as the page, and the content itself is covered by integrity tests.
+
 ### Designed for phones too
 
 The mobile experience is designed on its own terms: a bottom tab bar, one status column at a time on the tracker, and bottom-sheet filters.
@@ -161,7 +242,15 @@ The mobile experience is designed on its own terms: a bottom tab bar, one status
 
 ## The operations console
 
-Staff get their own console: review queue, candidates, jobs and applications, the ingestion pipeline, an audit log, system health, and **pricing that is stored in the database**, so plans can be edited without a deploy.
+Staff get their own console: the delivery board, review queue, candidates, jobs and
+applications, the ingestion pipeline, partners and promo codes, the lead inbox, an audit log,
+system health, and **pricing that is stored in the database**, so plans can be edited without
+a deploy.
+
+There are three staff roles. **Reviewers** approve tailored applications. **Application
+specialists** (operators) submit them and are the only role that can record a submission or
+unlock a candidate's self-identification. **Administrators** do both, plus partners, pricing
+and accounts.
 
 <div align="center">
 <img src="docs/media/ops-overview.png" alt="Operations overview" width="860" />
@@ -296,9 +385,18 @@ erDiagram
     subscriptions ||--o{ payments : billed_by
     users ||--o{ notifications : gets
     users ||--o{ audit_logs : acts_in
+    users ||--o| application_answers : answers_once
+    users ||--o{ delivery_runs : owed_daily
+    delivery_runs ||--o{ applications : submitted_in
+    partners ||--o{ referrals : credits
+    partners ||--o{ promo_codes : issues
+    users ||--o{ referrals : referred_as
+    plans ||--o{ referrals : converted_to
 ```
 
-Plus `background_jobs`, `ingestion_runs`, `idempotency_keys` and `rate_limits` for the pipeline. See [`supabase/migrations`](supabase/migrations).
+Plus `leads` for marketing enquiries, and `background_jobs`, `ingestion_runs`,
+`idempotency_keys` and `rate_limits` for the pipeline. See
+[`supabase/migrations`](supabase/migrations).
 
 <br />
 
@@ -316,6 +414,7 @@ Nothing in a profile or a job feed is invented. Every external source is a docum
 | **GitHub** | [GitHub REST API](https://docs.github.com/rest): account exists, public languages and repositories | No (`GITHUB_TOKEN` raises limits) |
 | **LinkedIn** | URL format only. LinkedIn has no public profile API, so links are shown to reviewers as **self-reported** | — |
 | **Jobs** | [Arbeitnow](https://www.arbeitnow.com/blog/job-board-api) (on by default), [Adzuna](https://developer.adzuna.com), [The Muse](https://www.themuse.com/developers/api/v2), public Greenhouse / Lever boards | Arbeitnow: no. Others: yes |
+| **Exchange rates** | European Central Bank daily reference rates via [Frankfurter](https://frankfurter.dev). Used only to *display* an indicative price; billing is always in the plan's currency | No |
 
 **Trust levels are kept separate.** Every skill is *self-reported* until a reviewer approves the profile (*reviewer-approved*, recorded as a snapshot so later additions aren't presented as reviewed). Skills that also appear in the candidate's public GitHub repositories are labelled as *evidence*, never as verified credentials, and they don't add to match scores.
 
@@ -341,6 +440,10 @@ Nothing in a profile or a job feed is invented. Every external source is a docum
 | **Secrets** | Service credentials never reach the client; production fails closed without a session secret. |
 | **Input handling** | Every input is validated with Zod on the server (the browser runs the same rules for inline feedback). Queries go through the parameterised Supabase client; free-text search terms are stripped of filter syntax. Job HTML is reduced to plain text and only `http(s)` links are stored. |
 | **Verification data** | `profile_verifications` and `skill_requests` have no write policies at all: only the server writes them, after checking the reviewer's role. |
+| **EEO self-identification** | `SELECT` on `application_answers.self_identification` is revoked from `anon` and `authenticated`, and the readable columns are granted back by name. No browser session can read it — not even the row's owner's. The owner sees their own answers only because the server fetches them after authenticating the session; a specialist must name the form that needs them, and the unlock is audited. |
+| **Service record** | `delivery_runs` has no write policy. A candidate can read what was done for them but can never claim work was done, so the count on their dashboard is only ever written by a specialist recording a real submission. |
+| **Promo codes** | Live codes are world-readable so the pricing page can quote one before sign-in, but `EXECUTE` on `redeem_promo_code` is revoked from `public` as well as `anon`/`authenticated`, and the redemption cap is enforced inside the function — two concurrent checkouts cannot both take the last one. |
+| **Leads** | Marketing enquiries are staff-read-only and have no browser write path; the public form posts through a server action that rate-limits by IP. |
 | **Privacy** | Candidates can export everything held about them (`/api/me/export`) or delete their account from Settings; audit entries are kept without the IP address. |
 
 These are not just claims: the test suite boots the real migrations in an in-process Postgres and asserts them (see [Testing](#testing)).
@@ -416,10 +519,19 @@ npm run lint
 - **Verification & privacy:** automatic flags, status transitions, permission checks, data export isolation, account erasure.
 - **End to end:** invalid sign-up, duplicate accounts, missing onboarding fields, API failure handling, empty results, candidate access to admin pages, staff review flow, and phone-width layouts.
 
+- **Answer vault:** an empty vault blocks rather than defaulting to "No", a `false` answer counts as answered, follow-up questions appear only once their trigger is "yes", voluntary self-identification never blocks a submission, and the owner can read their own EEO answers while a plain repository read cannot.
+- **Managed delivery:** weekend days owe nothing, a candidate may lower but never raise their plan's quota, pausing drops the target to zero, runs are idempotent per day, only operators can claim or submit, submissions cannot be double-counted, and closing a short day requires a reason.
+- **Money:** conversions return null rather than a guess when no rate is held, conversions are marked approximate and rounded, zero-decimal currencies never show cents, and an upstream failure leaves the billing currency alone instead of inventing a rate.
+- **Content:** every post is checked for a unique slug, a publishable description length, real prose, no empty blocks and no raw HTML — the kind of breakage a typecheck cannot see.
+- **Partners & promo codes:** percentage and fixed-amount discounts, never below zero, currency mismatch refused, plan restrictions, expiry and caps, quoting without consuming a redemption, one referral per account per partner, and barter partners earning no cash.
 - **Matching engine:** sponsorship rules, blocked-eligibility capping, transferable skills, ranking.
 - **Ingestion:** title cleaning, location and salary parsing, sponsorship detection, fingerprints.
 - **Sessions:** tamper, expiry and fail-closed behaviour.
-- **Database:** every migration is applied to an in-process Postgres ([PGlite](https://pglite.dev)), then the tests prove that candidates cannot read each other's rows, cannot promote themselves to admin, cannot forge AI-authored events, cannot write outside their storage folder, and that the queue claims each job exactly once.
+- **Database:** every migration is applied to an in-process Postgres ([PGlite](https://pglite.dev)), then the tests prove that candidates cannot read each other's rows, cannot promote themselves to admin, cannot forge AI-authored events, cannot write outside their storage folder, and that the queue claims each job exactly once. The managed-service tables are held to the same standard: **no session can read EEO self-identification** (the owner's included), candidates can read but never write a delivery run, the lead list is invisible to candidates and read-only for staff, live promo codes are public but unredeemable from the browser, and the redemption cap holds at exactly its limit.
+
+> Two of those tests earned their keep immediately: they caught a column-level `REVOKE` that
+> did nothing while a table-wide `SELECT` grant existed, and a `REVOKE EXECUTE` that left the
+> default `PUBLIC` grant in place. Both were real holes in the first draft of the migration.
 
 <br />
 
@@ -445,10 +557,11 @@ npm run lint
 ```
 src/
 ├─ app/                    Routes
-│  ├─ (marketing)/         Landing page, pricing
+│  ├─ (marketing)/         Landing page, pricing, writing
 │  ├─ (auth)/              Sign in, sign up
-│  ├─ (app)/               Dashboard, jobs, applications, profile, settings
-│  ├─ admin/               Operations console
+│  ├─ (app)/               Dashboard, jobs, applications, answers, profile, partner
+│  ├─ admin/               Operations console (incl. delivery board, partners, leads)
+│  ├─ r/[token]/           Partner share links
 │  ├─ actions/             Server Actions (typed results, rate limited, audited)
 │  └─ api/                 REST routes, cron worker, health
 ├─ components/
@@ -457,8 +570,10 @@ src/
 │  └─ marketing/           Landing page and hero demo
 └─ lib/
    ├─ data/                Repository interface: Supabase + in-memory
-   ├─ services/            Matching, tailoring, applications, reviews, billing, admin
+   ├─ services/            Matching, tailoring, applications, reviews, billing, admin,
+   │                        answers, delivery, partners, leads
    ├─ pipeline/            Sources, normalization, ingestion, queue, worker
+   ├─ content/             Blog posts as typed content blocks
    ├─ ai/                  Provider interface: Claude + rules
    ├─ auth/ · infra/       Sessions, errors, rate limiting, logging, retries
    └─ seed/                Realistic fictional companies, jobs and people

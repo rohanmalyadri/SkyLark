@@ -17,6 +17,9 @@ export const RATE_LIMITS = {
   pipeline: { limit: 6, windowSec: 300 },
   lookup: { limit: 90, windowSec: 60 },
   enrich: { limit: 20, windowSec: 3600 },
+  // The marketing contact form, keyed by IP: generous enough for a shared office,
+  // tight enough that nobody fills the lead table from a script.
+  lead: { limit: 5, windowSec: 3600 },
 } satisfies Record<string, RateLimitRule>;
 
 type Bucket = { count: number; resetAt: number };

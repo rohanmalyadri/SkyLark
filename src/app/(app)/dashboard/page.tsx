@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { EligibilityBadge, FactorChips, StatusBadge } from "@/components/app/match";
 import { RematchButton, SaveJobButton } from "@/components/app/job-actions";
 import { CatalogNotice } from "@/components/app/jobs/catalog-notice";
+import { DeliveryCard } from "@/components/app/delivery/delivery-card";
 import { VerificationBanner } from "@/components/app/profile/verification-banner";
 import { Button } from "@/components/ui/button";
 import { Stagger, StaggerItem } from "@/components/ui/reveal";
@@ -18,6 +19,7 @@ import { catalogStatus, ensureFreshCatalog } from "@/lib/services/catalog";
 import { countryName, formatPlace, STAGE_META } from "@/lib/domain/constants";
 import type { ApplicationEvent } from "@/lib/domain/types";
 import { dashboardData, type DashboardTask } from "@/lib/services/dashboard";
+import { mySummary } from "@/lib/services/delivery";
 import { cn, formatDate, formatSalaryRange, timeAgo } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -33,7 +35,7 @@ export default function DashboardPage() {
 async function Dashboard() {
   const user = await requireCandidate();
   await ensureFreshCatalog();
-  const [d, catalog, verification] = await Promise.all([dashboardData(user), catalogStatus(), (await userRepo()).getVerification(user.id)]);
+  const [d, catalog, verification, delivery] = await Promise.all([dashboardData(user), catalogStatus(), (await userRepo()).getVerification(user.id), mySummary(user)]);
   const first = user.fullName.split(" ")[0];
   const nextUp = d.upcoming[0];
 
@@ -83,6 +85,11 @@ async function Dashboard() {
           </Link>
         ))}
       </Panel>
+
+      {/* The done-for-you promise, kept in view: today's submissions and the week's shape */}
+      <div className="mt-6">
+        <DeliveryCard summary={delivery} />
+      </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* Top matches */}
@@ -265,6 +272,7 @@ function TaskRow({ task }: { task: DashboardTask }) {
 const ACTOR_STYLE: Record<ApplicationEvent["actor"], { icon: React.ComponentType<{ className?: string }>; cls: string; label: string }> = {
   ai: { icon: Sparkles, cls: "text-accent", label: "AI" },
   reviewer: { icon: UserCheck, cls: "text-success", label: "Specialist" },
+  operator: { icon: UserCheck, cls: "text-accent", label: "Specialist" },
   candidate: { icon: FileText, cls: "text-muted", label: "You" },
   system: { icon: Circle, cls: "text-subtle", label: "System" },
 };

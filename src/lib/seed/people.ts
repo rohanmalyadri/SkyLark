@@ -11,12 +11,16 @@ export interface PersonSeed {
 
 export const DEMO_CANDIDATE_KEY = "demo";
 export const DEMO_ADMIN_KEY = "ops";
+/** The specialist who submits applications in the demo data. */
+export const DEMO_OPERATOR_KEY = "op-nadia";
 
 export const PEOPLE: PersonSeed[] = [
   { key: DEMO_CANDIDATE_KEY, email: "demo@skylark.dev", fullName: "Ananya Rao", role: "candidate", createdDaysAgo: 34 },
   { key: DEMO_ADMIN_KEY, email: "ops@skylark.dev", fullName: "Jordan Ellis", role: "admin", createdDaysAgo: 210 },
   { key: "rev-sam", email: "sam.okoye@skylark.dev", fullName: "Sam Okoye", role: "reviewer", createdDaysAgo: 160 },
   { key: "rev-lena", email: "lena.fischer@skylark.dev", fullName: "Lena Fischer", role: "reviewer", createdDaysAgo: 120 },
+  { key: DEMO_OPERATOR_KEY, email: "nadia.haddad@skylark.dev", fullName: "Nadia Haddad", role: "operator", createdDaysAgo: 140 },
+  { key: "op-tom", email: "tom.ferreira@skylark.dev", fullName: "Tom Ferreira", role: "operator", createdDaysAgo: 95 },
   { key: "c-mateo", email: "mateo.silva@example.com", fullName: "Mateo Silva", role: "candidate", createdDaysAgo: 22 },
   { key: "c-wei", email: "wei.chen@example.com", fullName: "Wei Chen", role: "candidate", createdDaysAgo: 18 },
   { key: "c-fatima", email: "fatima.alsayed@example.com", fullName: "Fatima Al-Sayed", role: "candidate", createdDaysAgo: 15 },

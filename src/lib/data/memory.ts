@@ -2,17 +2,21 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { APPLICATION_STATUSES } from "@/lib/domain/types";
 import type {
+  AnswerSection,
   Application,
+  ApplicationAnswers,
   ApplicationStatus,
   ApplicationWithJob,
   BackgroundJob,
+  DeliveryRunWithContext,
   HumanReviewWithContext,
   JobWithCompany,
   MatchWithJob,
+  PlanId,
   UserSettings,
 } from "@/lib/domain/types";
-import { buildDataset, defaultSettings, type Dataset } from "@/lib/seed/dataset";
-import type { AdminStats, Repository } from "./repository";
+import { buildDataset, defaultSettings, emptyAnswers, emptySelfIdentification, type Dataset } from "@/lib/seed/dataset";
+import type { AdminStats, DeliveryRunQuery, LeadQuery, Repository } from "./repository";
 
 interface Store extends Dataset {
   idempotency: Map<string, unknown>;
@@ -29,6 +33,12 @@ export function memoryStore(): Store {
   // Stores created before verification existed (dev hot reload) get the new collection.
   g.__autoapplyStore.verifications ??= [];
   g.__autoapplyStore.skillRequests ??= [];
+  g.__autoapplyStore.answers ??= [];
+  g.__autoapplyStore.deliveryRuns ??= [];
+  g.__autoapplyStore.partners ??= [];
+  g.__autoapplyStore.referrals ??= [];
+  g.__autoapplyStore.promoCodes ??= [];
+  g.__autoapplyStore.leads ??= [];
   return g.__autoapplyStore;
 }
 
@@ -99,6 +109,12 @@ export class MemoryRepository implements Repository {
     s.settings = s.settings.filter((x) => x.userId !== id);
     s.verifications = s.verifications.filter((v) => v.userId !== id);
     s.skillRequests = s.skillRequests.filter((r) => r.userId !== id);
+    s.answers = s.answers.filter((a) => a.userId !== id);
+    s.deliveryRuns = s.deliveryRuns.filter((r) => r.userId !== id);
+    s.leads = s.leads.map((l) => (l.ownerId === id ? { ...l, ownerId: null } : l));
+    // A referral is the partner's record of their own work: keep it, forget who it was.
+    s.referrals = s.referrals.map((r) => (r.userId === id ? { ...r, userId: null } : r));
+    s.partners = s.partners.map((pt) => (pt.userId === id ? { ...pt, userId: null } : pt));
     s.reviews.forEach((r) => r.reviewerId === id && (r.reviewerId = null));
     s.audit.forEach((a) => {
       if (a.actorId === id) {
@@ -538,6 +554,192 @@ export class MemoryRepository implements Repository {
     return clone([...this.s.ingestionRuns].sort((a, b) => b.startedAt.localeCompare(a.startedAt)).slice(0, limit));
   }
 
+  /* application answers */
+  async getAnswers(userId: string) {
+    const row = this.s.answers.find((a) => a.userId === userId);
+    // Mirrors the column grant Postgres enforces: a plain read never carries EEO answers,
+    // so demo mode cannot accidentally be more permissive than production.
+    return row ? clone({ ...row, selfIdentification: emptySelfIdentification() }) : null;
+  }
+  async getSelfIdentification(userId: string) {
+    return clone(this.s.answers.find((a) => a.userId === userId)?.selfIdentification ?? null);
+  }
+  async upsertAnswers(answers: Omit<ApplicationAnswers, "updatedAt">) {
+    const row: ApplicationAnswers = { ...clone(answers), updatedAt: nowIso() };
+    const i = this.s.answers.findIndex((a) => a.userId === answers.userId);
+    if (i >= 0) this.s.answers[i] = row;
+    else this.s.answers.push(row);
+    // Writes read back through the same redacted shape as getAnswers, so no caller can come
+    // to depend on EEO answers arriving from a save.
+    return clone({ ...row, selfIdentification: emptySelfIdentification() });
+  }
+  async patchAnswerSection<K extends AnswerSection>(userId: string, section: K, value: ApplicationAnswers[K]) {
+    const current = this.s.answers.find((a) => a.userId === userId) ?? emptyAnswers(userId);
+    return this.upsertAnswers({ ...clone(current), [section]: clone(value) });
+  }
+
+  /* managed delivery */
+  async getDeliveryRun(userId: string, day: string) {
+    return clone(this.s.deliveryRuns.find((r) => r.userId === userId && r.day === day) ?? null);
+  }
+  async getDeliveryRunById(id: string) {
+    return (await this.listDeliveryRuns({ limit: 10_000 })).find((r) => r.id === id) ?? null;
+  }
+  async createDeliveryRun(run: Parameters<Repository["createDeliveryRun"]>[0]) {
+    const row = { ...clone(run), id: run.id ?? randomUUID(), createdAt: run.createdAt ?? nowIso() };
+    this.s.deliveryRuns.push(row);
+    return clone(row);
+  }
+  async updateDeliveryRun(id: string, patch: Parameters<Repository["updateDeliveryRun"]>[1]) {
+    const run = this.s.deliveryRuns.find((r) => r.id === id);
+    if (!run) throw new Error("delivery run not found");
+    Object.assign(run, patch);
+    return clone(run);
+  }
+  async listDeliveryRuns(query: DeliveryRunQuery = {}) {
+    const names = new Map(this.s.users.map((u) => [u.id, u]));
+    return this.s.deliveryRuns
+      .filter(
+        (r) =>
+          (!query.userId || r.userId === query.userId) &&
+          (!query.day || r.day === query.day) &&
+          (!query.since || r.day >= query.since) &&
+          (!query.status || query.status.includes(r.status)) &&
+          (!query.operatorId || r.operatorId === query.operatorId),
+      )
+      .sort((a, b) => b.day.localeCompare(a.day) || a.userId.localeCompare(b.userId))
+      .slice(0, query.limit ?? 500)
+      .map((r): DeliveryRunWithContext => {
+        const candidate = names.get(r.userId);
+        return {
+          ...clone(r),
+          candidateName: candidate?.fullName ?? "Unknown",
+          candidateEmail: candidate?.email ?? "",
+          operatorName: r.operatorId ? names.get(r.operatorId)?.fullName ?? null : null,
+        };
+      });
+  }
+  async candidatesNeedingDelivery(day: string, limit: number) {
+    const scheduled = new Set(this.s.deliveryRuns.filter((r) => r.day === day).map((r) => r.userId));
+    const out: { userId: string; planId: PlanId }[] = [];
+    for (const u of this.s.users) {
+      if (u.role !== "candidate" || scheduled.has(u.id) || out.length >= limit) continue;
+      const sub = this.s.subscriptions.find((x) => x.userId === u.id && (x.status === "active" || x.status === "trialing"));
+      if (!sub) continue;
+      if (this.s.answers.find((a) => a.userId === u.id)?.delivery.paused) continue;
+      out.push({ userId: u.id, planId: sub.planId });
+    }
+    return out;
+  }
+
+  /* partners & referrals */
+  async getPartner(id: string) {
+    return clone(this.s.partners.find((p) => p.id === id) ?? null);
+  }
+  async getPartnerByPromoCode(code: string) {
+    const c = code.toUpperCase();
+    return clone(this.s.partners.find((p) => p.promoCode === c) ?? null);
+  }
+  async getPartnerByLinkToken(token: string) {
+    return clone(this.s.partners.find((p) => p.linkToken === token) ?? null);
+  }
+  async getPartnerForUser(userId: string) {
+    return clone(this.s.partners.find((p) => p.userId === userId) ?? null);
+  }
+  async listPartners(opts: Parameters<Repository["listPartners"]>[0] = {}) {
+    return clone(
+      this.s.partners
+        .filter((p) => !opts.status || p.status === opts.status)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, opts.limit ?? 200),
+    );
+  }
+  async createPartner(partner: Parameters<Repository["createPartner"]>[0]) {
+    const row = { ...clone(partner), id: partner.id ?? randomUUID(), createdAt: partner.createdAt ?? nowIso() };
+    if (this.s.partners.some((p) => p.promoCode === row.promoCode)) throw new Error("promo code already in use");
+    this.s.partners.push(row);
+    return clone(row);
+  }
+  async updatePartner(id: string, patch: Parameters<Repository["updatePartner"]>[1]) {
+    const p = this.s.partners.find((x) => x.id === id);
+    if (!p) throw new Error("partner not found");
+    Object.assign(p, clone(patch));
+    return clone(p);
+  }
+  async createReferral(referral: Parameters<Repository["createReferral"]>[0]) {
+    const row = { ...clone(referral), id: referral.id ?? randomUUID(), createdAt: referral.createdAt ?? nowIso() };
+    this.s.referrals.push(row);
+    return clone(row);
+  }
+  async getReferral(partnerId: string, userId: string) {
+    return clone(this.s.referrals.find((r) => r.partnerId === partnerId && r.userId === userId) ?? null);
+  }
+  async listReferrals(opts: Parameters<Repository["listReferrals"]>[0] = {}) {
+    return clone(
+      this.s.referrals
+        .filter((r) => (!opts.partnerId || r.partnerId === opts.partnerId) && (!opts.userId || r.userId === opts.userId) && (!opts.status || opts.status.includes(r.status)))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, opts.limit ?? 1000),
+    );
+  }
+  async updateReferral(id: string, patch: Parameters<Repository["updateReferral"]>[1]) {
+    const r = this.s.referrals.find((x) => x.id === id);
+    if (!r) throw new Error("referral not found");
+    Object.assign(r, clone(patch));
+    return clone(r);
+  }
+
+  /* promo codes */
+  async getPromoCode(code: string) {
+    return clone(this.s.promoCodes.find((c) => c.code === code.toUpperCase()) ?? null);
+  }
+  async listPromoCodes(opts: Parameters<Repository["listPromoCodes"]>[0] = {}) {
+    const now = nowIso();
+    return clone(
+      this.s.promoCodes
+        .filter((c) => !opts.activeOnly || (c.active && c.startsAt <= now && (!c.expiresAt || c.expiresAt > now)))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, opts.limit ?? 200),
+    );
+  }
+  async upsertPromoCode(code: Parameters<Repository["upsertPromoCode"]>[0]) {
+    const row = { redemptions: 0, createdAt: nowIso(), ...clone(code), code: code.code.toUpperCase() };
+    const i = this.s.promoCodes.findIndex((c) => c.code === row.code);
+    if (i >= 0) this.s.promoCodes[i] = { ...this.s.promoCodes[i]!, ...row, redemptions: this.s.promoCodes[i]!.redemptions };
+    else this.s.promoCodes.push(row);
+    return clone(this.s.promoCodes.find((c) => c.code === row.code)!);
+  }
+  async redeemPromoCode(code: string) {
+    const c = this.s.promoCodes.find((x) => x.code === code.toUpperCase());
+    if (!c) return false;
+    if (c.maxRedemptions !== null && c.redemptions >= c.maxRedemptions) return false;
+    c.redemptions += 1;
+    return true;
+  }
+
+  /* leads */
+  async createLead(lead: Parameters<Repository["createLead"]>[0]) {
+    const at = lead.createdAt ?? nowIso();
+    const row = { ...clone(lead), id: lead.id ?? randomUUID(), createdAt: at, updatedAt: at };
+    this.s.leads.push(row);
+    return clone(row);
+  }
+  async listLeads(query: LeadQuery = {}) {
+    const q = query.search?.trim().toLowerCase();
+    return clone(
+      this.s.leads
+        .filter((l) => (!query.status || query.status.includes(l.status)) && (!q || `${l.name} ${l.email} ${l.city}`.toLowerCase().includes(q)))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, query.limit ?? 200),
+    );
+  }
+  async updateLead(id: string, patch: Parameters<Repository["updateLead"]>[1]) {
+    const l = this.s.leads.find((x) => x.id === id);
+    if (!l) throw new Error("lead not found");
+    Object.assign(l, clone(patch), { updatedAt: nowIso() });
+    return clone(l);
+  }
+
   /* idempotency & analytics */
   async getIdempotentResponse(key: string) {
     return this.s.idempotency.get(key) ?? null;
@@ -561,6 +763,19 @@ export class MemoryRepository implements Repository {
       applicationsByStatus: byStatus,
       applicationsPerDay: count(this.s.applications.map((a) => a.createdAt)),
       matchesPerDay: count(this.s.matches.map((m) => m.createdAt)),
+      delivery: this.s.deliveryRuns
+        .filter((r) => r.day === day(now))
+        .reduce(
+          (acc, r) => ({
+            runs: acc.runs + 1,
+            delivered: acc.delivered + (r.status === "delivered" ? 1 : 0),
+            short: acc.short + (r.status === "short" ? 1 : 0),
+            submitted: acc.submitted + r.submitted,
+            target: acc.target + r.target,
+          }),
+          { runs: 0, delivered: 0, short: 0, submitted: 0, target: 0 },
+        ),
+      newLeads: this.s.leads.filter((l) => l.status === "new").length,
     };
   }
 }

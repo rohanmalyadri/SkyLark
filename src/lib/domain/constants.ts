@@ -1,4 +1,4 @@
-import type { ApplicationStatus, AuthStatus, FactorRating, PipelineStage, ReviewStatus, Seniority, VerificationStatus } from "./types";
+import type { ApplicationStatus, AuthStatus, FactorRating, PipelineStage, ReviewStatus, Role, Seniority, VerificationStatus } from "./types";
 
 export const COUNTRIES: Record<string, string> = {
   US: "United States",
@@ -111,6 +111,13 @@ export const DEFAULT_REVIEW_CHECKLIST = [
 ];
 
 export const REVIEW_SLA_HOURS = 24;
+
+/** How each staff role is described in the operations console. */
+export const STAFF_ROLE_LABEL: Partial<Record<Role, string>> = {
+  admin: "Administrator",
+  reviewer: "Reviewer",
+  operator: "Application specialist",
+};
 
 /**
  * Which moves a candidate may make on their own board. Moving into human review goes
