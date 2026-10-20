@@ -22,6 +22,8 @@ const ServerEnvSchema = z.object({
   ADMIN_EMAILS: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().endsWith(".apps.googleusercontent.com").optional(),
   GOOGLE_CLIENT_SECRET: z.string().min(10).optional(),
+  /** "on" once the Google provider is enabled on the Supabase project (Auth → Providers). */
+  SUPABASE_GOOGLE_AUTH: z.enum(["on", "off"]).default("off"),
 
   /* Reference data & enrichment */
   STACKEXCHANGE_KEY: optionalKey,
@@ -73,4 +75,4 @@ export const nativeGoogleEnabled = () => {
 };
 
 /** Whether the "Continue with Google" button should be offered at all. */
-export const googleSignInAvailable = () => serverEnv().dataMode === "supabase" || nativeGoogleEnabled();
+export const googleSignInAvailable = () => (serverEnv().dataMode === "supabase" ? serverEnv().SUPABASE_GOOGLE_AUTH === "on" : nativeGoogleEnabled());

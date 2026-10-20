@@ -79,7 +79,7 @@ const fromProfile = (p: CandidateProfile): Row => ({
   headline: p.headline,
   summary: p.summary,
   location_city: p.location.city,
-  location_region: p.location.region || null,
+  location_region: p.location.region ?? "",
   location_country: p.location.country || null,
   citizenship: p.citizenship,
   work_authorizations: p.workAuthorizations,
@@ -543,8 +543,13 @@ export class SupabaseRepository implements Repository {
     return r ? toJobWithCompany(r) : null;
   }
   async findJobsByFingerprint(fingerprints: string[]) {
-    if (!fingerprints.length) return [];
-    return check(await this.db.from("jobs").select("fingerprint").in("fingerprint", fingerprints), "findFingerprints").map((r: Row) => r.fingerprint as string);
+    // Chunked: a feed holds hundreds of listings and `.in()` goes in the URL, which PostgREST caps.
+    const found: string[] = [];
+    for (let i = 0; i < fingerprints.length; i += 100) {
+      const rows = check(await this.db.from("jobs").select("fingerprint").in("fingerprint", fingerprints.slice(i, i + 100)), "findFingerprints");
+      found.push(...rows.map((r: Row) => r.fingerprint as string));
+    }
+    return found;
   }
   async insertJobs(jobs: Parameters<Repository["insertJobs"]>[0]) {
     if (!jobs.length) return [];
@@ -559,8 +564,8 @@ export class SupabaseRepository implements Repository {
   }
   async touchJobs(fingerprints: string[], seenAt: string) {
     let n = 0;
-    for (let i = 0; i < fingerprints.length; i += 200) {
-      const rows = check(await this.db.from("jobs").update({ last_seen_at: seenAt, status: "active" }).in("fingerprint", fingerprints.slice(i, i + 200)).select("id"), "touchJobs");
+    for (let i = 0; i < fingerprints.length; i += 100) {
+      const rows = check(await this.db.from("jobs").update({ last_seen_at: seenAt, status: "active" }).in("fingerprint", fingerprints.slice(i, i + 100)).select("id"), "touchJobs");
       n += rows.length;
     }
     return n;
