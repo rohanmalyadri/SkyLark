@@ -1,14 +1,26 @@
 import { cn, initials } from "@/lib/utils";
 
-export function Logo({ className, wordmark = true }: { className?: string; wordmark?: boolean }) {
+/*
+ * The Skylark logo is drawn as CSS masks (public/brand/*.png) so its colour is pure CSS:
+ * grey at rest, the brand orange and ink on hover of the logo or its link (see .sk-logo in globals.css).
+ */
+
+/** The bird on its own. */
+export function SkylarkMark({ className }: { className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-2.5", className)}>
-      <svg viewBox="0 0 28 28" className="size-7" aria-hidden>
-        <rect x="0.5" y="0.5" width="27" height="27" rx="7" fill="#0C0D10" stroke="rgb(255 255 255 / 0.14)" />
-        <path d="M8 19.5 13.2 8.5h1.6L20 19.5" fill="none" stroke="#EDEEF0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M10.6 15.2h5.2l2.7-2.7" fill="none" stroke="#3D7BFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      {wordmark && <span className="text-[15px] font-semibold tracking-[-0.02em] text-fg">AutoApply</span>}
+    <span className={cn("sk-logo sk-logo--mark", className)} aria-hidden>
+      <span className="sk-logo__mark" />
+    </span>
+  );
+}
+
+/** Bird and wordmark lockup, or the bird alone with `wordmark={false}`. */
+export function Logo({ className, wordmark = true }: { className?: string; wordmark?: boolean }) {
+  if (!wordmark) return <SkylarkMark className={cn("h-7", className)} />;
+  return (
+    <span className={cn("sk-logo sk-logo--lockup h-7", className)} role="img" aria-label="Skylark">
+      <span className="sk-logo__mark" />
+      <span className="sk-logo__word" />
     </span>
   );
 }
@@ -19,17 +31,9 @@ export function CompanyMark({ name, color, size = "md", className }: { name: str
   return (
     <span
       className={cn("inline-grid shrink-0 place-items-center border font-semibold tracking-tight", dims, className)}
-      style={{ color, background: `color-mix(in srgb, ${color} 12%, #0C0D10)`, borderColor: `color-mix(in srgb, ${color} 28%, transparent)` }}
+      style={{ color: `color-mix(in srgb, ${color} 70%, #1F1F1F)`, background: `color-mix(in srgb, ${color} 10%, #FFFFFF)`, borderColor: `color-mix(in srgb, ${color} 35%, transparent)` }}
       aria-hidden
     >
-      {initials(name)}
-    </span>
-  );
-}
-
-export function Avatar({ name, className }: { name: string; className?: string }) {
-  return (
-    <span className={cn("inline-grid size-8 shrink-0 place-items-center rounded-full border border-line-strong bg-surface-3 text-[11px] font-semibold text-fg", className)} aria-hidden>
       {initials(name)}
     </span>
   );

@@ -1,4 +1,4 @@
-import type { ApplicationStatus, AuthStatus, FactorRating, PipelineStage, ReviewStatus, Seniority } from "./types";
+import type { ApplicationStatus, AuthStatus, FactorRating, PipelineStage, ReviewStatus, Role, Seniority, VerificationStatus } from "./types";
 
 export const COUNTRIES: Record<string, string> = {
   US: "United States",
@@ -31,7 +31,17 @@ export const COUNTRIES: Record<string, string> = {
   VN: "Vietnam",
 };
 
-export const countryName = (code: string) => COUNTRIES[code] ?? code;
+const regionNames = typeof Intl !== "undefined" && "DisplayNames" in Intl ? new Intl.DisplayNames(["en"], { type: "region" }) : null;
+
+export const countryName = (code: string) => {
+  if (!code) return "";
+  if (COUNTRIES[code]) return COUNTRIES[code];
+  try {
+    return regionNames?.of(code) ?? code;
+  } catch {
+    return code;
+  }
+};
 
 export const SENIORITY_LABEL: Record<Seniority, string> = {
   entry: "Entry",
@@ -102,6 +112,13 @@ export const DEFAULT_REVIEW_CHECKLIST = [
 
 export const REVIEW_SLA_HOURS = 24;
 
+/** How each staff role is described in the operations console. */
+export const STAFF_ROLE_LABEL: Partial<Record<Role, string>> = {
+  admin: "Administrator",
+  reviewer: "Reviewer",
+  operator: "Application specialist",
+};
+
 /**
  * Which moves a candidate may make on their own board. Moving into human review goes
  * through submitForReview (it needs an approved document); human_review → applied is
@@ -117,3 +134,13 @@ export const CANDIDATE_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[
   offer: ["rejected", "interview"],
   rejected: ["saved"],
 };
+
+export const VERIFICATION_META: Record<VerificationStatus, { label: string; tone: Tone; description: string }> = {
+  pending: { label: "Awaiting review", tone: "warning", description: "A specialist is reviewing your profile." },
+  approved: { label: "Verified", tone: "success", description: "A specialist reviewed and approved your profile." },
+  changes_requested: { label: "Changes requested", tone: "accent", description: "A specialist asked you to update your profile." },
+  rejected: { label: "Not verified", tone: "danger", description: "A specialist couldn't verify your profile." },
+};
+
+/** "Berlin, Germany", or just "Germany" when a listing names no city. */
+export const formatPlace = (p: { city: string; country: string }) => (p.city ? `${p.city}, ${countryName(p.country)}` : countryName(p.country));

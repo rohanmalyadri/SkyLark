@@ -2,21 +2,30 @@ import { heuristicTailor } from "@/lib/ai/heuristic";
 import { DEFAULT_REVIEW_CHECKLIST, REVIEW_SLA_HOURS } from "@/lib/domain/constants";
 import type {
   Application,
+  ApplicationAnswers,
   ApplicationEvent,
   ApplicationStatus,
   AuditLog,
   BackgroundJob,
   CandidateProfile,
   Company,
+  DeliveryRun,
   HumanReview,
   IngestionRun,
   Job,
+  Lead,
   Match,
   Notification,
+  Partner,
   Payment,
   PipelineStage,
   Plan,
+  ProfileVerification,
+  PromoCode,
+  Referral,
   Resume,
+  SelfIdentification,
+  SkillRequest,
   ReviewStatus,
   Subscription,
   TailoredDocument,
@@ -24,10 +33,11 @@ import type {
   UserSettings,
 } from "@/lib/domain/types";
 import { jobFingerprint } from "@/lib/pipeline/normalize";
+import { SAMPLE_SOURCE } from "@/lib/pipeline/source-meta";
 import { scoreMatch } from "@/lib/services/matching/engine";
 import { COMPANIES, JOB_SEEDS, PLANS, ROLE_TEMPLATES, companyIdByKey, jobIdByKey } from "./catalog";
 import { daysAgo, daysFromNow, hoursAgo, seedId } from "./ids";
-import { DEMO_ADMIN_KEY, DEMO_CANDIDATE_KEY, PEOPLE, demoProfile, otherProfiles, userIdByKey } from "./people";
+import { DEMO_ADMIN_KEY, DEMO_CANDIDATE_KEY, DEMO_OPERATOR_KEY, PEOPLE, demoProfile, otherProfiles, userIdByKey } from "./people";
 
 export interface Dataset {
   users: User[];
@@ -48,7 +58,63 @@ export interface Dataset {
   audit: AuditLog[];
   backgroundJobs: BackgroundJob[];
   ingestionRuns: IngestionRun[];
+  verifications: ProfileVerification[];
+  skillRequests: SkillRequest[];
+  answers: ApplicationAnswers[];
+  deliveryRuns: DeliveryRun[];
+  partners: Partner[];
+  referrals: Referral[];
+  promoCodes: PromoCode[];
+  leads: Lead[];
 }
+
+/** Unanswered EEO self-identification. Shared so a withheld column and a blank one match. */
+export const emptySelfIdentification = (): SelfIdentification => ({
+  gender: null,
+  genderSelfDescribed: "",
+  hispanicOrLatino: null,
+  raceEthnicity: [],
+  veteranStatus: null,
+  disabilityStatus: null,
+});
+
+/** An empty answer vault: every question unanswered rather than defaulted to "no". */
+export const emptyAnswers = (userId: string, updatedAt = new Date().toISOString()): ApplicationAnswers => ({
+  userId,
+  updatedAt,
+  eligibility: {
+    isOver18: null,
+    authorizedInTargetCountries: null,
+    needsSponsorshipNow: null,
+    needsFutureSponsorship: null,
+    canPerformEssentialFunctions: null,
+    canProvideRightToWorkDocuments: null,
+    earliestStartDate: "",
+    noticePeriodDays: null,
+  },
+  screening: {
+    appliedOrWorkedHereBefore: null,
+    relatedToCurrentEmployee: null,
+    relationshipDetails: "",
+    leftRoleForPolicyViolation: null,
+    policyViolationDetails: "",
+    representedByAgency: null,
+    onsiteDaysPerWeek: null,
+    boundByNonCompete: null,
+    nonCompeteDetails: "",
+  },
+  background: {
+    consentToBackgroundCheck: null,
+    consentToDrugScreen: null,
+    refusedOrFailedDrugTest: null,
+    convictedOfFelony: null,
+    felonyDetails: "",
+    pendingChargesOrInvestigation: null,
+    pendingDetails: "",
+  },
+  selfIdentification: emptySelfIdentification(),
+  delivery: { excludedCompanies: [], dailyTarget: null, minScore: 65, requireApprovalBeforeSubmit: true, paused: false, pauseReason: "" },
+})
 
 export const defaultSettings = (userId: string): UserSettings => ({
   userId,
@@ -114,12 +180,14 @@ export function buildDataset(base = Date.now()): Dataset {
       niceToHaveSkills: s.nice,
       minYears: s.minYears,
       visaSponsorship: s.sponsorship,
-      source: ["greenhouse", "lever", "ashby", "workable"][s.key.length % 4]!,
+      // Fictional listings for local demos, labelled as samples in the product.
+      source: SAMPLE_SOURCE,
       sourceUrl: `https://${company.domain}/careers/${s.key}`,
       externalId: s.key,
       fingerprint: jobFingerprint(company.domain, s.title, locations[0]!.country),
       status: "active",
       postedAt: daysAgo(s.postedDaysAgo, base),
+      lastSeenAt: now,
       createdAt: daysAgo(s.postedDaysAgo, base),
     };
   });
@@ -333,32 +401,232 @@ export function buildDataset(base = Date.now()): Dataset {
     createdAt: daysAgo(d, base),
   }));
 
-  const sources = ["greenhouse", "lever", "ashby", "workable"];
-  const ingestionRuns: IngestionRun[] = Array.from({ length: 10 }, (_, i) => {
-    const failed = i === 3;
-    const fetched = 40 + ((i * 17) % 35);
-    const duplicates = 6 + ((i * 5) % 9);
+  // Pipeline history is never fabricated: runs and queue entries come only from real ingestion.
+  const ingestionRuns: IngestionRun[] = [];
+  const backgroundJobs: BackgroundJob[] = [];
+
+  /* Verification: the demo candidate is approved; a few others wait in the review queue. */
+  const queued = new Set(["c-wei", "c-aisha", "c-hiro"]);
+  const verifications: ProfileVerification[] = profiles.map((p, i) => {
+    const key = PEOPLE.find((x) => userIdByKey(x.key) === p.userId)?.key ?? "";
+    const pending = queued.has(key);
+    const submittedAt = daysAgo(2 + i, base);
     return {
-      id: seedId(`run:${i}`),
-      source: sources[i % 4]!,
-      status: failed ? "failed" : "succeeded",
-      fetched: failed ? 0 : fetched,
-      normalized: failed ? 0 : fetched - 2,
-      duplicates: failed ? 0 : duplicates,
-      inserted: failed ? 0 : fetched - 2 - duplicates,
-      error: failed ? "Upstream returned 503 after 3 attempts" : null,
-      startedAt: hoursAgo(i * 7 + 1, base),
-      finishedAt: hoursAgo(i * 7 + 0.9, base),
+      userId: p.userId,
+      status: pending ? "pending" : "approved",
+      note: "",
+      flags: pending ? [{ code: "no_resume", severity: "info", message: "No resume uploaded." }] : [],
+      enrichment: {},
+      submittedAt,
+      reviewedBy: pending ? null : userIdByKey(DEMO_ADMIN_KEY),
+      reviewedAt: pending ? null : daysAgo(1 + i * 0.5, base),
+      approvedSnapshot: pending ? null : { skills: p.skills.map((s) => s.name), links: [] },
+      updatedAt: submittedAt,
     };
   });
 
-  const backgroundJobs: BackgroundJob[] = [
-    { id: seedId("bj:1"), type: "ingest_source", payload: { source: "workable" }, status: "dead", attempts: 3, maxAttempts: 3, lastError: "Upstream returned 503 Service Unavailable", idempotencyKey: "ingest:workable:seed-a", runAfter: hoursAgo(22, base), startedAt: hoursAgo(22, base), finishedAt: hoursAgo(21.9, base), createdAt: hoursAgo(22.5, base) },
-    { id: seedId("bj:2"), type: "tailor_application", payload: { applicationId: seedId("app:c-daniel:helix-platform") }, status: "failed", attempts: 1, maxAttempts: 3, lastError: "AI provider timeout after 90s", idempotencyKey: "tailor:seed-b", runAfter: hoursAgo(-0.2, base), startedAt: hoursAgo(1, base), finishedAt: hoursAgo(0.98, base), createdAt: hoursAgo(1.1, base) },
-    { id: seedId("bj:3"), type: "match_candidate", payload: { userId: demoId }, status: "succeeded", attempts: 1, maxAttempts: 3, lastError: null, idempotencyKey: "match:seed-c", runAfter: hoursAgo(2, base), startedAt: hoursAgo(2, base), finishedAt: hoursAgo(1.99, base), createdAt: hoursAgo(2, base) },
-    { id: seedId("bj:4"), type: "send_notification", payload: { userId: demoId }, status: "succeeded", attempts: 1, maxAttempts: 5, lastError: null, idempotencyKey: "notify:seed-d", runAfter: hoursAgo(2, base), startedAt: hoursAgo(2, base), finishedAt: hoursAgo(2, base), createdAt: hoursAgo(2, base) },
-    { id: seedId("bj:5"), type: "match_job", payload: { jobId: jobIdByKey("helix-sfe") }, status: "succeeded", attempts: 2, maxAttempts: 3, lastError: null, idempotencyKey: "matchjob:seed-e", runAfter: hoursAgo(26, base), startedAt: hoursAgo(26, base), finishedAt: hoursAgo(25.9, base), createdAt: hoursAgo(26, base) },
+  /* ---------- Managed service: answers, delivery, partners, promos, leads ---------- */
+
+  // The demo candidate has a fully answered vault; the others are partway through, which is
+  // what makes the "finish your answers" prompts visible in the UI.
+  const answers: ApplicationAnswers[] = profiles.map((p, i) => {
+    const a = emptyAnswers(p.userId);
+    if (i > 2) return a;
+    const full = i === 0;
+    a.eligibility = {
+      isOver18: true,
+      authorizedInTargetCountries: false,
+      needsSponsorshipNow: true,
+      needsFutureSponsorship: true,
+      canPerformEssentialFunctions: true,
+      canProvideRightToWorkDocuments: full ? true : null,
+      earliestStartDate: daysFromNow(30, base).slice(0, 10),
+      noticePeriodDays: 30,
+    };
+    a.screening = {
+      appliedOrWorkedHereBefore: false,
+      relatedToCurrentEmployee: false,
+      relationshipDetails: "",
+      leftRoleForPolicyViolation: false,
+      policyViolationDetails: "",
+      representedByAgency: false,
+      onsiteDaysPerWeek: 3,
+      boundByNonCompete: full ? false : null,
+      nonCompeteDetails: "",
+    };
+    if (full) {
+      a.background = {
+        consentToBackgroundCheck: true,
+        consentToDrugScreen: true,
+        refusedOrFailedDrugTest: false,
+        convictedOfFelony: false,
+        felonyDetails: "",
+        pendingChargesOrInvestigation: false,
+        pendingDetails: "",
+      };
+      a.selfIdentification = { gender: "woman", genderSelfDescribed: "", hispanicOrLatino: "no", raceEthnicity: ["asian"], veteranStatus: "not_a_veteran", disabilityStatus: "no" };
+      a.delivery = { excludedCompanies: ["Paystream"], dailyTarget: 25, minScore: 70, requireApprovalBeforeSubmit: false, paused: false, pauseReason: "" };
+    }
+    return a;
+  });
+
+  // Two weeks of delivery history, so the dashboard shows a real trend rather than a blank chart.
+  const operators = [userIdByKey(DEMO_OPERATOR_KEY), userIdByKey("op-tom")];
+  const deliveryRuns: DeliveryRun[] = [];
+  for (const [ci, key] of [DEMO_CANDIDATE_KEY, "c-wei", "c-priya"].entries()) {
+    const userId = userIdByKey(key);
+    const target = ci === 0 ? 25 : 10;
+    for (let d = 13; d >= 0; d--) {
+      const date = new Date(base - d * 86_400_000);
+      const weekday = date.getUTCDay();
+      if (weekday === 0 || weekday === 6) continue; // the promise is per working day
+      const day = date.toISOString().slice(0, 10);
+      const today = d === 0;
+      const shortfall = (d + ci) % 7 === 0 ? Math.ceil(target * 0.3) : 0;
+      const submitted = today ? Math.floor(target * 0.6) : Math.max(0, target - shortfall);
+      deliveryRuns.push({
+        id: seedId(`run:${key}:${day}`),
+        userId,
+        day,
+        target,
+        submitted,
+        status: today ? "in_progress" : shortfall ? "short" : "delivered",
+        operatorId: operators[(d + ci) % operators.length]!,
+        note: shortfall && !today ? "Fewer new postings cleared the candidate's score floor." : "",
+        startedAt: `${day}T08:05:00.000Z`,
+        completedAt: today ? null : `${day}T16:40:00.000Z`,
+        createdAt: `${day}T07:00:00.000Z`,
+      });
+    }
+  }
+
+  const partners: Partner[] = [
+    {
+      id: seedId("partner:careercompass"),
+      userId: null,
+      name: "Career Compass",
+      email: "hello@careercompass.example",
+      promoCode: "COMPASS20",
+      linkToken: "cmps7k2f4qd91xab",
+      status: "active",
+      payout: { perReferral: 25, flatMonthly: 200, currency: "USD", barter: false },
+      note: "Newsletter with 40k international job seekers.",
+      createdBy: userIdByKey(DEMO_ADMIN_KEY),
+      createdAt: daysAgo(90, base),
+    },
+    {
+      id: seedId("partner:relocateher"),
+      userId: null,
+      name: "Relocate Her",
+      email: "team@relocateher.example",
+      promoCode: "RELOCATE15",
+      linkToken: "rlch3m8v6tz20pqe",
+      status: "active",
+      payout: { perReferral: 30, flatMonthly: 0, currency: "USD", barter: true },
+      note: "Community for women relocating for work. Paid in kind through co-marketing.",
+      createdBy: userIdByKey(DEMO_ADMIN_KEY),
+      createdAt: daysAgo(55, base),
+    },
   ];
 
-  return { users, profiles, resumes, companies, jobs, matches, applications, events, tailored, reviews, plans, subscriptions, payments, notifications, settings, audit, backgroundJobs, ingestionRuns };
+  const REFERRAL_SEEDS: [string, number, Referral["status"], Referral["planId"], number][] = [
+    ["c-wei", 0, "converted", "professional", 49],
+    ["c-priya", 0, "converted", "entry", 19],
+    ["c-hiro", 0, "signed_up", null, 0],
+    ["c-lucas", 1, "converted", "entry", 19],
+    ["c-aisha", 1, "signed_up", null, 0],
+  ];
+  const referrals: Referral[] = REFERRAL_SEEDS.map(([key, pi, status, planId, amount], i) => {
+    const partner = partners[pi]!;
+    const createdAt = daysAgo(28 - i * 4, base);
+    return {
+      id: seedId(`referral:${key}`),
+      partnerId: partner.id,
+      userId: userIdByKey(key),
+      promoCode: partner.promoCode,
+      status,
+      planId,
+      amount,
+      currency: "USD",
+      convertedAt: status === "converted" ? createdAt : null,
+      createdAt,
+    };
+  });
+
+  const promoCodes: PromoCode[] = [
+    {
+      code: "COMPASS20",
+      kind: "percent",
+      value: 20,
+      currency: "USD",
+      description: "Career Compass readers: 20% off your first month",
+      partnerId: partners[0]!.id,
+      appliesToPlans: [],
+      firstPeriodOnly: true,
+      maxRedemptions: null,
+      redemptions: 2,
+      startsAt: daysAgo(90, base),
+      expiresAt: null,
+      active: true,
+      createdAt: daysAgo(90, base),
+    },
+    {
+      code: "RELOCATE15",
+      kind: "percent",
+      value: 15,
+      currency: "USD",
+      description: "Relocate Her community: 15% off your first month",
+      partnerId: partners[1]!.id,
+      appliesToPlans: [],
+      firstPeriodOnly: true,
+      maxRedemptions: null,
+      redemptions: 1,
+      startsAt: daysAgo(55, base),
+      expiresAt: null,
+      active: true,
+      createdAt: daysAgo(55, base),
+    },
+    {
+      code: "LAUNCH25",
+      kind: "amount",
+      value: 25,
+      currency: "USD",
+      description: "$25 off your first month",
+      partnerId: null,
+      appliesToPlans: ["professional", "executive"],
+      firstPeriodOnly: true,
+      maxRedemptions: 500,
+      redemptions: 37,
+      startsAt: daysAgo(20, base),
+      expiresAt: daysFromNow(40, base),
+      active: true,
+      createdAt: daysAgo(20, base),
+    },
+  ];
+
+  const LEAD_SEEDS: [string, string, string, string, string, string, Lead["status"], string][] = [
+    ["Ravi Menon", "ravi.menon@example.com", "+91 98400 11223", "Kochi", "IN", "I need help applying to data roles in Germany.", "new", ""],
+    ["Sofia Duarte", "sofia.duarte@example.com", "+351 912 445 778", "Porto", "PT", "Do you apply to roles that sponsor from outside the EU?", "contacted", ""],
+    ["Kwame Asante", "kwame.asante@example.com", "+233 24 118 9930", "Accra", "GH", "Looking for a plan with more than 25 applications a day.", "qualified", "COMPASS20"],
+    ["Mina Park", "mina.park@example.com", "+82 10 2288 4417", "Seoul", "KR", "", "won", "LAUNCH25"],
+    ["Tomas Novak", "tomas.novak@example.com", "+420 601 229 884", "Brno", "CZ", "What happens if you miss a day?", "lost", ""],
+  ];
+  const leads: Lead[] = LEAD_SEEDS.map(([name, email, phone, city, country, message, status, promo], i) => ({
+    id: seedId(`lead:${email}`),
+    name,
+    email,
+    phone,
+    city,
+    country,
+    message,
+    source: promo ? `campaign:${promo.toLowerCase()}` : "website:home",
+    promoCode: promo,
+    status,
+    ownerId: i % 2 === 0 ? userIdByKey(DEMO_ADMIN_KEY) : null,
+    note: status === "lost" ? "Wanted a per-application price, not a subscription." : "",
+    createdAt: daysAgo(12 - i * 2, base),
+    updatedAt: daysAgo(11 - i * 2, base),
+  }));
+
+  return { users, profiles, resumes, companies, jobs, matches, applications, events, tailored, reviews, plans, subscriptions, payments, notifications, settings, audit, backgroundJobs, ingestionRuns, verifications, skillRequests: [], answers, deliveryRuns, partners, referrals, promoCodes, leads };
 }

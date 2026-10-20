@@ -162,7 +162,7 @@ export function emptyProfile(userId: string, now: string): CandidateProfile {
     userId,
     headline: "",
     summary: "",
-    location: { city: "", country: "" },
+    location: { city: "", region: "", country: "" },
     citizenship: [],
     workAuthorizations: [],
     requiresSponsorship: true,

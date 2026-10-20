@@ -8,8 +8,9 @@ import { CompanyMark } from "@/components/ui/marks";
 import { PageHeader, Panel, PanelHeader } from "@/components/ui/panel";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/states";
+import { sourceName } from "@/lib/pipeline/source-meta";
 import { requireStaff } from "@/lib/auth/dal";
-import { REVIEW_STATUS_META, STATUS_META } from "@/lib/domain/constants";
+import { REVIEW_STATUS_META, STAFF_ROLE_LABEL, STATUS_META } from "@/lib/domain/constants";
 import { APPLICATION_STATUSES } from "@/lib/domain/types";
 import { overview } from "@/lib/services/admin";
 import { cn, timeAgo } from "@/lib/utils";
@@ -33,14 +34,21 @@ async function Overview() {
     { label: "Active jobs", value: stats.activeJobs, href: "/admin/jobs" },
     { label: "Applications", value: stats.applications, href: "/admin/jobs?tab=applications" },
     { label: "Review queue", value: stats.reviewQueue, href: "/admin/reviews", alert: stats.reviewsOverdue ? `${stats.reviewsOverdue} past SLA` : null },
+    {
+      label: "Sent today",
+      value: `${stats.delivery.submitted}/${stats.delivery.target}`,
+      href: "/admin/delivery",
+      alert: stats.delivery.short ? `${stats.delivery.short} closed short` : null,
+    },
+    { label: "New leads", value: stats.newLeads, href: "/admin/leads", alert: stats.newLeads ? "Unanswered" : null },
     { label: "Failed jobs", value: stats.failedJobs, href: "/admin/pipeline", alert: stats.failedJobs ? "Needs attention" : null },
   ];
 
   return (
     <>
-      <PageHeader eyebrow="Operations console" title="Overview" description={`Signed in as ${user.fullName} · ${user.role === "admin" ? "Administrator" : "Reviewer"}`} />
+      <PageHeader eyebrow="Operations console" title="Overview" description={`Signed in as ${user.fullName} · ${STAFF_ROLE_LABEL[user.role] ?? "Staff"}`} />
 
-      <Panel className="grid grid-cols-2 gap-px overflow-hidden bg-line md:grid-cols-5">
+      <Panel className="grid grid-cols-2 gap-px overflow-hidden bg-line md:grid-cols-4 xl:grid-cols-7">
         {kpis.map((k) => (
           <Link key={k.label} href={k.href} className="bg-surface px-5 py-4 transition-colors last:col-span-2 hover:bg-surface-2 md:last:col-span-1">
             <p className="text-[13px] text-muted">{k.label}</p>
@@ -126,7 +134,7 @@ async function Overview() {
               {runs.map((r) => (
                 <li key={r.id} className="flex items-center gap-3 px-5 py-3 text-[13px]">
                   {r.status === "succeeded" ? <CheckCircle2 className="size-4 text-success" /> : r.status === "failed" ? <XCircle className="size-4 text-danger" /> : <span className="size-4 animate-pulse rounded-full bg-accent/40" />}
-                  <span className="w-20 capitalize text-fg">{r.source}</span>
+                  <span className="w-24 truncate text-fg">{sourceName(r.source)}</span>
                   <span className="flex-1 truncate text-xs text-subtle">{r.status === "failed" ? r.error : `${r.inserted} new · ${r.duplicates} dupes · ${r.fetched} fetched`}</span>
                   <span className="text-xs text-subtle">{timeAgo(r.startedAt)}</span>
                 </li>

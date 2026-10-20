@@ -21,7 +21,7 @@ const ExtractionSchema = z.object({
   headline: z.string().nullable(),
 });
 
-const TAILOR_SYSTEM = `You are AutoApply's application tailoring assistant. You help international job candidates adapt their existing resume and write a cover letter for one specific role.
+const TAILOR_SYSTEM = `You are Skylark's application tailoring assistant. You help international job candidates adapt their existing resume and write a cover letter for one specific role.
 
 Rules that matter more than polish:
 - Never invent employers, titles, dates, credentials, or metrics. Rewrites may reorder, sharpen, and surface skills the candidate already demonstrated; if a bullet would benefit from a number the candidate hasn't given, say so in the reason instead of making one up.

@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ProfileEditor } from "@/components/app/profile/profile-editor";
 import { ResumeManager } from "@/components/app/profile/resume-manager";
+import { VerificationBanner } from "@/components/app/profile/verification-banner";
 import { PageHeader, Panel, PanelHeader } from "@/components/ui/panel";
 import { ScoreRing } from "@/components/ui/score";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { requireCandidate } from "@/lib/auth/dal";
 import { profileCompleteness } from "@/lib/domain/profile";
 import { getProfileBundle } from "@/lib/services/profile";
+import { mySkillRequests } from "@/lib/services/skills";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Profile & resumes" };
@@ -18,6 +20,7 @@ const SECTIONS = [
   ["preferences", "Preferences"],
   ["skills", "Skills"],
   ["experience", "Experience"],
+  ["education", "Education"],
   ["documents", "Resumes & documents"],
 ] as const;
 
@@ -31,7 +34,10 @@ export default function ProfilePage() {
 
 async function Profile() {
   const user = await requireCandidate();
-  const { profile, resumes } = await getProfileBundle(user);
+  const [{ profile, resumes, verification }, skillRequests] = await Promise.all([getProfileBundle(user), mySkillRequests(user)]);
+  const gh = verification?.enrichment.github;
+  const evidence = gh?.status === "verified" ? gh.verifiedSkills : [];
+  const reviewed = verification?.status === "approved" ? (verification.approvedSnapshot?.skills ?? []) : [];
   const completeness = profileCompleteness(profile, resumes.length > 0);
   const done = new Set(completeness.items.filter((i) => i.done).map((i) => i.href.split("#")[1]));
 
@@ -54,7 +60,7 @@ async function Profile() {
                   <li key={id}>
                     <a href={`#${id}`} className="-ml-px flex items-center justify-between border-l border-transparent py-1.5 pl-3 text-[13px] text-muted transition-colors hover:border-fg hover:text-fg">
                       {label}
-                      <span className={cn("size-1.5 rounded-full", done.has(id) || (id === "documents" && resumes.length) ? "bg-success" : "bg-white/10")} aria-hidden />
+                      <span className={cn("size-1.5 rounded-full", done.has(id) || (id === "documents" && resumes.length) ? "bg-success" : "bg-black/10")} aria-hidden />
                     </a>
                   </li>
                 ))}
@@ -63,7 +69,8 @@ async function Profile() {
           </div>
         </aside>
         <div className="min-w-0 space-y-6 pb-16">
-          <ProfileEditor profile={profile} />
+          <VerificationBanner verification={verification} />
+          <ProfileEditor profile={profile} fullName={user.fullName} avatarUrl={user.avatarUrl} evidence={evidence} reviewed={reviewed} skillRequests={skillRequests.map((r) => ({ id: r.id, name: r.name, status: r.status, note: r.note }))} />
           <Panel id="documents" className="scroll-mt-20">
             <PanelHeader title="Resumes & documents" description="Your primary resume is the starting point for every tailored version" />
             <ResumeManager resumes={resumes} />

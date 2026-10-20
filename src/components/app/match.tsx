@@ -92,7 +92,7 @@ export function PipelineStepper({ stage, compact, className }: { stage: Pipeline
                 className={cn(
                   "grid size-[18px] shrink-0 place-items-center rounded-full border text-[9px] font-semibold transition-colors",
                   done && "border-accent bg-accent text-white",
-                  active && (human ? "border-success bg-success-soft text-success" : "border-accent bg-accent-soft text-[#8FB3FF]"),
+                  active && (human ? "border-success bg-success-soft text-success" : "border-accent bg-accent-soft text-accent"),
                   !done && !active && "border-line-strong text-subtle",
                 )}
               >

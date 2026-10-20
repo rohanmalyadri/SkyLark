@@ -20,7 +20,7 @@ export function AppShell({ variant, children }: { variant: Variant; children: Re
   const items = variant === "admin" ? ADMIN_NAV : CANDIDATE_NAV;
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[232px_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line bg-bg px-3 py-4 md:flex">
+      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line bg-surface px-3 py-4 md:flex">
         <Link href={variant === "admin" ? "/admin" : "/dashboard"} className="mb-6 flex items-center gap-2 rounded-md px-1.5" aria-label="Home">
           <Logo />
           {variant === "admin" && <span className="rounded border border-line-strong px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-subtle">Ops</span>}
@@ -75,7 +75,7 @@ async function ShellUser() {
   return (
     <div className="flex items-center gap-1.5">
       <NotificationsButton items={notifications} />
-      <UserMenu name={user.fullName} email={user.email} role={user.role} />
+      <UserMenu name={user.fullName} email={user.email} role={user.role} avatarUrl={user.avatarUrl} />
       <CommandPalette staff={isStaff(user)} />
     </div>
   );

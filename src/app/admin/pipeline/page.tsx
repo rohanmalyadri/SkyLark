@@ -5,6 +5,7 @@ import { IngestButton, RetryJobButton, RunWorkerButton } from "@/components/admi
 import { Badge } from "@/components/ui/badge";
 import { PageHeader, Panel, PanelHeader } from "@/components/ui/panel";
 import { PageSkeleton } from "@/components/ui/skeleton";
+import { sourceName } from "@/lib/pipeline/source-meta";
 import { requireStaff } from "@/lib/auth/dal";
 import type { BackgroundJob } from "@/lib/domain/types";
 import { pipelineState } from "@/lib/services/admin";
@@ -61,14 +62,14 @@ async function Pipeline() {
                 <li key={s.id} className="flex items-center gap-3 px-5 py-3">
                   <div className="min-w-0 flex-1">
                     <p className="text-[13px] font-medium">{s.name}</p>
-                    <p className="text-xs text-subtle">{last ? `Last run ${timeAgo(last.startedAt)} · ${last.status}` : "Never run"}</p>
+                    <p className="text-xs text-subtle">{!s.enabled ? `Off · needs ${s.requires}` : last ? `Last run ${timeAgo(last.startedAt)} · ${last.status}` : "Never run"}</p>
                   </div>
-                  {isAdmin && <IngestButton source={s.id} />}
+                  {isAdmin && s.enabled && <IngestButton source={s.id} />}
                 </li>
               );
             })}
           </ul>
-          <p className="border-t border-line px-5 py-3 text-xs text-subtle">Adapters are mocked in this build; real board APIs implement the same JobSource interface.</p>
+          <p className="border-t border-line px-5 py-3 text-xs text-subtle">Live sources refresh automatically every few hours and on the cron schedule. Listings a source stops showing, or older than JOB_MAX_AGE_DAYS, are closed.</p>
         </Panel>
 
         <Panel>
@@ -90,7 +91,7 @@ async function Pipeline() {
               <tbody className="divide-y divide-line">
                 {runs.map((r) => (
                   <tr key={r.id}>
-                    <td className="px-5 py-2.5 capitalize">{r.source}</td>
+                    <td className="px-5 py-2.5">{sourceName(r.source)}</td>
                     <td className="px-5 py-2.5">
                       <span className="flex items-center gap-1.5">
                         {r.status === "succeeded" ? <CheckCircle2 className="size-3.5 text-success" /> : r.status === "failed" ? <XCircle className="size-3.5 text-danger" /> : <Loader2 className="size-3.5 animate-spin text-accent" />}

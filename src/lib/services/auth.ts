@@ -6,8 +6,10 @@ import { systemRepo } from "@/lib/data";
 import { memoryStore } from "@/lib/data/memory";
 import { SignInSchema, SignUpSchema } from "@/lib/domain/schemas";
 import type { User } from "@/lib/domain/types";
-import { serverEnv } from "@/lib/env";
-import { AppError } from "@/lib/infra/errors";
+import type { GoogleProfile } from "@/lib/auth/google";
+import { nativeGoogleEnabled, serverEnv } from "@/lib/env";
+import { AppError, fieldErrors } from "@/lib/infra/errors";
+import { emailProblem } from "@/lib/validation/email";
 import { rateLimit } from "@/lib/infra/rate-limit";
 import { DEMO_ADMIN_KEY, DEMO_CANDIDATE_KEY, userIdByKey } from "@/lib/seed/people";
 import { createSessionClient } from "@/lib/supabase/server";
@@ -37,10 +39,12 @@ export async function signUp(input: unknown, ip: string) {
   await rateLimit("auth", ip);
   const data = SignUpSchema.parse(input);
   const env = serverEnv();
+  const emailIssue = await emailProblem(data.email);
+  if (emailIssue) throw fieldErrors({ email: emailIssue });
 
   if (env.dataMode === "demo") {
     const repo = systemRepo();
-    if (await repo.getUserByEmail(data.email)) throw new AppError("conflict", "An account with that email already exists. Try signing in.");
+    if (await repo.getUserByEmail(data.email)) throw fieldErrors({ email: "An account with this email already exists — sign in instead" }, "An account with that email already exists. Try signing in.");
     const user = await repo.createUser({ email: data.email, fullName: data.fullName, role: "candidate", avatarUrl: null, onboardedAt: null });
     memoryStore().passwords.set(user.id, await hashPassword(data.password));
     await setDemoCookie(user.id);
@@ -54,7 +58,12 @@ export async function signUp(input: unknown, ip: string) {
     password: data.password,
     options: { data: { full_name: data.fullName }, emailRedirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/onboarding` },
   });
-  if (error) throw new AppError("validation", error.message);
+  if (error) {
+    if (/already registered|already exists/i.test(error.message)) throw fieldErrors({ email: "An account with this email already exists — sign in instead" }, "An account with that email already exists. Try signing in.");
+    throw new AppError("validation", error.message);
+  }
+  // Supabase hides existing accounts behind an empty identities list instead of an error.
+  if (res.user && res.user.identities?.length === 0) throw fieldErrors({ email: "An account with this email already exists — sign in instead" }, "An account with that email already exists. Try signing in.");
   return { needsConfirmation: !res.session };
 }
 
@@ -85,7 +94,8 @@ export async function signIn(input: unknown, ip: string) {
 
 export async function googleSignInUrl(next = "/dashboard") {
   const env = serverEnv();
-  if (env.dataMode === "demo") throw new AppError("validation", "Google sign-in needs Supabase configured. Use a demo account instead.");
+  if (nativeGoogleEnabled()) return `/auth/google?next=${encodeURIComponent(next)}`;
+  if (env.dataMode === "demo") throw new AppError("validation", "Google sign-in isn't configured. Use a demo account instead.");
   const supabase = await createSessionClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -93,6 +103,27 @@ export async function googleSignInUrl(next = "/dashboard") {
   });
   if (error || !data.url) throw new AppError("internal", "Couldn't start Google sign-in.");
   return data.url;
+}
+
+/**
+ * Signs in (or signs up) from a verified Google identity when running without Supabase.
+ * Accounts are matched on Google-verified email, so an existing email/password user lands in the same account.
+ */
+export async function completeGoogleSignIn(profile: GoogleProfile, ip: string) {
+  await rateLimit("auth", ip);
+  const repo = systemRepo();
+  let user = await repo.getUserByEmail(profile.email);
+  const created = !user;
+  if (!user) {
+    user = await repo.createUser({ email: profile.email, fullName: profile.name, role: "candidate", avatarUrl: profile.picture, onboardedAt: null });
+  } else if (!user.avatarUrl && profile.picture) {
+    user = await repo.updateUser(user.id, { avatarUrl: profile.picture });
+  }
+  await applyRoleAllowlist(user);
+  user = (await repo.getUser(user.id)) ?? user;
+  await setDemoCookie(user.id);
+  await audit(user, created ? "auth.signed_up" : "auth.signed_in", "user", user.id, { method: "google" });
+  return user;
 }
 
 export async function exchangeOAuthCode(code: string) {

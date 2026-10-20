@@ -71,6 +71,11 @@ export async function submitForReview(user: User, applicationId: string) {
   if (!["preparing", "saved"].includes(app.status)) throw new AppError("validation", "Only applications being prepared can be sent for review.");
   const doc = app.tailoredDocumentId ? await repo.getTailoredDocument(app.tailoredDocumentId) : null;
   if (!doc || doc.status !== "approved") throw new AppError("validation", "Approve your tailored resume and cover letter before requesting review.");
+  const verification = await repo.getVerification(user.id);
+  if (verification?.status !== "approved") {
+    const why = verification?.status === "rejected" ? "Your profile couldn't be verified, so applications can't be submitted." : verification?.status === "changes_requested" ? "Make the changes a specialist requested on your profile first." : "Your profile is still being verified by a specialist. You'll be notified as soon as it's approved.";
+    throw new AppError("validation", why);
+  }
   await assertWithinLimit(user.id, "review");
 
   const review = await repo.createReview({

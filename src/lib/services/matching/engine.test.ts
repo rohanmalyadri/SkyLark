@@ -39,6 +39,7 @@ const job = (patch: Partial<Job> = {}): Job => ({
   fingerprint: "fp",
   status: "active",
   postedAt: new Date().toISOString(),
+  lastSeenAt: new Date().toISOString(),
   createdAt: new Date().toISOString(),
   ...patch,
 });
@@ -47,7 +48,7 @@ const profile = (patch: Partial<CandidateProfile> = {}): CandidateProfile => ({
   userId: "u1",
   headline: "Engineer",
   summary: "",
-  location: { city: "Bengaluru", country: "IN" },
+  location: { city: "Bengaluru", region: "Karnataka", country: "IN" },
   citizenship: ["IN"],
   workAuthorizations: [{ country: "IN", status: "citizen" }],
   requiresSponsorship: true,
@@ -80,7 +81,7 @@ describe("scoreMatch", () => {
     const { score, breakdown } = scoreMatch(profile(), job(), company);
     expect(score).toBeGreaterThanOrEqual(80);
     expect(breakdown.eligibility).toBe("needs_sponsorship");
-    expect(breakdown.factors.map((f) => f.key)).toEqual(["skills", "experience", "eligibility", "location", "sponsorship", "preferences"]);
+    expect(breakdown.factors.map((f) => f.key)).toEqual(["skills", "experience", "education", "eligibility", "location", "sponsorship", "preferences"]);
     expect(breakdown.factors.every((f) => f.reason.length > 10)).toBe(true);
     expect(breakdown.missingSkills).toEqual([]);
   });
@@ -119,5 +120,35 @@ describe("rankMatches", () => {
       { score: 66, breakdown: { ...base, eligibility: "eligible" as const }, job: { postedAt: "2026-01-01" } },
     ];
     expect(rankMatches(items)[0]!.score).toBe(66);
+  });
+});
+
+describe("education and evidence", () => {
+  it("scores degree requirements against completed education", () => {
+    const listing = job({ requirements: ["Bachelor's degree in Computer Science or similar"] });
+    const without = scoreMatch(profile(), listing, company).breakdown.factors.find((f) => f.key === "education")!;
+    const withDegree = scoreMatch(profile({ education: [{ id: "e", school: "NIT Karnataka", degree: "Bachelor's", field: "Computer Science", year: 2017 }] }), listing, company).breakdown.factors.find((f) => f.key === "education")!;
+    expect(without.score).toBeLessThan(withDegree.score);
+    expect(withDegree.reason).toMatch(/bachelor/i);
+  });
+
+  it("is neutral when a listing names no skills", () => {
+    const f = scoreMatch(profile(), job({ requiredSkills: [], niceToHaveSkills: [] }), company).breakdown.factors.find((x) => x.key === "skills")!;
+    expect(f.score).toBe(60);
+    expect(f.reason).toMatch(/doesn't name specific skills/);
+  });
+
+  it("never treats GitHub-only skills as claimed skills", () => {
+    const listing = job({ requiredSkills: ["Rust"] });
+    const plain = scoreMatch(profile(), listing, company);
+    const withEvidence = scoreMatch(profile(), listing, company, { verifiedSkills: ["Rust"] });
+    expect(withEvidence.score).toBe(plain.score);
+    expect(withEvidence.breakdown.missingSkills).toEqual(["Rust"]);
+  });
+
+  it("annotates claimed skills that public repositories support", () => {
+    const res = scoreMatch(profile(), job(), company, { verifiedSkills: ["TypeScript"] });
+    expect(res.breakdown.verifiedSkills).toEqual(["TypeScript"]);
+    expect(res.breakdown.factors[0]!.reason).toMatch(/not a verified credential/);
   });
 });

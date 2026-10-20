@@ -4,6 +4,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { EligibilityBadge, FactorChips, StatusBadge } from "@/components/app/match";
 import { RematchButton, SaveJobButton } from "@/components/app/job-actions";
+import { CatalogNotice } from "@/components/app/jobs/catalog-notice";
+import { DeliveryCard } from "@/components/app/delivery/delivery-card";
+import { VerificationBanner } from "@/components/app/profile/verification-banner";
 import { Button } from "@/components/ui/button";
 import { Stagger, StaggerItem } from "@/components/ui/reveal";
 import { PageHeader, Panel, PanelHeader } from "@/components/ui/panel";
@@ -11,9 +14,12 @@ import { ScoreBar, ScoreRing } from "@/components/ui/score";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/states";
 import { requireCandidate } from "@/lib/auth/dal";
-import { countryName, STAGE_META } from "@/lib/domain/constants";
+import { userRepo } from "@/lib/data";
+import { catalogStatus, ensureFreshCatalog } from "@/lib/services/catalog";
+import { countryName, formatPlace, STAGE_META } from "@/lib/domain/constants";
 import type { ApplicationEvent } from "@/lib/domain/types";
 import { dashboardData, type DashboardTask } from "@/lib/services/dashboard";
+import { mySummary } from "@/lib/services/delivery";
 import { cn, formatDate, formatSalaryRange, timeAgo } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -28,7 +34,8 @@ export default function DashboardPage() {
 
 async function Dashboard() {
   const user = await requireCandidate();
-  const d = await dashboardData(user);
+  await ensureFreshCatalog();
+  const [d, catalog, verification, delivery] = await Promise.all([dashboardData(user), catalogStatus(), (await userRepo()).getVerification(user.id), mySummary(user)]);
   const first = user.fullName.split(" ")[0];
   const nextUp = d.upcoming[0];
 
@@ -41,7 +48,7 @@ async function Dashboard() {
     <>
       <PageHeader
         eyebrow="Command center"
-        title={user.onboardedAt && Date.now() - new Date(user.onboardedAt).getTime() < 3_600_000 ? `Welcome to AutoApply, ${first}` : `Welcome back, ${first}`}
+        title={d.firstVisit ? `Welcome to Skylark, ${first}` : `Welcome back, ${first}`}
         description={summary.join(" · ")}
         actions={
           <>
@@ -54,6 +61,11 @@ async function Dashboard() {
           </>
         }
       />
+
+      <div className="mb-6 space-y-3">
+        {verification && verification.status !== "approved" && <VerificationBanner verification={verification} />}
+        <CatalogNotice status={catalog} />
+      </div>
 
       {/* KPI strip: one panel, hairline dividers — not four floating cards */}
       <Panel className="grid grid-cols-2 gap-px overflow-hidden bg-line lg:grid-cols-4">
@@ -73,6 +85,11 @@ async function Dashboard() {
           </Link>
         ))}
       </Panel>
+
+      {/* The done-for-you promise, kept in view: today's submissions and the week's shape */}
+      <div className="mt-6">
+        <DeliveryCard summary={delivery} />
+      </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         {/* Top matches */}
@@ -101,7 +118,7 @@ async function Dashboard() {
                         <EligibilityBadge eligibility={m.breakdown.eligibility} />
                       </div>
                       <p className="mt-0.5 truncate text-[13px] text-muted">
-                        {m.job.company.name} · {m.job.locations.map((l) => `${l.city}, ${countryName(l.country)}`).join(" / ")} · <span className="capitalize">{m.job.workMode}</span>
+                        {m.job.company.name} · {m.job.locations.map(formatPlace).join(" / ")} · <span className="capitalize">{m.job.workMode}</span>
                         {m.job.salary && <> · {formatSalaryRange(m.job.salary)}</>}
                       </p>
                       <FactorChips factors={m.breakdown.factors} className="mt-2.5" />
@@ -255,6 +272,7 @@ function TaskRow({ task }: { task: DashboardTask }) {
 const ACTOR_STYLE: Record<ApplicationEvent["actor"], { icon: React.ComponentType<{ className?: string }>; cls: string; label: string }> = {
   ai: { icon: Sparkles, cls: "text-accent", label: "AI" },
   reviewer: { icon: UserCheck, cls: "text-success", label: "Specialist" },
+  operator: { icon: UserCheck, cls: "text-accent", label: "Specialist" },
   candidate: { icon: FileText, cls: "text-muted", label: "You" },
   system: { icon: Circle, cls: "text-subtle", label: "System" },
 };

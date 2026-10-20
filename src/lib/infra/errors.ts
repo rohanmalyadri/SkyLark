@@ -29,6 +29,12 @@ export class AppError extends Error {
   }
 }
 
+/** Validation failure tied to specific form fields, e.g. { "skills.2.name": ["Not a recognised skill"] }. */
+export function fieldErrors(errors: Record<string, string | string[]>, message = "Please fix the highlighted fields.") {
+  const normalized = Object.fromEntries(Object.entries(errors).map(([k, v]) => [k, Array.isArray(v) ? v : [v]]));
+  return new AppError("validation", message, { fieldErrors: normalized });
+}
+
 export const notFound = (what: string) => new AppError("not_found", `${what} not found`);
 export const forbidden = (msg = "You don't have access to this resource") => new AppError("forbidden", msg);
 
@@ -39,7 +45,8 @@ export type ActionResult<T = undefined> =
 
 export function toActionError(err: unknown, context: string): Extract<ActionResult, { ok: false }> {
   if (err instanceof AppError) {
-    return { ok: false, error: err.message, code: err.code };
+    const fieldErrors = err.details?.fieldErrors as Record<string, string[]> | undefined;
+    return { ok: false, error: err.message, code: err.code, ...(fieldErrors ? { fieldErrors } : {}) };
   }
   if (err instanceof z.ZodError) {
     const fieldErrors: Record<string, string[]> = {};
@@ -58,7 +65,7 @@ export function toActionError(err: unknown, context: string): Extract<ActionResu
 export function errorResponse(err: unknown, context: string) {
   unstable_rethrow(err);
   if (err instanceof AppError) {
-    return Response.json({ error: { code: err.code, message: err.message } }, { status: err.status });
+    return Response.json({ error: { code: err.code, message: err.message, ...(err.details?.fieldErrors ? { fieldErrors: err.details.fieldErrors } : {}) } }, { status: err.status });
   }
   if (err instanceof z.ZodError) {
     return Response.json({ error: { code: "validation", message: "Invalid request", issues: err.issues } }, { status: 422 });

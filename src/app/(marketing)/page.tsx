@@ -1,336 +1,455 @@
-import { ArrowRight, Ban, Check, FileLock2, Globe2, KeyRound, Lock, ScrollText, Sparkles, UserCheck } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
-import { FactorBreakdown } from "@/components/app/match";
-import { HeroDemo } from "@/components/marketing/hero-demo";
+import { FaqList } from "@/components/marketing/faq";
+import { HeroScene } from "@/components/marketing/hero-scene";
+import { MapLocations, type MapLocation } from "@/components/marketing/map-locations";
+import { Draggable, HomeMotion } from "@/components/marketing/motion";
+import { ContactForm } from "@/components/marketing/contact-form";
 import { PricingTable } from "@/components/marketing/pricing-table";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { CompanyMark } from "@/components/ui/marks";
-import { InView, Reveal } from "@/components/ui/reveal";
-import { SectionLabel } from "@/components/ui/panel";
-import { ScoreRing } from "@/components/ui/score";
-import { Skeleton } from "@/components/ui/skeleton";
-import type { MatchFactor } from "@/lib/domain/types";
-import { FACTOR_WEIGHTS } from "@/lib/services/matching/engine";
-import { publicPlans } from "@/lib/services/public";
+import { TrustWall } from "@/components/marketing/trust-wall";
+import { allPosts, readingMinutes } from "@/lib/content/posts";
+import { formatDate } from "@/lib/utils";
+import { countryName, DEFAULT_REVIEW_CHECKLIST, REVIEW_SLA_HOURS } from "@/lib/domain/constants";
+import { listCountries } from "@/lib/geo";
+import { CITY_COORDS, mapPosition } from "@/lib/geo-cities";
+import { FACTOR_WEIGHTS, MATCH_MODEL_VERSION } from "@/lib/services/matching/engine";
+import { exchangeRates } from "@/lib/services/fx";
+import { publicCatalogStats, publicDomains, publicPlans } from "@/lib/services/public";
 
 export const metadata: Metadata = {
-  title: { absolute: "AutoApply — Apply where you're actually eligible" },
+  title: { absolute: "Skylark — Your next move, already in motion" },
 };
 
-const Container = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`mx-auto w-full max-w-[1200px] px-4 sm:px-6 ${className}`}>{children}</div>
-);
-
-function SectionHeading({ eyebrow, title, body, align = "left" }: { eyebrow: string; title: React.ReactNode; body?: string; align?: "left" | "center" }) {
+function TextLink({ href, children, small }: { href: string; children: React.ReactNode; small?: boolean }) {
   return (
-    <div className={align === "center" ? "mx-auto max-w-2xl text-center" : "max-w-2xl"}>
-      <SectionLabel>{eyebrow}</SectionLabel>
-      <h2 className="mt-3 text-[30px] font-semibold leading-[1.1] tracking-[-0.03em] sm:text-[40px]">{title}</h2>
-      {body && <p className="mt-4 text-[15px] leading-relaxed text-muted sm:text-base">{body}</p>}
-    </div>
+    <Link href={href} className={small ? "link --small" : "link"}>
+      <span className="t">
+        {children}
+        <span className="underline" aria-hidden />
+      </span>
+    </Link>
   );
 }
 
+const pct = (w: number) => `${Math.round(w * 100)}%`;
+const FACTOR_COUNT = Object.keys(FACTOR_WEIGHTS).length;
+
 const STEPS = [
-  { key: "Profile", title: "Build one profile", body: "Upload a resume. We extract skills and experience; you confirm work authorization, target countries and salary." },
-  { key: "Match", title: "Get ranked matches", body: "Every role is scored on six explainable factors. Ineligible roles are filtered out before you see them." },
-  { key: "Tailor", title: "Tailor in minutes", body: "AI rewrites bullets and drafts a cover letter for the specific role. Accept or reject every change." },
-  { key: "Apply", title: "Human-reviewed apply", body: "A specialist checks eligibility, accuracy and fit, then submits through the employer's channel." },
-  { key: "Track", title: "Track every reply", body: "Screening, interviews and offers in one board, with notes, next steps and a full history." },
-];
-
-const SAMPLE_FACTORS: MatchFactor[] = [
-  { key: "skills", label: "Skills", rating: "strong", score: 94, weight: FACTOR_WEIGHTS.skills, reason: "Covers all 5 required skills — TypeScript, React, Node.js, PostgreSQL, AWS." },
-  { key: "experience", label: "Experience", rating: "strong", score: 100, weight: FACTOR_WEIGHTS.experience, reason: "7 years of experience at the expected senior level." },
-  { key: "eligibility", label: "Eligibility", rating: "moderate", score: 75, weight: FACTOR_WEIGHTS.eligibility, reason: "Eligible with an employer-sponsored visa for the Netherlands." },
-  { key: "location", label: "Location", rating: "strong", score: 82, weight: FACTOR_WEIGHTS.location, reason: "Netherlands is one of your target countries." },
-  { key: "sponsorship", label: "Sponsorship", rating: "strong", score: 90, weight: FACTOR_WEIGHTS.sponsorship, reason: "Listing explicitly offers visa sponsorship." },
-];
-
-const COUNTRIES = [
-  { name: "Netherlands", roles: 14, status: "Sponsorship available", tone: "success" as const, share: 88 },
-  { name: "Germany", roles: 11, status: "Sponsorship available", tone: "success" as const, share: 74 },
-  { name: "Ireland", roles: 9, status: "Sponsorship available", tone: "success" as const, share: 61 },
-  { name: "Canada", roles: 4, status: "Sponsorship sometimes", tone: "warning" as const, share: 32 },
-  { name: "United States", roles: 0, status: "Requires existing authorization", tone: "danger" as const, share: 4 },
-];
-
-const SECURITY = [
-  { icon: Lock, title: "Row-level security", body: "Every query runs as you. Postgres policies make other candidates' data unreachable, not just hidden." },
-  { icon: FileLock2, title: "Private documents", body: "Resumes live in a private bucket, validated by file signature and served through short-lived signed links." },
-  { icon: UserCheck, title: "You approve everything", body: "AI drafts. You accept or reject each change. Nothing is submitted without your sign-off and a human check." },
-  { icon: ScrollText, title: "Full audit trail", body: "Sign-ins, edits, reviews and submissions are recorded with who did what and when." },
-  { icon: Ban, title: "No mass-apply spam", body: "We apply selectively to roles you're eligible for — protecting your reputation with recruiters." },
-  { icon: KeyRound, title: "Least privilege", body: "Service credentials never reach the browser. Staff access is role-gated and logged." },
+  {
+    id: "step-profile",
+    nav: "Profile",
+    title: ["Your", "profile"],
+    art: "/art/stage-profile-v2.jpg",
+    body: "Share your experience, goals and where you can work. Upload your resume once — it powers everything that follows.",
+    link: { href: "/signup", label: "Create your profile" },
+    details: [
+      ["Time", "About 5 minutes"],
+      ["Resume", "PDF, DOCX or text"],
+      ["File size", "Up to 5 MB"],
+      ["Preferences", "Roles · countries · salary"],
+    ],
+  },
+  {
+    id: "step-match",
+    nav: "Match",
+    title: ["Ranked", "matches"],
+    art: "/art/stage-match-v2.jpg",
+    body: `Every role is scored on ${FACTOR_COUNT} weighted factors, and each score explains itself. Roles you can't legally take are filtered out first.`,
+    link: { href: "/#faq", label: "How matching works" },
+    details: [
+      ["Factors", `${FACTOR_COUNT}, weighted`],
+      ["Skills", `${pct(FACTOR_WEIGHTS.skills)} of the score`],
+      ["Eligibility", `${pct(FACTOR_WEIGHTS.eligibility)} of the score`],
+      ["Model", MATCH_MODEL_VERSION],
+    ],
+  },
+  {
+    id: "step-tailor",
+    nav: "Tailor",
+    title: ["Tailored", "to fit"],
+    art: "/art/stage-tailor-v2.jpg",
+    body: "Your resume and cover letter are adapted to each role from what you've actually done. You accept or reject every change.",
+    link: { href: "/signup", label: "Start tailoring" },
+    details: [
+      ["Changes", "Approved line by line"],
+      ["Cover letter", "Written per role"],
+      ["Versions", "Kept for every role"],
+      ["Sources", "Only your own history"],
+    ],
+  },
+  {
+    id: "step-apply",
+    nav: "Apply & track",
+    title: ["Applied", "for you"],
+    art: "/art/stage-apply-v2.jpg",
+    body: "A specialist checks eligibility and accuracy, submits through the employer's own channel, and tracks every reply.",
+    link: { href: "/#pricing", label: "See plan allowances" },
+    details: [
+      ["Review", `${DEFAULT_REVIEW_CHECKLIST.length}-point checklist`],
+      ["Turnaround", `${REVIEW_SLA_HOURS}-hour target`],
+      ["Updates", "In-app alerts"],
+      ["Tracking", "Saved → offer"],
+    ],
+  },
 ];
 
 export default function LandingPage() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="bg-grid pointer-events-none absolute inset-0" aria-hidden />
-        <div className="glow-top pointer-events-none absolute inset-0" aria-hidden />
-        <Container className="relative pb-20 pt-16 sm:pt-24 md:pb-28">
-          <Reveal className="flex justify-center">
-            <Link href="#international" className="group inline-flex items-center gap-2 rounded-full border border-line-strong bg-surface/80 py-1 pl-1 pr-3 text-xs text-muted transition-colors hover:border-white/20 hover:text-fg">
-              <span className="rounded-full bg-accent-soft px-2 py-0.5 font-medium text-[#8FB3FF]">Visa-aware</span>
-              Matching built for international candidates
-              <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" aria-hidden />
-            </Link>
-          </Reveal>
-          <Reveal delay={0.05}>
-            <h1 className="mx-auto mt-7 max-w-[820px] text-center text-[40px] font-semibold leading-[1.02] tracking-[-0.045em] sm:text-[56px] lg:text-[64px]">
-              <span className="text-gradient">Apply where you&apos;re</span>
-              <br className="hidden sm:block" /> <span className="text-gradient">actually eligible.</span>
-            </h1>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <p className="mx-auto mt-6 max-w-[620px] text-center text-[15px] leading-relaxed text-muted sm:text-[17px]">
-              AutoApply ranks roles by your skills, experience, work authorization and sponsorship needs — then tailors each application and has a specialist review it before it&apos;s sent.
-            </p>
-          </Reveal>
-          <Reveal delay={0.15} className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Button asChild size="lg" className="w-full sm:w-auto">
-              <Link href="/signup">
-                Start your search <ArrowRight aria-hidden />
-              </Link>
-            </Button>
-            <Button asChild size="lg" variant="secondary" className="w-full sm:w-auto">
-              <Link href="#how-it-works">See how it works</Link>
-            </Button>
-          </Reveal>
-          <Reveal delay={0.2}>
-            <p className="mt-5 text-center text-xs text-subtle">No auto-spam. Nothing is submitted without your approval.</p>
-          </Reveal>
-          <Reveal delay={0.3} y={24} className="mt-16 md:mt-20">
-            <HeroDemo />
-          </Reveal>
-        </Container>
-      </section>
+      {/* Sea of clouds behind the hero and introduction (WebGL, fixed to the viewport) */}
+      <div className="canvas" aria-hidden>
+        <HeroScene />
+      </div>
 
-      {/* Facts */}
-      <section aria-label="Product facts" className="border-y border-line bg-surface/40">
-        <Container className="grid grid-cols-2 divide-line md:grid-cols-4 md:divide-x">
-          {[
-            ["6", "explainable match factors"],
-            ["24h", "human review turnaround"],
-            ["20+", "countries with visa-aware filters"],
-            ["0", "applications sent without your OK"],
-          ].map(([n, label]) => (
-            <div key={label} className="px-2 py-8 md:px-8">
-              <p className="text-3xl font-semibold tracking-[-0.03em] tabular">{n}</p>
-              <p className="mt-1 text-[13px] text-muted">{label}</p>
+      {/* 01 — Hero (herofulltext) */}
+      <section className="component component--hero" aria-labelledby="hero-title">
+        <div className="wrap --full">
+          <h1 id="hero-title" className="title display --3xlarge">
+            <span className="line">Your</span>
+            <span className="line">next</span>
+            <span className="line">move</span>
+          </h1>
+          <div className="text-block-left --small">
+            <p className="text --xlarge --rise">Matched roles, tailored applications and specialist review for job seekers applying across borders.</p>
+            <div className="actions">
+              <TextLink href="/#how-it-works">How it works</TextLink>
             </div>
-          ))}
-        </Container>
+          </div>
+          <p className="label scroll">Scroll</p>
+        </div>
       </section>
 
-      {/* How it works */}
-      <section id="how-it-works" className="scroll-mt-20 py-24 md:py-32">
-        <Container>
-          <InView>
-            <SectionHeading eyebrow="How it works" title="Profile → Match → Tailor → Apply → Track" body="One profile powers the whole search. Every stage is visible, reversible and yours to approve." />
-          </InView>
-          <ol className="relative mt-14 grid gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-5">
-            {STEPS.map((s, i) => (
-                <li key={s.key} className="in-view flex h-full flex-col bg-bg p-6">
-                  <div className="flex items-center justify-between">
-                    <span className="font-mono text-[11px] text-subtle">0{i + 1}</span>
-                    <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-accent">{s.key}</span>
+      {/* 02 — About (textblocklarge) */}
+      <section id="about" className="component component--textblocklarge" aria-labelledby="about-title">
+        <div className="wrap --full">
+          <div className="text-block-center">
+            <p className="label">About Skylark</p>
+            <h2 id="about-title" className="display --large --fill">
+              A human-assisted job application service for candidates whose next role is across a border
+            </h2>
+          </div>
+        </div>
+      </section>
+
+      {/* 03 — Numbers (gridnumbers, vertical) */}
+      <Numbers />
+
+      {/* 04 — How it works heading */}
+      <section id="how-it-works" className="component component--textblocklarge" aria-labelledby="how-title">
+        <div className="wrap --full">
+          <div className="text-block-center">
+            <p className="label">How it works</p>
+            <h2 id="how-title" className="display --large --fill">
+              Four stages take you from one profile to applications sent on your behalf, with a person checking every step that matters
+            </h2>
+          </div>
+        </div>
+      </section>
+
+      {/* 05 — Stages (contentscrollcenter) */}
+      <section className="component component--scroll" data-hide-header aria-label="The four stages">
+        <div className="stage" style={{ ["--count" as string]: STEPS.length }}>
+          <div className="sticky">
+            <nav className="anchors" aria-label="Stages">
+              {STEPS.map((s, i) => (
+                <button key={s.id} type="button" className={i === 0 ? "text --xsmall --bold --active" : "text --xsmall --bold"}>
+                  {s.nav}
+                </button>
+              ))}
+            </nav>
+            {STEPS.map((s) => (
+              <article key={s.id} id={s.id} className="content" aria-labelledby={`${s.id}-title`}>
+                <div className="image --cover" data-cursor="View">
+                  <Image src={s.art} alt="" fill sizes="100vw" />
+                </div>
+                <div className="info">
+                  <h3 id={`${s.id}-title`} className="title display --3xlarge floating-center">
+                    <span className="line">{s.title[0]}</span>
+                    <span className="line">{s.title[1]}</span>
+                  </h3>
+                  <div className="text-block-left --xsmall">
+                    <p className="text --medium --bold">{s.body}</p>
+                    <div className="actions">
+                      <TextLink href={s.link.href} small>
+                        {s.link.label}
+                      </TextLink>
+                    </div>
                   </div>
-                  <h3 className="mt-8 text-[15px] font-semibold tracking-tight">{s.title}</h3>
-                  <p className="mt-2 text-[13px] leading-relaxed text-muted">{s.body}</p>
-                </li>
-            ))}
-          </ol>
-        </Container>
-      </section>
-
-      {/* AI + Human */}
-      <section className="border-t border-line py-24 md:py-32">
-        <Container>
-          <InView>
-            <SectionHeading eyebrow="AI + human" title="AI does the volume. People do the judgment." body="Models are great at reading ten thousand listings. They shouldn't be the last word on your career." />
-          </InView>
-          <div className="mt-14 grid gap-4 lg:grid-cols-2">
-            {[
-              { icon: Sparkles, who: "AI", tone: "text-accent", items: ["Discovers roles across job boards and ATS feeds", "Normalizes, de-duplicates and enriches every listing", "Scores fit, eligibility and sponsorship likelihood", "Drafts tailored bullets and a role-specific cover letter"] },
-              { icon: UserCheck, who: "Humans", tone: "text-success", items: ["You accept or reject every suggested change", "A specialist verifies eligibility and accuracy", "Applications are submitted through the right channel", "You decide what happens after each reply"] },
-            ].map((col, i) => (
-              <InView key={col.who} delay={i * 0.08} className="rounded-xl border border-line bg-surface p-6 md:p-8">
-                <div className="flex items-center gap-2.5">
-                  <col.icon className={`size-4 ${col.tone}`} aria-hidden />
-                  <p className="text-sm font-semibold">{col.who}</p>
+                  <dl className="details">
+                    {s.details.map(([k, v]) => (
+                      <div key={k} className="group">
+                        <dt className="text --xsmall --uppercase --bold">{k}</dt>
+                        <dd className="text --small">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
                 </div>
-                <ul className="mt-6 space-y-3.5">
-                  {col.items.map((t) => (
-                    <li key={t} className="flex gap-3 text-sm text-muted">
-                      <Check className={`mt-0.5 size-4 shrink-0 ${col.tone}`} aria-hidden />
-                      {t}
-                    </li>
-                  ))}
-                </ul>
-              </InView>
+              </article>
             ))}
+            <div className="svg-container" id="morphings-svg" aria-hidden />
           </div>
-          <InView className="mt-4 overflow-x-auto rounded-xl border border-line bg-surface px-6 py-5 no-scrollbar">
-            <ol className="flex min-w-[640px] items-center justify-between" aria-label="Application pipeline">
-              {["AI discovered", "AI matched", "AI tailored", "Human reviewed", "Applied"].map((s, i, arr) => (
-                <li key={s} className="flex flex-1 items-center last:flex-none">
-                  <span className="flex items-center gap-2 text-[13px]">
-                    <span className={`grid size-5 place-items-center rounded-full border text-[10px] font-semibold ${i < 3 ? "border-accent-line bg-accent-soft text-[#8FB3FF]" : "border-success/30 bg-success-soft text-success"}`}>{i + 1}</span>
-                    <span className="whitespace-nowrap text-fg">{s}</span>
-                  </span>
-                  {i < arr.length - 1 && <span className="mx-4 h-px flex-1 bg-line-strong" aria-hidden />}
-                </li>
-              ))}
-            </ol>
-          </InView>
-        </Container>
+        </div>
       </section>
 
-      {/* Matching */}
-      <section id="matching" className="scroll-mt-20 border-t border-line py-24 md:py-32">
-        <Container className="grid items-start gap-12 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
-          <InView>
-            <SectionHeading eyebrow="Matching engine" title="Every score comes with its reasons." body="No black-box percentages. Each match is a weighted blend of six factors, and every factor tells you why — so you can decide fast and fix gaps deliberately." />
-            <dl className="mt-10 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-3">
-              {Object.entries(FACTOR_WEIGHTS).map(([k, w]) => (
-                <div key={k} className="border-l border-line-strong pl-3">
-                  <dt className="text-[13px] capitalize text-muted">{k}</dt>
-                  <dd className="mt-0.5 text-lg font-semibold tabular">{Math.round(w * 100)}%</dd>
-                </div>
-              ))}
-            </dl>
-          </InView>
-          <InView delay={0.1} className="rounded-xl border border-line-strong bg-surface shadow-[0_30px_80px_-30px_rgb(0_0_0/0.7)]">
-            <div className="flex items-center gap-3 border-b border-line p-5">
-              <CompanyMark name="Helix Payments" color="#6E8BFF" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">Senior Full-Stack Engineer, Payouts</p>
-                <p className="text-xs text-subtle">Helix Payments · Amsterdam · Hybrid · €85k–€110k</p>
-              </div>
-              <ScoreRing score={92} size={48} />
-            </div>
-            <div className="p-5">
-              <FactorBreakdown factors={SAMPLE_FACTORS} />
-            </div>
-          </InView>
-        </Container>
-      </section>
+      {/* 06 — International (map) */}
+      <International />
 
-      {/* International */}
-      <section id="international" className="scroll-mt-20 border-t border-line py-24 md:py-32">
-        <Container className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-          <InView className="order-2 lg:order-1">
-            <div className="rounded-xl border border-line bg-surface">
-              <div className="flex items-center justify-between border-b border-line px-5 py-4">
-                <p className="flex items-center gap-2 text-sm font-medium">
-                  <Globe2 className="size-4 text-muted" aria-hidden /> Your eligibility map
-                </p>
-                <span className="text-xs text-subtle">Senior Full-Stack · needs sponsorship</span>
-              </div>
-              <ul className="divide-y divide-line">
-                {COUNTRIES.map((c) => (
-                  <li key={c.name} className="grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 px-5 py-3.5">
-                    <div>
-                      <p className="text-sm text-fg">{c.name}</p>
-                      <p className="text-xs text-subtle">{c.roles} eligible roles this week</p>
-                    </div>
-                    <Badge tone={c.tone} dot>
-                      {c.status}
-                    </Badge>
-                    <div className="col-span-2 h-1 overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className={`h-full rounded-full ${c.tone === "success" ? "bg-success" : c.tone === "warning" ? "bg-warning" : "bg-danger"}`} style={{ width: `${c.share}%` }} />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </InView>
-          <InView className="order-1 lg:order-2">
-            <SectionHeading
-              eyebrow="International by design"
-              title="For people whose next job is in another country."
-              body="Work authorization is a first-class filter, not a footnote. AutoApply knows where you can work today, where you'd need a visa, and which employers actually sponsor."
-            />
-            <ul className="mt-8 space-y-3.5">
-              {[
-                "Authorization and sponsorship needs checked on every role",
-                "Employer sponsorship history used when listings are silent",
-                "Relocation preferences and remote eligibility by country",
-                "Salaries compared across currencies against your floor",
-              ].map((t) => (
-                <li key={t} className="flex gap-3 text-sm text-muted">
-                  <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden /> {t}
-                </li>
-              ))}
-            </ul>
-          </InView>
-        </Container>
-      </section>
+      {/* 07 — Disciplines (teams) */}
+      <Disciplines />
 
-      {/* Pricing */}
-      <section id="pricing" className="scroll-mt-20 border-t border-line py-24 md:py-32">
-        <Container>
-          <InView>
-            <SectionHeading align="center" eyebrow="Pricing" title="Pay for outcomes, not spam." body="Every plan includes visa-aware matching. Upgrade when you want more tailoring and human review." />
-          </InView>
-          <div className="mt-12">
-            <Suspense fallback={<div className="grid gap-4 lg:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-[440px] rounded-xl" />)}</div>}>
-              <Plans />
-            </Suspense>
+      {/* 08 — Pricing */}
+      <section id="pricing" className="component component--textblocklarge" aria-labelledby="pricing-title">
+        <div className="wrap --full">
+          <div className="text-block-center">
+            <p className="label">Pricing</p>
+            <h2 id="pricing-title" className="display --large --fill">
+              Plans for every stage of a search, from self-serve matching to a dedicated specialist
+            </h2>
           </div>
-        </Container>
+        </div>
+      </section>
+      <section className="component component--pricing" aria-label="Plans">
+        <Plans />
+        <p className="pricing-note text --xsmall">
+          Prices in USD. Plans renew automatically at the end of each billing period; cancel from Settings and your plan stays active until the period ends. Skylark does not guarantee interviews, offers or visa sponsorship.
+        </p>
       </section>
 
-      {/* Security */}
-      <section id="security" className="scroll-mt-20 border-t border-line py-24 md:py-32">
-        <Container>
-          <InView>
-            <SectionHeading eyebrow="Trust & security" title="Your career data, handled like financial data." />
-          </InView>
-          <div className="mt-12 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
-            {SECURITY.map((s) => (
-              <div key={s.title} className="bg-bg p-6">
-                <s.icon className="size-4 text-muted" aria-hidden />
-                <h3 className="mt-5 text-sm font-semibold">{s.title}</h3>
-                <p className="mt-1.5 text-[13px] leading-relaxed text-muted">{s.body}</p>
-              </div>
-            ))}
+      {/* Trust wall: checkable commitments rather than quotes */}
+      <section id="trust" className="component component--textblocklarge" aria-labelledby="trust-title">
+        <div className="wrap --full">
+          <div className="text-block-center">
+            <p className="label">Why trust us</p>
+            <h2 id="trust-title" className="display --large --fill">
+              Six promises you can check inside the product, not six testimonials
+            </h2>
           </div>
-        </Container>
+        </div>
+      </section>
+      <section className="component component--trust" aria-label="Our commitments">
+        <TrustWall />
       </section>
 
-      {/* CTA */}
-      <section className="relative overflow-hidden border-t border-line">
-        <div className="glow-top pointer-events-none absolute inset-0 rotate-180" aria-hidden />
-        <Container className="relative py-24 text-center md:py-32">
-          <InView>
-            <h2 className="mx-auto max-w-2xl text-[32px] font-semibold leading-[1.08] tracking-[-0.035em] sm:text-[44px]">Your next role might be in another country. Start there.</h2>
-            <p className="mx-auto mt-4 max-w-md text-muted">Set up your profile in about five minutes. Your first ranked matches appear immediately.</p>
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-              <Button asChild size="lg">
-                <Link href="/signup">
-                  Create your profile <ArrowRight aria-hidden />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="secondary">
-                <Link href="/login">Try the demo account</Link>
-              </Button>
-            </div>
-          </InView>
-        </Container>
+      {/* Lead capture */}
+      <section id="contact" className="component component--contact" aria-labelledby="contact-title">
+        <div className="contact">
+          <div className="contact__intro">
+            <p className="label">Talk to us</p>
+            <h2 id="contact-title" className="display --large --fill">
+              Not sure which plan fits, or whether we can apply for your kind of role?
+            </h2>
+            <p className="text --medium">
+              Tell us what you&apos;re looking for and a person will reply within one working day. No sales call unless you ask for one.
+            </p>
+          </div>
+          <ContactForm />
+        </div>
       </section>
+
+      {/* Writing */}
+      <section id="writing" className="component component--textblocklarge" aria-labelledby="writing-title">
+        <div className="wrap --full">
+          <div className="text-block-center">
+            <p className="label">Writing</p>
+            <h2 id="writing-title" className="display --large --fill">
+              Practical notes on looking for work in a country that is not yours yet
+            </h2>
+          </div>
+        </div>
+      </section>
+      <LatestWriting />
+
+      {/* 09 — FAQ */}
+      <section id="faq" className="component component--faq" aria-labelledby="faq-title">
+        <div className="text-block-center faq-head">
+          <p className="label">FAQs</p>
+          <h2 id="faq-title" className="display --large --fill">
+            Questions, answered
+          </h2>
+        </div>
+        <FaqList />
+      </section>
+
+      <HomeMotion />
     </>
   );
 }
 
+async function Numbers() {
+  const stats = await publicCatalogStats();
+  const columns = [
+    [
+      [String(FACTOR_COUNT), "Factors behind every match score"],
+      [String(DEFAULT_REVIEW_CHECKLIST.length), "Checks before every submission"],
+      [`${REVIEW_SLA_HOURS}h`, "Target turnaround for specialist review"],
+    ],
+    [
+      [String(listCountries().length), "Countries and territories in our location data"],
+      [String(stats.openRoles), "Open roles in the current job catalog"],
+      [String(stats.companies), "Hiring companies in the catalog"],
+    ],
+  ];
+  return (
+    <section className="component component--gridnumbers" aria-label="Skylark in numbers">
+      <div className="wrap --xsmall">
+        <div className="columns">
+          <div className="item">
+            <div className="text-block-left --small">
+              <p className="text --xlarge --rise">
+                We find roles you&apos;re eligible for, tailor each application and have a specialist check it before it&apos;s sent — so your time goes to interviews.
+              </p>
+              <div className="actions">
+                <TextLink href="/#how-it-works">See how it works</TextLink>
+              </div>
+            </div>
+          </div>
+          <div className="item">
+            {columns.map((col, c) => (
+              <dl key={c} className={`content content-${c}`}>
+                {col.map(([n, label]) => (
+                  <div key={label} className="group --magnet">
+                    <dt className="text --large --bold">{label}</dt>
+                    <dd className="number display --xlarge --serif">{n}</dd>
+                  </div>
+                ))}
+              </dl>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+async function International() {
+  const stats = await publicCatalogStats();
+  const names = stats.countries.map(countryName);
+  // The arc needs a full ring; repeat the catalog's markets until it has one.
+  const codes = stats.countries;
+  // Each tile is that country's own stippled map (public/art/countries/<iso>.jpg).
+  const ring = codes.length ? Array.from({ length: Math.max(12, codes.length) }, (_, i) => codes[i % codes.length]!) : [];
+  const step = 360 / Math.max(ring.length, 1);
+  const markers: MapLocation[] = stats.cities.flatMap((c) => {
+    const at = CITY_COORDS[`${c.city}|${c.country}`];
+    return at ? [{ key: `${c.city}|${c.country}`, city: c.city, country: countryName(c.country), roles: c.roles, ...mapPosition(at[0], at[1]) }] : [];
+  });
+  return (
+    <section className="component component--map" aria-labelledby="intl-title">
+      <div className="wrap --full">
+        <div className="waves" aria-hidden>
+          <Image src="/art/waves.png" alt="" fill sizes="100vw" style={{ objectFit: "cover" }} />
+        </div>
+        <div className="text-block-center">
+          <p className="label">International by design</p>
+          <h2 id="intl-title" className="display --xlarge --fill">
+            Your next role may be <strong>in another country</strong>. Start where you can work
+          </h2>
+        </div>
+        {ring.length > 0 && (
+          <div className="circle-container" aria-hidden>
+            <div className="circle">
+              {ring.map((code, i) => (
+                <div key={i} className="circle-item" style={{ transform: `rotate(${i * step - 96}deg) translate(var(--r)) rotate(96deg)` }}>
+                  <div className="group">
+                    <div className="image">
+                      <Image src={`/art/countries/${code.toLowerCase()}.jpg`} alt="" fill sizes="(min-width: 1101px) 10vw, 25vw" />
+                    </div>
+                    <div className="name">
+                      <p className="text --xlarge --bold">{countryName(code)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="gradient" />
+            <p className="statement text --xlarge">
+              Work authorization, sponsorship history and relocation preferences are checked on every role, with location data for {listCountries().length} countries and territories.
+            </p>
+          </div>
+        )}
+        <div className="map">
+          <Image src="/art/world-dots.png" alt="" fill sizes="100vw" />
+          <MapLocations locations={markers} />
+        </div>
+        <p className="sr-only">Roles in the current catalog are located in {names.join(", ")}.</p>
+      </div>
+    </section>
+  );
+}
+
+async function Disciplines() {
+  const domains = await publicDomains();
+  if (!domains.length) return null;
+  return (
+    <section id="domains" className="component component--teams" aria-labelledby="domains-title">
+      <div className="wrap --full">
+        <div className="text-block-center">
+          <p className="label">Domains</p>
+          <h2 id="domains-title" className="display --large --fill">
+            Matched by discipline, with the skills employers in each one ask for most
+          </h2>
+        </div>
+        <Draggable>
+          <ul className="inner">
+            {domains.map((d, i) => (
+              <li key={d.name}>
+                <Link href={`/jobs?q=${encodeURIComponent(d.name.toLowerCase())}`} className="card --magnet" draggable={false}>
+                  <span className="gradient" aria-hidden />
+                  <span className="gradient --hover" aria-hidden />
+                  <span className="group">
+                    <span className="text --large">
+                      {d.openRoles} open {d.openRoles === 1 ? "role" : "roles"} · {d.skills.slice(0, 3).join(", ")}
+                    </span>
+                    <span className="title display --xsmall">{d.name}</span>
+                  </span>
+                  <span className="image" aria-hidden>
+                    <Image src={`/art/land/land-${String(((i * 5 + 3) % 16) + 1).padStart(2, "0")}.jpg`} alt="" fill sizes="(min-width: 1101px) 23vw, 78vw" draggable={false} />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Draggable>
+      </div>
+    </section>
+  );
+}
+
 async function Plans() {
-  const plans = await publicPlans();
-  return <PricingTable plans={plans} />;
+  const [plans, fx] = await Promise.all([publicPlans(), exchangeRates()]);
+  return <PricingTable plans={plans} fx={fx} />;
+}
+
+/** The three most recent posts, read from the same content source as /blog. */
+function LatestWriting() {
+  const posts = allPosts().slice(0, 3);
+  return (
+    <section className="component component--posts" aria-label="Latest writing">
+      <div className="posts">
+        <div className="posts-grid">
+          {posts.map((post) => (
+            <article key={post.slug} className="post-card">
+              <p className="post-card__meta text --xsmall">
+                <time dateTime={post.publishedAt}>{formatDate(post.publishedAt, { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })}</time>
+                <span aria-hidden> · </span>
+                {readingMinutes(post)} min read
+              </p>
+              <h3 className="title --medium">
+                <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+              </h3>
+              <p className="text --small post-card__excerpt">{post.description}</p>
+              <Link href={`/blog/${post.slug}`} className="post-card__more text --xsmall">
+                Read it <ArrowRight aria-hidden />
+              </Link>
+            </article>
+          ))}
+        </div>
+        <p className="posts__all text --small">
+          <Link href="/blog">Everything we have written</Link>
+        </p>
+      </div>
+    </section>
+  );
 }
