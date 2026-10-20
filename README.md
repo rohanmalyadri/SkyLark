@@ -1,11 +1,11 @@
 <div align="center">
 
-<img src="docs/media/tour.gif" alt="AutoApply product tour" width="860" />
+<img src="docs/media/tour.gif" alt="SkyLark product tour" width="860" />
 
 <br />
 <br />
 
-# AutoApply
+# SkyLark
 
 ### The career operating system for international talent.
 
@@ -22,20 +22,21 @@ It tailors every application, and a human specialist reviews it before anything 
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat-square&logo=postgresql&logoColor=white)
 ![Claude](https://img.shields.io/badge/Claude-D97757?style=flat-square&logo=anthropic&logoColor=white)
 ![Tests](https://img.shields.io/badge/tests-28_passing-3dd68c?style=flat-square)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
-[**Quick start**](#quick-start) · [**How it works**](#how-it-works) · [**Architecture**](#architecture) · [**Security**](#security-model) · [**Project structure**](#project-structure)
+[**Quick start**](#quick-start) · [**How it works**](#how-it-works) · [**Architecture**](#architecture) · [**Security**](#security-model) · [**Project structure**](#project-structure) · [**License**](#license)
 
 </div>
 
 <br />
 
-## Why AutoApply
+## Why SkyLark
 
 Most job boards optimise for volume. If you are looking for a job in another country, volume is the problem: most listings you see are roles you cannot legally take, at companies that will never sponsor you, and mass-applying burns your reputation with recruiters.
 
-AutoApply flips the model.
+SkyLark flips the model.
 
-| | Typical job board | AutoApply |
+| | Typical job board | SkyLark |
 |---|---|---|
 | **Eligibility** | Your problem | A first-class filter on every role |
 | **Match score** | A black-box percentage | Six weighted factors, each with a written reason |
@@ -71,7 +72,7 @@ Every application moves through the same visible pipeline, so you always know wh
 
 ### 1. A profile built for crossing borders
 
-Upload a resume and the skills, headline and experience are extracted for you. Then you tell AutoApply what matters: where you can already work, whether you need sponsorship, where you would relocate, and what you need to earn.
+Upload a resume and the skills, headline and experience are extracted for you. Then you tell SkyLark what matters: where you can already work, whether you need sponsorship, where you would relocate, and what you need to earn.
 
 <div align="center">
 <img src="docs/media/dashboard.png" alt="Candidate dashboard" width="860" />
@@ -111,7 +112,7 @@ A role you are legally blocked from is capped at a low score no matter how good 
 
 ### 3. Tailoring where you stay in control
 
-AutoApply drafts a role-specific summary, rewrites resume bullets, writes a cover letter and shows a skill-gap table. **Nothing is applied until you accept or reject each suggestion**, and it never invents employers, titles or numbers.
+SkyLark drafts a role-specific summary, rewrites resume bullets, writes a cover letter and shows a skill-gap table. **Nothing is applied until you accept or reject each suggestion**, and it never invents employers, titles or numbers.
 
 <div align="center">
 <img src="docs/media/tailoring-accepted.png" alt="AI tailoring workspace" width="860" />
@@ -322,8 +323,8 @@ These are not just claims: the test suite boots the real migrations in an in-pro
 > No accounts, keys or database needed. The app runs on realistic seeded data out of the box.
 
 ```bash
-git clone https://github.com/rohzyy/AutoApply.git
-cd AutoApply
+git clone https://github.com/rohanmalyadri/SkyLark.git
+cd SkyLark
 npm install
 npm run dev
 ```
@@ -429,12 +430,18 @@ supabase/
 
 <br />
 
+## License
+
+SkyLark is released under the [MIT License](LICENSE). Copyright © 2026 Rohan Malyadri.
+
+<br />
+
 ---
 
 <div align="center">
 
 ### Made with ❤️ by **Team Synapse**
 
-<sub>AutoApply is a capstone project. All companies, jobs and people shown are fictional.</sub>
+<sub>SkyLark is a capstone project, released under the MIT License. All companies, jobs and people shown are fictional.</sub>
 
 </div>
