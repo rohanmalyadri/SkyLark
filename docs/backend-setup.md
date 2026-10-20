@@ -43,6 +43,12 @@ baked in at build time, so **redeploy** after setting them. `SESSION_SECRET`, `C
 Optional extras (see `.env.example`): `ANTHROPIC_API_KEY` for AI tailoring (otherwise a rules engine is
 used), `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` for Indian and US listings, `GITHUB_TOKEN`, `STACKEXCHANGE_KEY`.
 
+## Region
+
+The Supabase project lives in AWS ap-southeast-2 (Sydney), so `vercel.json` pins functions to `syd1`.
+Every page makes several database calls; from Vercel's default US region each one crosses the Pacific
+and job imports overrun the 60-second function limit. If the database ever moves, move this too.
+
 ## 4. Check it worked
 
 - `https://skylark-ten-mu.vercel.app/api/health` returns `"mode":"supabase"`.
