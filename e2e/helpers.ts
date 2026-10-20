@@ -14,7 +14,15 @@ export async function signUp(page: Page, opts: { name: string; email: string; pa
 export async function demoSignIn(page: Page, who: "Candidate" | "Operations") {
   await page.context().clearCookies();
   await page.goto("/login");
-  await page.getByRole("button", { name: new RegExp(`^${who}`) }).click();
+  // Against Supabase there are no demo buttons: sign in to the accounts `npm run seed -- --demo` created.
+  const seeded = process.env.E2E_SEED_PASSWORD;
+  if (seeded) {
+    await page.getByLabel("Email").fill(who === "Candidate" ? "demo@skylark.dev" : "ops@skylark.dev");
+    await page.locator("#password").fill(seeded);
+    await page.getByRole("button", { name: /^sign in$/i }).click();
+  } else {
+    await page.getByRole("button", { name: new RegExp(`^${who}`) }).click();
+  }
   await expect(page).toHaveURL(who === "Candidate" ? /\/dashboard/ : /\/admin/);
 }
 
