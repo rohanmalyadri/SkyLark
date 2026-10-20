@@ -24,7 +24,7 @@ It tailors every application, and a human specialist reviews it before anything 
 ![Tests](https://img.shields.io/badge/tests-28_passing-3dd68c?style=flat-square)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 
-[**Quick start**](#quick-start) · [**How it works**](#how-it-works) · [**Architecture**](#architecture) · [**Security**](#security-model) · [**Project structure**](#project-structure) · [**License**](#license)
+[**Live demo**](https://skylark-ten-mu.vercel.app) · [**Quick start**](#quick-start) · [**How it works**](#how-it-works) · [**Architecture**](#architecture) · [**Security**](#security-model) · [**Project structure**](#project-structure) · [**License**](#license)
 
 </div>
 
@@ -202,7 +202,7 @@ flowchart TB
         Storage[("Storage<br/>private resumes")]
     end
 
-    Cron["Cron<br/>every 5 min"] --> Pipeline
+    Cron["Cron<br/>daily"] --> Pipeline
     UI --> Proxy --> Pages
     UI --> Actions
     Pages --> Services
@@ -320,6 +320,8 @@ These are not just claims: the test suite boots the real migrations in an in-pro
 
 ## Quick start
 
+> **Try it live:** <https://skylark-ten-mu.vercel.app>
+
 > No accounts, keys or database needed. The app runs on realistic seeded data out of the box.
 
 ```bash
@@ -348,7 +350,7 @@ Demo mode keeps data in memory, so it resets whenever the server restarts.
    ```bash
    npm run seed
    ```
-5. **Deploy.** [`vercel.json`](vercel.json) schedules the background worker every 5 minutes.
+5. **Deploy.** [`vercel.json`](vercel.json) schedules the background worker once a day (09:00 UTC), the most often Vercel's Hobby plan allows. On Pro you can set it back to every 5 minutes.
 
 | Variable | Required | Purpose |
 |---|:---:|---|
