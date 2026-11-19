@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Briefcase, ClipboardCheck, Gauge, Handshake, Inbox, KanbanSquare, LayoutGrid, ListChecks, Radar, ScrollText, Send, Settings, ShieldCheck, Sparkles, Tag, Users, UserRound, Workflow } from "lucide-react";
+import { Activity, Briefcase, ClipboardCheck, Contact, Gauge, Handshake, Inbox, IndianRupee, LayoutDashboard, MessagesSquare, KanbanSquare, LayoutGrid, ListChecks, Radar, ScrollText, Send, Settings, ShieldCheck, Sparkles, Tag, Users, UserRound, Workflow } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,11 @@ export const CANDIDATE_NAV = [
 ] as const;
 
 export const ADMIN_NAV = [
-  { href: "/admin", label: "Overview", icon: Gauge },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/clients", label: "Clients", icon: Contact },
+  { href: "/admin/inbox", label: "Client inbox", short: "Inbox", icon: MessagesSquare },
+  { href: "/admin/payments", label: "Payments", icon: IndianRupee },
+  { href: "/admin/operations", label: "Operations", short: "Ops", icon: Gauge },
   { href: "/admin/delivery", label: "Delivery board", short: "Delivery", icon: Send },
   { href: "/admin/reviews", label: "Review queue", short: "Reviews", icon: ClipboardCheck },
   { href: "/admin/candidates", label: "Candidates", icon: Users },

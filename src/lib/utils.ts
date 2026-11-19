@@ -14,6 +14,16 @@ export function formatMoney(amount: number, currency = "USD", compact = false) {
   }).format(amount);
 }
 
+/** Indian rupees with Indian digit grouping: ₹13,902 · ₹1,23,456. */
+export function formatINR(amount: number, compact = false) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: compact ? 1 : 0,
+    notation: compact ? "compact" : "standard",
+  }).format(amount);
+}
+
 export function formatSalaryRange(salary: { min: number; max: number; currency: string } | null) {
   if (!salary) return null;
   return `${formatMoney(salary.min, salary.currency, true)} – ${formatMoney(salary.max, salary.currency, true)}`;
