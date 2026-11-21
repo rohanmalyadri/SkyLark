@@ -96,6 +96,7 @@ export async function googleSignInUrl(next = "/dashboard") {
   const env = serverEnv();
   if (nativeGoogleEnabled()) return `/auth/google?next=${encodeURIComponent(next)}`;
   if (env.dataMode === "demo") throw new AppError("validation", "Google sign-in isn't configured. Use a demo account instead.");
+  if (env.SUPABASE_GOOGLE_AUTH !== "on") throw new AppError("validation", "Google sign-in isn't set up yet. Use your email and password.");
   const supabase = await createSessionClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",

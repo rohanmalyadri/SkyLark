@@ -4,6 +4,7 @@ import { defineConfig, devices } from "@playwright/test";
  * End-to-end tests against a running app (demo data mode by default).
  *   npm run test:e2e                      # starts `next dev` on :3000 if it isn't running
  *   E2E_BASE_URL=https://staging… npm run test:e2e
+ *   E2E_SEED_PASSWORD=… npm run test:e2e   # against a Supabase project seeded with `npm run seed -- --demo`
  * Uses an installed browser channel (Edge by default) so no browser download is needed;
  * set PW_CHANNEL=chrome, or run `npx playwright install chromium` and PW_CHANNEL=chromium.
  */
