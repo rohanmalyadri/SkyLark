@@ -124,6 +124,12 @@ export class MemoryRepository implements Repository {
       }
     });
     s.passwords.delete(id);
+    // The client record is the business's own (what was agreed and paid); it stays, unlinked.
+    const crm = crmStore();
+    if (crm.clients.some((c) => c.userId === id)) {
+      crm.clients.forEach((c) => c.userId === id && (c.userId = null));
+      saveCrm();
+    }
   }
 
   /* profiles */
@@ -759,6 +765,9 @@ export class MemoryRepository implements Repository {
   async getClient(id: string) {
     return clone(crmStore().clients.find((c) => c.id === id) ?? null);
   }
+  async getClientByUserId(userId: string) {
+    return clone(crmStore().clients.find((c) => c.userId === userId) ?? null);
+  }
   async createClient(client: Parameters<Repository["createClient"]>[0]) {
     const createdAt = client.createdAt ?? nowIso();
     const row = { ...client, id: client.id ?? randomUUID(), createdAt, updatedAt: createdAt };
@@ -795,10 +804,10 @@ export class MemoryRepository implements Repository {
     saveCrm();
     return clone(row);
   }
-  async markClientMessagesRead(clientId: string, at: string) {
+  async markClientMessagesRead(clientId: string, at: string, direction: "inbound" | "outbound" = "inbound") {
     let changed = 0;
     for (const m of crmStore().messages) {
-      if (m.clientId === clientId && m.direction === "inbound" && !m.readAt) {
+      if (m.clientId === clientId && m.direction === direction && !m.readAt) {
         m.readAt = at;
         changed++;
       }

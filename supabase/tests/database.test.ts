@@ -285,6 +285,16 @@ describe("the managed service", () => {
     expect((await db.query(`select 1 from public.client_messages union all select 1 from public.client_notes`)).rows).toHaveLength(0);
   });
 
+  it("links a client to at most one account, and unlinks it when the account goes", async () => {
+    await db.exec(`insert into public.clients (name, user_id) values ('Linked Client', '${A}')`);
+    await expect(db.exec(`insert into public.clients (name, user_id) values ('Second Record', '${A}')`)).rejects.toThrow(/clients_user_idx/);
+    // Candidates still can't read client rows directly, even their own; the server reads for them.
+    await asUser(A, async () => {
+      expect((await db.query(`select 1 from public.clients`)).rows).toHaveLength(0);
+    });
+    await db.exec(`delete from public.clients where name = 'Linked Client'`);
+  });
+
   it("publishes live promo codes but lets nobody redeem one from the browser", async () => {
     await db.exec(`insert into public.promo_codes (code, kind, value, description) values
       ('LIVE20', 'percent', 20, 'Live'),

@@ -26,7 +26,10 @@ const g = globalThis as unknown as { __skylarkCrm?: CrmData; __skylarkCrmWritabl
 function load(): CrmData {
   try {
     const parsed = JSON.parse(readFileSync(/*turbopackIgnore: true*/ FILE, "utf8")) as CrmData;
-    if (parsed?.version === 1 && Array.isArray(parsed.clients)) return parsed;
+    if (parsed?.version === 1 && Array.isArray(parsed.clients)) {
+      parsed.clients.forEach((c) => (c.userId ??= null));
+      return parsed;
+    }
   } catch {
     // Missing or unreadable: start from the seed below.
   }

@@ -128,6 +128,7 @@ export function ClientInbox({ threads, messages, now, staffName }: { threads: Th
                 <p className="flex flex-wrap items-center gap-x-2 text-xs text-subtle">
                   <span>{active.total} message{active.total === 1 ? "" : "s"}</span>
                   {active.client.amount != null && <span className="tabular">· {formatINR(active.client.amount)}</span>}
+                  <span className={active.client.userId ? "text-success" : undefined}>· {active.client.userId ? "Chats from the app" : "No app account"}</span>
                 </p>
               </div>
               <div className="hidden items-center gap-1.5 sm:flex">

@@ -767,6 +767,8 @@ export interface Client {
   paymentMethod: string | null;
   /** Gateway reference. Only a gateway may set this; staff entries leave it null. */
   paymentReference: string | null;
+  /** The user account this client chats from, when they have one. One account, one client. */
+  userId: string | null;
   lastInteractionAt: string | null;
   createdAt: string;
   updatedAt: string;

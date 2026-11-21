@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Briefcase, ClipboardCheck, Contact, Gauge, Handshake, Inbox, IndianRupee, LayoutDashboard, MessagesSquare, KanbanSquare, LayoutGrid, ListChecks, Radar, ScrollText, Send, Settings, ShieldCheck, Sparkles, Tag, Users, UserRound, Workflow } from "lucide-react";
+import { Activity, Briefcase, ClipboardCheck, Contact, Gauge, Handshake, Inbox, IndianRupee, LayoutDashboard, MessageCircle, MessagesSquare, KanbanSquare, LayoutGrid, ListChecks, Radar, ScrollText, Send, Settings, ShieldCheck, Sparkles, Tag, Users, UserRound, Workflow } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ export const CANDIDATE_NAV = [
   { href: "/jobs", label: "Job intelligence", short: "Jobs", icon: Radar },
   { href: "/applications", label: "Applications", icon: KanbanSquare },
   { href: "/answers", label: "Application answers", short: "Answers", icon: ListChecks },
+  { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/profile", label: "Profile & resumes", short: "Profile", icon: UserRound },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;

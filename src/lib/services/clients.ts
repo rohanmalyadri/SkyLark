@@ -8,6 +8,7 @@ import type { Client, User } from "@/lib/domain/types";
 import { AppError, notFound } from "@/lib/infra/errors";
 import { audit } from "./audit";
 import { summarizeClients, threadSummaries } from "./client-stats";
+import { notify } from "./notifications";
 
 /*
  * The admin CRM: clients, what they paid, and the conversation with them. Staff only.
@@ -74,8 +75,8 @@ export async function clientDetail(staff: User, id: string) {
   const repo = systemRepo();
   const client = await repo.getClient(id);
   if (!client) throw notFound("Client");
-  const [messages, notes] = await Promise.all([repo.listClientMessages({ clientId: id }), repo.listClientNotes(id)]);
-  return { client, messages, notes };
+  const [messages, notes, user] = await Promise.all([repo.listClientMessages({ clientId: id }), repo.listClientNotes(id), client.userId ? repo.getUser(client.userId) : null]);
+  return { client, messages, notes, account: user && { name: user.fullName, email: user.email } };
 }
 
 export async function inbox(staff: User) {
@@ -101,6 +102,7 @@ export async function createClient(staff: User, input: z.infer<typeof ClientInpu
     paidAt: null,
     paymentMethod: null,
     paymentReference: null,
+    userId: null,
     lastInteractionAt: null,
     ...paymentFields(input, null),
   });
@@ -155,8 +157,15 @@ export async function addMessage(staff: User, input: z.infer<typeof ClientMessag
     readAt: inbound ? now : null,
     createdAt: now,
   });
-  // Replying means the thread has been read.
-  if (!inbound) await repo.markClientMessagesRead(client.id, now);
+  if (!inbound) {
+    // Replying means the thread has been read.
+    await repo.markClientMessagesRead(client.id, now);
+    // A client with an account sees the reply in Messages; tell them it's there.
+    if (client.userId) {
+      const preview = input.body.length > 140 ? `${input.body.slice(0, 137)}…` : input.body;
+      await notify(client.userId, { type: "system", title: `New message from ${staff.fullName}`, body: preview, href: "/messages" });
+    }
+  }
   return message;
 }
 

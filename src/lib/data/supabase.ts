@@ -217,6 +217,7 @@ const toClient = (r: Row): Client => ({
   paidAt: r.paid_at,
   paymentMethod: r.payment_method,
   paymentReference: r.payment_reference,
+  userId: r.user_id ?? null,
   lastInteractionAt: r.last_interaction_at,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
@@ -249,6 +250,7 @@ const CLIENT_COLUMNS: Record<string, string> = {
   paidAt: "paid_at",
   paymentMethod: "payment_method",
   paymentReference: "payment_reference",
+  userId: "user_id",
   lastInteractionAt: "last_interaction_at",
 };
 
@@ -1275,6 +1277,10 @@ export class SupabaseRepository implements Repository {
   async updateClient(id: string, patch: Parameters<Repository["updateClient"]>[1]) {
     return toClient(check(await this.db.from("clients").update(fromClientPatch(patch)).eq("id", id).select().single(), "updateClient"));
   }
+  async getClientByUserId(userId: string) {
+    const r = check(await this.db.from("clients").select("*").eq("user_id", userId).maybeSingle(), "getClientByUserId");
+    return r ? toClient(r) : null;
+  }
   async deleteClient(id: string) {
     // Messages and notes go with it (on delete cascade).
     check(await this.db.from("clients").delete().eq("id", id), "deleteClient");
@@ -1300,9 +1306,9 @@ export class SupabaseRepository implements Repository {
     check(await this.db.from("clients").update({ last_interaction_at: saved.createdAt }).eq("id", saved.clientId), "touchClient");
     return saved;
   }
-  async markClientMessagesRead(clientId: string, at: string) {
+  async markClientMessagesRead(clientId: string, at: string, direction: "inbound" | "outbound" = "inbound") {
     const rows = check(
-      await this.db.from("client_messages").update({ read_at: at }).eq("client_id", clientId).eq("direction", "inbound").is("read_at", null).select("id"),
+      await this.db.from("client_messages").update({ read_at: at }).eq("client_id", clientId).eq("direction", direction).is("read_at", null).select("id"),
       "markClientMessagesRead",
     );
     return (rows ?? []).length;

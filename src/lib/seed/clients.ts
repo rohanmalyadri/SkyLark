@@ -43,6 +43,7 @@ export const SEED_CLIENTS: SeedClient[] = [
       paidAt: null,
       paymentMethod: null,
       paymentReference: null,
+      userId: null,
     },
     messages: [
       { ago: 262, from: "client", body: "Hi, I came across Skylark through a friend. I'm a final-year CSE student looking for backend developer roles. How exactly does your service work?" },
@@ -78,6 +79,7 @@ export const SEED_CLIENTS: SeedClient[] = [
       paidAt: null,
       paymentMethod: null,
       paymentReference: null,
+      userId: null,
     },
     messages: [
       { ago: 410, from: "client", body: "Hello, I have about 4 years of experience as a data analyst and I'm trying to move into data engineering. I don't have much time to apply during the week. Can your team handle the applications for me?" },
@@ -115,6 +117,7 @@ export const SEED_CLIENTS: SeedClient[] = [
       paidAt: null,
       paymentMethod: null,
       paymentReference: null,
+      userId: null,
     },
     messages: [
       { ago: 118, from: "client", body: "Hi, I'm a frontend developer with 2 years at a service company. I want to move to a product company. Is this something you help with, or is it only for freshers?" },

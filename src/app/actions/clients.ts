@@ -2,9 +2,10 @@
 
 import { z } from "zod";
 import { STAFF_ROLES } from "@/lib/auth/dal";
-import { ClientInputSchema, ClientMessageSchema, ClientNoteSchema, ClientPatchSchema } from "@/lib/domain/schemas";
+import { ClientAccountLinkSchema, ClientInputSchema, ClientMessageSchema, ClientNoteSchema, ClientPatchSchema, MyMessageSchema } from "@/lib/domain/schemas";
 import type { User } from "@/lib/domain/types";
 import * as clients from "@/lib/services/clients";
+import * as supportChat from "@/lib/services/support-chat";
 import { run } from "./_wrap";
 
 const STAFF = [...STAFF_ROLES] as User["role"][];
@@ -35,4 +36,24 @@ export async function markClientReadAction(clientId: string) {
 
 export async function addClientNoteAction(input: unknown) {
   return run("client.note", async (u) => void (await clients.addNote(u, ClientNoteSchema.parse(input))), { roles: STAFF, message: "Note saved" });
+}
+
+export async function linkClientAccountAction(input: unknown) {
+  return run("client.link", async (u) => {
+    const data = ClientAccountLinkSchema.parse(input);
+    return supportChat.linkAccount(u, data.clientId, data.email);
+  }, { roles: STAFF, message: "Account link updated" });
+}
+
+/* ---------- the user's side: their own conversation with the team ---------- */
+
+export async function sendMyMessageAction(input: unknown) {
+  return run("support.message", async (u) => {
+    const m = await supportChat.sendMyMessage(u, MyMessageSchema.parse(input).body);
+    return { id: m.id, createdAt: m.createdAt };
+  });
+}
+
+export async function markMyMessagesReadAction() {
+  return run("support.read", (u) => supportChat.markMyMessagesRead(u));
 }

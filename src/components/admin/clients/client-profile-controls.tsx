@@ -1,12 +1,12 @@
 "use client";
 
-import { MessageSquareText, StickyNote, Trash2 } from "lucide-react";
+import { Link2, MessageSquareText, StickyNote, Trash2, Unlink } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { addClientNoteAction, updateClientAction } from "@/app/actions/clients";
+import { addClientNoteAction, linkClientAccountAction, updateClientAction } from "@/app/actions/clients";
 import { Button } from "@/components/ui/button";
-import { Select, Textarea } from "@/components/ui/input";
+import { Input, Select, Textarea } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/states";
 import { CLIENT_PAYMENT_META, CLIENT_STATUS_META } from "@/lib/domain/constants";
 import { CLIENT_PAYMENT_STATUSES, CLIENT_STATUSES, type Client, type ClientNote, type ClientPaymentStatus, type ClientStatus } from "@/lib/domain/types";
@@ -102,5 +102,48 @@ export function NotesPanel({ client, notes }: { client: Client; notes: ClientNot
         </ol>
       )}
     </div>
+  );
+}
+
+/** Connects this client to the Skylark account they chat from, or disconnects it. */
+export function AccountLink({ client, account }: { client: Client; account: { name: string; email: string } | null }) {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const link = useAction(linkClientAccountAction, { onSuccess: () => setEmail("") });
+
+  if (account) {
+    return (
+      <div className="space-y-3 p-4 text-[13px]">
+        <p className="flex items-start gap-2 text-muted">
+          <Link2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+          <span>
+            Linked to <span className="font-medium text-fg">{account.name}</span> ({account.email}). They see this conversation in their Messages page.
+          </span>
+        </p>
+        <Button size="sm" variant="ghost" loading={link.pending} onClick={() => void link.execute({ clientId: client.id, email: "" })}>
+          <Unlink /> Unlink account
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <form
+      className="space-y-2 p-4"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setError(null);
+        const res = await link.execute({ clientId: client.id, email });
+        if (!res.ok) setError(res.fieldErrors?.email?.[0] ?? null);
+      }}
+    >
+      <p className="text-[13px] text-muted">Not linked. Enter the email of their Skylark account so they can chat with you from the app.</p>
+      <div className="flex gap-2">
+        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="client@example.com" aria-label="Account email" aria-invalid={!!error} className="h-8 text-[13px]" />
+        <Button size="sm" type="submit" loading={link.pending} disabled={!email.trim()}>
+          Link
+        </Button>
+      </div>
+      {error && <p className="text-xs text-danger">{error}</p>}
+    </form>
   );
 }

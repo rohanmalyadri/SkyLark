@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ChatThread } from "@/components/admin/clients/chat-thread";
-import { NotesPanel, ProfileActions, StatusControls } from "@/components/admin/clients/client-profile-controls";
+import { AccountLink, NotesPanel, ProfileActions, StatusControls } from "@/components/admin/clients/client-profile-controls";
 import { Amount, ClientAvatar, ClientStatusBadge, formatClock, formatDay, PaymentBadge, PaymentSourceTag } from "@/components/admin/clients/client-ui";
 import { Panel, PanelHeader } from "@/components/ui/panel";
 import { PageSkeleton } from "@/components/ui/skeleton";
@@ -31,7 +31,7 @@ async function ClientProfile({ params }: { params: Promise<{ id: string }> }) {
     if (err instanceof AppError && err.code === "not_found") notFound();
     throw err;
   });
-  const { client, messages, notes } = detail;
+  const { client, messages, notes, account } = detail;
   const now = new Date().toISOString();
   const moneyMoved = client.paymentStatus === "paid" || client.paymentStatus === "refunded";
   const unread = messages.filter((m) => m.direction === "inbound" && !m.readAt).length;
@@ -106,6 +106,11 @@ async function ClientProfile({ params }: { params: Promise<{ id: string }> }) {
                 <Info className="mt-px size-3.5 shrink-0" /> Entered by staff. No payment gateway has confirmed this payment.
               </p>
             )}
+          </Panel>
+
+          <Panel>
+            <PanelHeader title="Skylark account" description="Lets the client chat with you from the app." />
+            <AccountLink client={client} account={account} />
           </Panel>
 
           <Panel>

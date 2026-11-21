@@ -11,6 +11,7 @@ import type {
   CandidateProfile,
   Client,
   ClientMessage,
+  ClientMessageDirection,
   ClientNote,
   ClientPaymentStatus,
   ClientStatus,
@@ -264,6 +265,7 @@ export interface Repository {
   /* clients (CRM) */
   listClients(query?: ClientQuery): Promise<Client[]>;
   getClient(id: string): Promise<Client | null>;
+  getClientByUserId(userId: string): Promise<Client | null>;
   createClient(client: NewRow<Omit<Client, "updatedAt">>): Promise<Client>;
   updateClient(id: string, patch: ClientPatch): Promise<Client>;
   /** Removes the client with their messages and notes. */
@@ -271,8 +273,11 @@ export interface Repository {
   /** Oldest first. Without a client id, every client's messages (for inbox previews and stats). */
   listClientMessages(opts?: { clientId?: string; limit?: number }): Promise<ClientMessage[]>;
   addClientMessage(message: NewRow<ClientMessage>): Promise<ClientMessage>;
-  /** Marks the client's unread inbound messages as read; returns how many changed. */
-  markClientMessagesRead(clientId: string, at: string): Promise<number>;
+  /**
+   * Marks unread messages in one direction as read; returns how many changed. "inbound" is the
+   * team reading the client's messages, "outbound" is the client reading the team's replies.
+   */
+  markClientMessagesRead(clientId: string, at: string, direction?: ClientMessageDirection): Promise<number>;
   listClientNotes(clientId: string): Promise<ClientNote[]>;
   addClientNote(note: NewRow<ClientNote>): Promise<ClientNote>;
 

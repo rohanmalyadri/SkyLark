@@ -323,6 +323,17 @@ export const ClientMessageSchema = z.object({
   direction: z.enum(["inbound", "outbound"]).default("outbound"),
 });
 
+/** A signed-in user writing to the team. The client record comes from the session, never the browser. */
+export const MyMessageSchema = z.object({
+  body: z.string().trim().min(1, "Write a message first").max(4000),
+});
+
+export const ClientAccountLinkSchema = z.object({
+  clientId: z.string().min(1).max(64),
+  /** Empty unlinks. */
+  email: z.email("Enter a valid email").max(254).transform((v) => v.toLowerCase()).or(z.literal("")),
+});
+
 export const ClientNoteSchema = z.object({
   clientId: z.string().min(1).max(64),
   body: z.string().trim().min(1, "Write a note first").max(2000),
