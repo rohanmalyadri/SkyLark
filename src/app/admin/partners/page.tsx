@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/panel";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { requireStaff } from "@/lib/auth/dal";
+import { serverEnv } from "@/lib/env";
+import { SITE_HOST } from "@/lib/site";
 import { listPartnersWithStats, listPromoCodes } from "@/lib/services/partners";
 
 export const metadata: Metadata = { title: "Partners & codes" };
@@ -22,9 +24,9 @@ async function Partners() {
   const staff = await requireStaff();
   const [partners, codes, h] = await Promise.all([listPartnersWithStats(staff), listPromoCodes(staff), headers()]);
 
-  // Share links are shown with the host the operator is actually using, so copying one works.
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "skylark.dev";
-  const origin = `${h.get("x-forwarded-proto") ?? "https"}://${host}`;
+  // Share links always use the public domain in production; locally, the host in use.
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? SITE_HOST;
+  const origin = process.env.NODE_ENV === "production" ? serverEnv().siteUrl : `${h.get("x-forwarded-proto") ?? "http"}://${host}`;
 
   const totals = partners.reduce((acc, p) => ({ conversions: acc.conversions + p.conversions, owed: acc.owed + p.earnings }), { conversions: 0, owed: 0 });
 

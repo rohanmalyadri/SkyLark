@@ -17,8 +17,9 @@ The script also records the migrations as applied, so later migrations can go th
 
 ## 2. Auth settings (Supabase dashboard → Authentication)
 
-- **URL Configuration** → Site URL: `https://skylark-ten-mu.vercel.app`.
-  Redirect URLs: add `https://skylark-ten-mu.vercel.app/**` and, for preview deployments,
+- **URL Configuration** → Site URL: `https://www.skylarkgo.in`.
+  Redirect URLs: add `https://www.skylarkgo.in/**`, keep `https://skylark-ten-mu.vercel.app/**` (the old
+  address, which now redirects to the domain) and, for preview deployments,
   `https://*-rohans-projects-8d7addbc.vercel.app/**`.
 - **Sign In / Providers → Email** → turn **Confirm email** off, unless you add custom SMTP
   (Authentication → Emails → SMTP Settings, e.g. Resend). Supabase's built-in mailer only delivers
@@ -38,10 +39,14 @@ The script also records the migrations as applied, so later migrations can go th
 
 All three Supabase values must be present or the app stays in demo mode. `NEXT_PUBLIC_*` values are
 baked in at build time, so **redeploy** after setting them. `SESSION_SECRET`, `CRON_SECRET` and
-`NEXT_PUBLIC_APP_URL` are already set.
+`NEXT_PUBLIC_APP_URL` are already set (`NEXT_PUBLIC_APP_URL` should be `https://www.skylarkgo.in`; the
+old `.vercel.app` value is treated as the domain anyway).
 
 Optional extras (see `.env.example`): `ANTHROPIC_API_KEY` for AI tailoring (otherwise a rules engine is
-used), `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` for Indian and US listings, `GITHUB_TOKEN`, `STACKEXCHANGE_KEY`.
+used), `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` for Indian and US listings, `GITHUB_TOKEN`, `STACKEXCHANGE_KEY`,
+and `GEMINI_API_KEY` (mark Sensitive) to turn on the chat-style onboarding. Without it, onboarding is the
+step-by-step form only. A free-tier Gemini key is rate-limited to a handful of requests a minute, so turn on
+billing for the Google AI Studio project before real traffic.
 
 ## Region
 
@@ -51,7 +56,7 @@ and job imports overrun the 60-second function limit. If the database ever moves
 
 ## 4. Check it worked
 
-- `https://skylark-ten-mu.vercel.app/api/health` returns `"mode":"supabase"`.
+- `https://www.skylarkgo.in/api/health` returns `"mode":"supabase"`.
 - Sign up with the `ADMIN_EMAILS` address, sign out and back in: you land in `/admin`.
 - The daily cron (`/api/cron/worker`, 09:00 UTC) imports jobs. To fill the board straight away, open
   **Admin → Pipeline** and run an import.

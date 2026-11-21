@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { DEMO_SESSION_COOKIE, demoSessionSecret, verifyDemoToken } from "@/lib/auth/demo-session";
 import { POSTS } from "@/lib/content/posts";
+import { LEGACY_HOSTS, SITE_URL } from "@/lib/site";
 
 const PROTECTED = ["/dashboard", "/jobs", "/applications", "/profile", "/settings", "/onboarding", "/admin"];
 const AUTH_PAGES = ["/login", "/signup"];
@@ -17,6 +18,12 @@ const supabaseConfigured = () =>
  * visitors early. Authorization is enforced again in the Data Access Layer and RLS.
  */
 export async function proxy(request: NextRequest) {
+  // Old addresses (the .vercel.app production alias, the bare domain) move to www.skylarkgo.in.
+  // Auth callbacks are left alone: their PKCE cookie lives on the host that started sign-in.
+  const host = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "").split(":")[0]!;
+  if (LEGACY_HOSTS.has(host) && (request.method === "GET" || request.method === "HEAD") && !request.nextUrl.pathname.startsWith("/auth/") && !request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.redirect(new URL(request.nextUrl.pathname + request.nextUrl.search, SITE_URL), 308);
+  }
   const requestId = request.headers.get("x-request-id") ?? crypto.randomUUID();
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-request-id", requestId);

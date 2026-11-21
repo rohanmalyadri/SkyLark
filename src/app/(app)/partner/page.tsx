@@ -7,6 +7,8 @@ import { PageHeader, Panel, PanelHeader, SectionLabel } from "@/components/ui/pa
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/states";
 import { requireUser } from "@/lib/auth/dal";
+import { serverEnv } from "@/lib/env";
+import { SITE_HOST } from "@/lib/site";
 import { myPartnerStats } from "@/lib/services/partners";
 import { formatDate } from "@/lib/utils";
 
@@ -32,7 +34,7 @@ async function PartnerDashboard() {
           <EmptyState
             icon={<Handshake />}
             title="You're not a partner yet"
-            description="Partners get a promo code for their audience and a share link that credits every sign-up back to them. Email partners@skylark.dev if you'd like to join."
+            description="Partners get a promo code for their audience and a share link that credits every sign-up back to them. Email partners@skylarkgo.in if you'd like to join."
           />
         </Panel>
       </>
@@ -40,8 +42,9 @@ async function PartnerDashboard() {
   }
 
   const { partner } = stats;
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "skylark.dev";
-  const shareLink = `${h.get("x-forwarded-proto") ?? "https"}://${host}/r/${partner.linkToken}`;
+  const host = h.get("x-forwarded-host") ?? h.get("host") ?? SITE_HOST;
+  const origin = process.env.NODE_ENV === "production" ? serverEnv().siteUrl : `${h.get("x-forwarded-proto") ?? "http"}://${host}`;
+  const shareLink = `${origin}/r/${partner.linkToken}`;
   const peak = Math.max(1, ...stats.byDay.map((d) => d.signUps));
   const rate = stats.signUps === 0 ? 0 : Math.round((stats.conversions / stats.signUps) * 100);
 
