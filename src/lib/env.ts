@@ -40,7 +40,12 @@ const ServerEnvSchema = z.object({
   ADZUNA_APP_KEY: optionalKey,
   ADZUNA_COUNTRIES: csv,
   MUSE_API_KEY: optionalKey,
-  GREENHOUSE_BOARDS: csv,
+  // Global employers with public Greenhouse boards, so the catalog isn't Europe-only. Set the
+  // variable to override the list; an empty value turns the source off.
+  GREENHOUSE_BOARDS: z
+    .string()
+    .default("gitlab,figma,mongodb,airbnb,twilio")
+    .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean)),
   LEVER_COMPANIES: csv,
 });
 
