@@ -13,7 +13,7 @@ export function RevenueByClient({ data, total }: { data: ClientSummary["revenueB
       {data.map((d) => (
         <li key={d.id}>
           <div className="mb-1.5 flex items-baseline justify-between gap-3 text-[13px]">
-            <Link href={`/admin/clients/${d.id}`} className="truncate text-fg hover:underline hover:underline-offset-4">
+            <Link href={`/obscuron-nexus-92vX7q/clients/${d.id}`} className="truncate text-fg hover:underline hover:underline-offset-4">
               {d.name}
             </Link>
             <span className="shrink-0 tabular">

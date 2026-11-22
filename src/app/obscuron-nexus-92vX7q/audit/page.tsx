@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Audit log" };
 
 const FILTERS = ["all", "application", "human_review", "tailored_document", "resume", "user", "plan", "background_job", "subscription"];
 
-export default function AuditPage({ searchParams }: PageProps<"/admin/audit">) {
+export default function AuditPage({ searchParams }: PageProps<"/obscuron-nexus-92vX7q/audit">) {
   return (
     <>
       <PageHeader eyebrow="Operations" title="Audit log" description="Append-only record of who did what, and when. Written server-side; never editable from the client." />
@@ -23,7 +23,7 @@ export default function AuditPage({ searchParams }: PageProps<"/admin/audit">) {
   );
 }
 
-async function Audit({ searchParams }: { searchParams: PageProps<"/admin/audit">["searchParams"] }) {
+async function Audit({ searchParams }: { searchParams: PageProps<"/obscuron-nexus-92vX7q/audit">["searchParams"] }) {
   await requireStaff();
   const sp = await searchParams;
   const entity = typeof sp.entity === "string" && FILTERS.includes(sp.entity) ? sp.entity : "all";
@@ -33,7 +33,7 @@ async function Audit({ searchParams }: { searchParams: PageProps<"/admin/audit">
     <>
       <nav aria-label="Filter by entity" className="mb-4 flex flex-wrap gap-1.5">
         {FILTERS.map((f) => (
-          <Link key={f} href={f === "all" ? "/admin/audit" : `/admin/audit?entity=${f}`} aria-current={entity === f ? "page" : undefined} className={cn("h-7 rounded-md border px-2.5 text-xs leading-7 transition-colors", entity === f ? "border-line-strong bg-surface-3 text-fg" : "border-line text-muted hover:text-fg")}>
+          <Link key={f} href={f === "all" ? "/obscuron-nexus-92vX7q/audit" : `/obscuron-nexus-92vX7q/audit?entity=${f}`} aria-current={entity === f ? "page" : undefined} className={cn("h-7 rounded-md border px-2.5 text-xs leading-7 transition-colors", entity === f ? "border-line-strong bg-surface-3 text-fg" : "border-line text-muted hover:text-fg")}>
             {f.replace(/_/g, " ")}
           </Link>
         ))}

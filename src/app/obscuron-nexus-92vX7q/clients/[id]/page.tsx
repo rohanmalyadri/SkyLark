@@ -14,7 +14,7 @@ import { clientDetail } from "@/lib/services/clients";
 
 export const metadata: Metadata = { title: "Client" };
 
-export default function ClientPage({ params }: PageProps<"/admin/clients/[id]">) {
+export default function ClientPage({ params }: PageProps<"/obscuron-nexus-92vX7q/clients/[id]">) {
   return (
     <Suspense fallback={<PageSkeleton rows={4} />}>
       <ClientProfile params={params} />
@@ -56,7 +56,7 @@ async function ClientProfile({ params }: { params: Promise<{ id: string }> }) {
 
   return (
     <>
-      <Link href="/admin/clients" className="mb-5 inline-flex items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-fg">
+      <Link href="/obscuron-nexus-92vX7q/clients" className="mb-5 inline-flex items-center gap-1.5 text-[13px] text-muted transition-colors hover:text-fg">
         <ArrowLeft className="size-3.5" /> All clients
       </Link>
 

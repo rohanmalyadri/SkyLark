@@ -26,7 +26,7 @@ applications before anything is sent. Capstone project by Team Synapse X (Rohan 
   `client-stats.ts`, pages under `src/app/admin/{page,clients,inbox,payments}`. Demo mode persists it to
   git-ignored `.data/crm.json` (delete to reseed); Supabase uses migration 9. Staff-entered payments are
   always `paymentSource: "manual"`; only a gateway integration may write "gateway". The old ops overview
-  now lives at `/admin/operations`.
+  now lives at `/obscuron-nexus-92vX7q/operations`.
 - User ↔ team chat: `/messages` (user side, `src/lib/services/support-chat.ts`) shares `ChatThread` with the
   admin inbox. A client links to one account (`clients.user_id`, migration 10); a user's first message
   opens a client record, and staff link existing clients by account email. Never auto-link by email.

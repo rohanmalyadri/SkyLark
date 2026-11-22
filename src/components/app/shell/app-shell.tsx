@@ -21,7 +21,7 @@ export function AppShell({ variant, children }: { variant: Variant; children: Re
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[232px_minmax(0,1fr)]">
       <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line bg-surface px-3 py-4 md:flex">
-        <Link href={variant === "admin" ? "/admin" : "/dashboard"} className="mb-6 flex items-center gap-2 rounded-md px-1.5" aria-label="Home">
+        <Link href={variant === "admin" ? "/obscuron-nexus-92vX7q" : "/dashboard"} className="mb-6 flex items-center gap-2 rounded-md px-1.5" aria-label="Home">
           <Logo />
           {variant === "admin" && <span className="rounded border border-line-strong px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-subtle">Ops</span>}
         </Link>
@@ -45,7 +45,7 @@ export function AppShell({ variant, children }: { variant: Variant; children: Re
 
       <div className="flex min-w-0 flex-col">
         <header className="glass sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-line px-4 md:px-8">
-          <Link href={variant === "admin" ? "/admin" : "/dashboard"} className="md:hidden" aria-label="Home">
+          <Link href={variant === "admin" ? "/obscuron-nexus-92vX7q" : "/dashboard"} className="md:hidden" aria-label="Home">
             <Logo wordmark={false} />
           </Link>
           <div className="flex-1">

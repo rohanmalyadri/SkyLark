@@ -44,7 +44,7 @@ async function Queue() {
                   <p className="text-[15px] font-medium">{r.name}</p>
                   <p className="mt-0.5 text-xs text-subtle">
                     Requested by{" "}
-                    <Link href={`/admin/candidates/${r.userId}`} className="text-muted hover:underline">
+                    <Link href={`/obscuron-nexus-92vX7q/candidates/${r.userId}`} className="text-muted hover:underline">
                       {r.requesterName}
                     </Link>{" "}
                     · {timeAgo(r.createdAt)}

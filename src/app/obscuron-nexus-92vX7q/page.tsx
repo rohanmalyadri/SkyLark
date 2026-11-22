@@ -34,10 +34,10 @@ async function Dashboard() {
   const manualRevenue = s.revenue - s.verifiedRevenue;
 
   const kpis = [
-    { label: "Total clients", value: String(s.totalClients), sub: `${s.byStatus.active} active · ${s.byStatus.completed} completed`, href: "/admin/clients", icon: Users },
-    { label: "Successful payments", value: String(s.paidClients), sub: s.paidClients ? `Average ${formatINR(s.averageDeal)}` : "None recorded yet", href: "/admin/payments", icon: CheckCircle2 },
-    { label: "Pending discussions", value: String(s.pendingDiscussions), sub: s.unread ? `${s.unread} unread message${s.unread === 1 ? "" : "s"}` : "Inbox is clear", href: "/admin/inbox", icon: Clock3, alert: s.unread > 0 },
-    { label: "Total revenue", value: formatINR(s.revenue), sub: s.verifiedRevenue === s.revenue ? "Gateway verified" : "Recorded manually", href: "/admin/payments", icon: IndianRupee },
+    { label: "Total clients", value: String(s.totalClients), sub: `${s.byStatus.active} active · ${s.byStatus.completed} completed`, href: "/obscuron-nexus-92vX7q/clients", icon: Users },
+    { label: "Successful payments", value: String(s.paidClients), sub: s.paidClients ? `Average ${formatINR(s.averageDeal)}` : "None recorded yet", href: "/obscuron-nexus-92vX7q/payments", icon: CheckCircle2 },
+    { label: "Pending discussions", value: String(s.pendingDiscussions), sub: s.unread ? `${s.unread} unread message${s.unread === 1 ? "" : "s"}` : "Inbox is clear", href: "/obscuron-nexus-92vX7q/inbox", icon: Clock3, alert: s.unread > 0 },
+    { label: "Total revenue", value: formatINR(s.revenue), sub: s.verifiedRevenue === s.revenue ? "Gateway verified" : "Recorded manually", href: "/obscuron-nexus-92vX7q/payments", icon: IndianRupee },
   ];
 
   return (
@@ -49,7 +49,7 @@ async function Dashboard() {
         actions={
           <>
             <Button asChild size="sm" variant="secondary">
-              <Link href="/admin/inbox">
+              <Link href="/obscuron-nexus-92vX7q/inbox">
                 <Inbox /> Inbox
                 {s.unread > 0 && <span className="rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white">{s.unread}</span>}
               </Link>
@@ -86,7 +86,7 @@ async function Dashboard() {
             title="Payment overview"
             description="Amounts in Indian rupees"
             action={
-              <Link href="/admin/payments" className="flex items-center gap-1 text-[13px] text-muted hover:text-fg">
+              <Link href="/obscuron-nexus-92vX7q/payments" className="flex items-center gap-1 text-[13px] text-muted hover:text-fg">
                 All payments <ArrowRight className="size-3.5" />
               </Link>
             }
@@ -118,7 +118,7 @@ async function Dashboard() {
           <ul className="divide-y divide-line border-t border-line">
             {threads.map(({ client: c }) => (
               <li key={c.id}>
-                <Link href={`/admin/clients/${c.id}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-surface/70">
+                <Link href={`/obscuron-nexus-92vX7q/clients/${c.id}`} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-surface/70">
                   <ClientAvatar name={c.name} className="size-8 text-[11px]" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[13px] font-medium text-fg">{c.name}</span>
@@ -158,7 +158,7 @@ async function Dashboard() {
             title="Latest messages"
             description="Most recent from clients"
             action={
-              <Link href="/admin/inbox" className="flex items-center gap-1 text-[13px] text-muted hover:text-fg">
+              <Link href="/obscuron-nexus-92vX7q/inbox" className="flex items-center gap-1 text-[13px] text-muted hover:text-fg">
                 Open inbox <ArrowRight className="size-3.5" />
               </Link>
             }
@@ -169,7 +169,7 @@ async function Dashboard() {
             <ul className="divide-y divide-line">
               {latestInbound.map((m) => (
                 <li key={m.id}>
-                  <Link href={`/admin/inbox?c=${m.clientId}`} className={cn("flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-surface/70", !m.readAt && "bg-accent-soft/60")}>
+                  <Link href={`/obscuron-nexus-92vX7q/inbox?c=${m.clientId}`} className={cn("flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-surface/70", !m.readAt && "bg-accent-soft/60")}>
                     <ClientAvatar name={m.clientName} unread={!m.readAt} className="size-8 text-[11px]" />
                     <span className="min-w-0 flex-1">
                       <span className="flex items-baseline justify-between gap-2">
@@ -205,7 +205,7 @@ async function Dashboard() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-[13px] text-fg">
-                        <Link href={`/admin/clients/${c.id}`} className="font-medium hover:underline hover:underline-offset-4">
+                        <Link href={`/obscuron-nexus-92vX7q/clients/${c.id}`} className="font-medium hover:underline hover:underline-offset-4">
                           {c.name}
                         </Link>{" "}
                         <span className="text-muted">{!lastMessage ? "was added as a client" : lastMessage.direction === "inbound" ? (unread ? `sent ${unread} new message${unread === 1 ? "" : "s"}` : "sent a message") : `got a reply from ${lastMessage.sample ? "the team" : lastMessage.authorName}`}</span>

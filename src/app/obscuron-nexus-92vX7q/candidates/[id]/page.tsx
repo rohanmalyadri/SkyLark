@@ -18,7 +18,7 @@ import { cn, formatDate, timeAgo } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Candidate review" };
 
-export default function CandidatePage({ params }: PageProps<"/admin/candidates/[id]">) {
+export default function CandidatePage({ params }: PageProps<"/obscuron-nexus-92vX7q/candidates/[id]">) {
   return (
     <Suspense fallback={<PageSkeleton rows={4} />}>
       <Candidate params={params} />
@@ -47,7 +47,7 @@ function FlagItem({ flag }: { flag: ProfileFlag }) {
   );
 }
 
-async function Candidate({ params }: { params: PageProps<"/admin/candidates/[id]">["params"] }) {
+async function Candidate({ params }: { params: PageProps<"/obscuron-nexus-92vX7q/candidates/[id]">["params"] }) {
   await requireStaff();
   const { id } = await params;
   let data;
@@ -66,7 +66,7 @@ async function Candidate({ params }: { params: PageProps<"/admin/candidates/[id]
 
   return (
     <>
-      <Link href="/admin/candidates" className="mb-5 inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-fg">
+      <Link href="/obscuron-nexus-92vX7q/candidates" className="mb-5 inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-fg">
         <ArrowLeft className="size-3.5" /> Candidates
       </Link>
       <div className="flex flex-col gap-4 border-b border-line pb-6 md:flex-row md:items-center md:justify-between">

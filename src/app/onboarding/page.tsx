@@ -31,7 +31,7 @@ export default function OnboardingPage() {
 
 async function Onboarding() {
   const user = await requireUser();
-  if (user.role !== "candidate") redirect("/admin");
+  if (user.role !== "candidate") redirect("/obscuron-nexus-92vX7q");
   if (user.onboardedAt) redirect("/dashboard");
   const { profile, resumes } = await getProfileBundle(user);
   return <OnboardingFlow profile={profile} firstName={user.fullName.split(" ")[0] ?? ""} fullName={user.fullName} avatarUrl={user.avatarUrl} hasResume={resumes.length > 0} chatAvailable={chatIntakeAvailable()} />;

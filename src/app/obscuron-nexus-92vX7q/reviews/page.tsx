@@ -22,7 +22,7 @@ const TABS: { key: string; label: string; status?: ReviewStatus[] }[] = [
   { key: "done", label: "Completed", status: ["approved", "changes_requested"] },
 ];
 
-export default function ReviewsPage({ searchParams }: PageProps<"/admin/reviews">) {
+export default function ReviewsPage({ searchParams }: PageProps<"/obscuron-nexus-92vX7q/reviews">) {
   return (
     <>
       <PageHeader eyebrow="Human review" title="Review queue" description="Every application is checked by a specialist before submission. SLA: 24 hours from request." />
@@ -33,7 +33,7 @@ export default function ReviewsPage({ searchParams }: PageProps<"/admin/reviews"
   );
 }
 
-async function Queue({ searchParams }: { searchParams: PageProps<"/admin/reviews">["searchParams"] }) {
+async function Queue({ searchParams }: { searchParams: PageProps<"/obscuron-nexus-92vX7q/reviews">["searchParams"] }) {
   const user = await requireStaff();
   const sp = await searchParams;
   const tab = TABS.find((t) => t.key === sp.tab) ?? TABS[0]!;
@@ -45,7 +45,7 @@ async function Queue({ searchParams }: { searchParams: PageProps<"/admin/reviews
     <>
       <nav aria-label="Queue filters" className="mb-4 flex gap-1 border-b border-line">
         {TABS.map((t) => (
-          <Link key={t.key} href={`/admin/reviews?tab=${t.key}`} aria-current={t.key === tab.key ? "page" : undefined} className={cn("-mb-px border-b-2 px-3 py-2.5 text-[13px] transition-colors", t.key === tab.key ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg")}>
+          <Link key={t.key} href={`/obscuron-nexus-92vX7q/reviews?tab=${t.key}`} aria-current={t.key === tab.key ? "page" : undefined} className={cn("-mb-px border-b-2 px-3 py-2.5 text-[13px] transition-colors", t.key === tab.key ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg")}>
             {t.label}
           </Link>
         ))}
@@ -73,7 +73,7 @@ async function Queue({ searchParams }: { searchParams: PageProps<"/admin/reviews
                   return (
                     <tr key={r.id} className="group relative transition-colors hover:bg-surface-2/40">
                       <td className="px-5 py-3.5">
-                        <Link href={`/admin/reviews/${r.id}`} className="font-medium text-fg after:absolute after:inset-0">
+                        <Link href={`/obscuron-nexus-92vX7q/reviews/${r.id}`} className="font-medium text-fg after:absolute after:inset-0">
                           {r.candidate.fullName}
                         </Link>
                         <p className="text-xs text-subtle">{r.candidate.email}</p>

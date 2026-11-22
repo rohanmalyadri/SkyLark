@@ -77,7 +77,7 @@ function ClientForm({ client, onDone }: { client?: Client; onDone: () => void })
   const router = useRouter();
   const [v, setV] = useState<Values>(() => toValues(client));
   const [errors, setErrors] = useState<Record<string, string[]>>({});
-  const create = useAction(createClientAction, { onSuccess: (d) => router.push(`/admin/clients/${d.id}`) });
+  const create = useAction(createClientAction, { onSuccess: (d) => router.push(`/obscuron-nexus-92vX7q/clients/${d.id}`) });
   const update = useAction(updateClientAction);
   const pending = create.pending || update.pending;
   const gatewayLocked = client?.paymentSource === "gateway";

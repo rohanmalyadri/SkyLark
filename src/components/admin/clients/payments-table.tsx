@@ -85,7 +85,7 @@ export function PaymentsTable({ clients }: { clients: Client[] }) {
                   return (
                     <tr key={c.id} className="transition-colors hover:bg-surface/70">
                       <td className="px-5 py-3">
-                        <Link href={`/admin/clients/${c.id}`} className="flex items-center gap-3 hover:underline hover:decoration-line-strong hover:underline-offset-4">
+                        <Link href={`/obscuron-nexus-92vX7q/clients/${c.id}`} className="flex items-center gap-3 hover:underline hover:decoration-line-strong hover:underline-offset-4">
                           <ClientAvatar name={c.name} className="size-8 text-[11px]" />
                           <span className="font-medium text-fg">{c.name}</span>
                         </Link>

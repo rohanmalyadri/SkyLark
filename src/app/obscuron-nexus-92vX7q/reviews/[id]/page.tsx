@@ -18,7 +18,7 @@ import { cn, timeAgo } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Review" };
 
-export default function ReviewPage({ params }: PageProps<"/admin/reviews/[id]">) {
+export default function ReviewPage({ params }: PageProps<"/obscuron-nexus-92vX7q/reviews/[id]">) {
   return (
     <Suspense fallback={<PageSkeleton rows={3} />}>
       <Review params={params} />
@@ -26,7 +26,7 @@ export default function ReviewPage({ params }: PageProps<"/admin/reviews/[id]">)
   );
 }
 
-async function Review({ params }: { params: PageProps<"/admin/reviews/[id]">["params"] }) {
+async function Review({ params }: { params: PageProps<"/obscuron-nexus-92vX7q/reviews/[id]">["params"] }) {
   const staff = await requireStaff();
   const { id } = await params;
   let data;
@@ -42,7 +42,7 @@ async function Review({ params }: { params: PageProps<"/admin/reviews/[id]">["pa
 
   return (
     <>
-      <Link href="/admin/reviews" className="mb-5 inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-fg">
+      <Link href="/obscuron-nexus-92vX7q/reviews" className="mb-5 inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-fg">
         <ArrowLeft className="size-3.5" /> Review queue
       </Link>
       <div className="flex flex-col gap-4 border-b border-line pb-6 md:flex-row md:items-center md:justify-between">

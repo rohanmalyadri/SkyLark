@@ -78,7 +78,7 @@ test.describe("matching", () => {
 test.describe("access control", () => {
   test("keeps candidates out of the admin portal", async ({ page }) => {
     await demoSignIn(page, "Candidate");
-    await page.goto("/admin/candidates");
+    await page.goto("/obscuron-nexus-92vX7q/candidates");
     await expect(page).toHaveURL(/\/dashboard/);
     const res = await page.request.get("/api/resumes/00000000-0000-4000-8000-000000000000?owner=someone-else");
     expect(res.status()).toBe(404);
@@ -86,7 +86,7 @@ test.describe("access control", () => {
 
   test("lets staff review a candidate and requires a reason to reject", async ({ page }) => {
     await demoSignIn(page, "Operations");
-    await page.goto("/admin/candidates?status=pending");
+    await page.goto("/obscuron-nexus-92vX7q/candidates?status=pending");
     await page.getByRole("link", { name: "Aisha Bello" }).click();
     await page.getByRole("button", { name: "Reject" }).click();
     await expect(page.getByText(/Explain what the candidate needs to change/)).toBeVisible();

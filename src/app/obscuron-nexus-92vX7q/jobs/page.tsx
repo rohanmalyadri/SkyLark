@@ -17,7 +17,7 @@ import { cn, formatSalaryRange, timeAgo } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Jobs & applications" };
 
-export default function AdminJobsPage({ searchParams }: PageProps<"/admin/jobs">) {
+export default function AdminJobsPage({ searchParams }: PageProps<"/obscuron-nexus-92vX7q/jobs">) {
   return (
     <>
       <PageHeader eyebrow="Operations" title="Jobs & applications" description="The normalized job catalog and every application moving through the pipeline." />
@@ -28,7 +28,7 @@ export default function AdminJobsPage({ searchParams }: PageProps<"/admin/jobs">
   );
 }
 
-async function Content({ searchParams }: { searchParams: PageProps<"/admin/jobs">["searchParams"] }) {
+async function Content({ searchParams }: { searchParams: PageProps<"/obscuron-nexus-92vX7q/jobs">["searchParams"] }) {
   await requireStaff();
   const sp = await searchParams;
   const tab = sp.tab === "applications" ? "applications" : "jobs";
@@ -39,7 +39,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/admin/jobs"
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <nav aria-label="View" className="flex gap-1 border-b border-line sm:border-0">
           {(["jobs", "applications"] as const).map((t) => (
-            <Link key={t} href={`/admin/jobs?tab=${t}`} aria-current={tab === t ? "page" : undefined} className={cn("-mb-px border-b-2 px-3 py-2 text-[13px] capitalize sm:rounded-md sm:border-0 sm:py-1.5", tab === t ? "border-accent text-fg sm:bg-surface-2" : "border-transparent text-muted hover:text-fg")}>
+            <Link key={t} href={`/obscuron-nexus-92vX7q/jobs?tab=${t}`} aria-current={tab === t ? "page" : undefined} className={cn("-mb-px border-b-2 px-3 py-2 text-[13px] capitalize sm:rounded-md sm:border-0 sm:py-1.5", tab === t ? "border-accent text-fg sm:bg-surface-2" : "border-transparent text-muted hover:text-fg")}>
               {t}
             </Link>
           ))}

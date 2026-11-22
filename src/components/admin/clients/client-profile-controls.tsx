@@ -22,7 +22,7 @@ export function ProfileActions({ client, canDelete }: { client: Client; canDelet
   return (
     <>
       <Button asChild size="sm" variant="secondary">
-        <Link href={`/admin/inbox?c=${client.id}`}>
+        <Link href={`/obscuron-nexus-92vX7q/inbox?c=${client.id}`}>
           <MessageSquareText /> Open in inbox
         </Link>
       </Button>
@@ -32,7 +32,7 @@ export function ProfileActions({ client, canDelete }: { client: Client; canDelet
           <Trash2 /> Delete
         </Button>
       )}
-      <DeleteClientDialog client={confirm ? client : null} onClose={() => setConfirm(false)} onDeleted={() => router.push("/admin/clients")} />
+      <DeleteClientDialog client={confirm ? client : null} onClose={() => setConfirm(false)} onDeleted={() => router.push("/obscuron-nexus-92vX7q/clients")} />
     </>
   );
 }

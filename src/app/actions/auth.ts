@@ -18,7 +18,7 @@ export async function signInAction(_: AuthState, form: FormData): Promise<AuthSt
   let destination: string;
   try {
     const user = await signIn({ email, password: form.get("password") }, (await requestIp()) ?? "unknown");
-    destination = safeNext(form.get("next"), user.role === "candidate" ? (user.onboardedAt ? "/dashboard" : "/onboarding") : "/admin");
+    destination = safeNext(form.get("next"), user.role === "candidate" ? (user.onboardedAt ? "/dashboard" : "/onboarding") : "/obscuron-nexus-92vX7q");
   } catch (err) {
     return { ...toActionError(err, "auth.signIn"), values: { email } };
   }
@@ -50,7 +50,7 @@ export async function googleAction(form: FormData): Promise<void> {
 export async function demoAction(form: FormData): Promise<void> {
   const who = form.get("who") === "admin" ? "admin" : "candidate";
   await demoSignIn(who);
-  redirect(who === "admin" ? "/admin" : "/dashboard");
+  redirect(who === "admin" ? "/obscuron-nexus-92vX7q" : "/dashboard");
 }
 
 export async function signOutAction(): Promise<void> {

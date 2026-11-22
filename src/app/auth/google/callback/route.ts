@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const profile = await completeGoogleExchange(code, state);
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const user = await completeGoogleSignIn(profile, ip);
-    const destination = user.role !== "candidate" ? (state.next.startsWith("/admin") ? state.next : "/admin") : user.onboardedAt ? state.next : "/onboarding";
+    const destination = user.role !== "candidate" ? (state.next.startsWith("/obscuron-nexus-92vX7q") ? state.next : "/obscuron-nexus-92vX7q") : user.onboardedAt ? state.next : "/onboarding";
     const res = NextResponse.redirect(new URL(destination, origin));
     res.cookies.delete({ name: GOOGLE_STATE_COOKIE, path: "/auth/google" });
     return res;

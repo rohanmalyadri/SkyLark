@@ -30,18 +30,18 @@ async function Overview() {
   const { stats, reviews, runs, failedJobs, now } = await overview();
 
   const kpis = [
-    { label: "Candidates", value: stats.candidates, href: "/admin/candidates" },
-    { label: "Active jobs", value: stats.activeJobs, href: "/admin/jobs" },
-    { label: "Applications", value: stats.applications, href: "/admin/jobs?tab=applications" },
-    { label: "Review queue", value: stats.reviewQueue, href: "/admin/reviews", alert: stats.reviewsOverdue ? `${stats.reviewsOverdue} past SLA` : null },
+    { label: "Candidates", value: stats.candidates, href: "/obscuron-nexus-92vX7q/candidates" },
+    { label: "Active jobs", value: stats.activeJobs, href: "/obscuron-nexus-92vX7q/jobs" },
+    { label: "Applications", value: stats.applications, href: "/obscuron-nexus-92vX7q/jobs?tab=applications" },
+    { label: "Review queue", value: stats.reviewQueue, href: "/obscuron-nexus-92vX7q/reviews", alert: stats.reviewsOverdue ? `${stats.reviewsOverdue} past SLA` : null },
     {
       label: "Sent today",
       value: `${stats.delivery.submitted}/${stats.delivery.target}`,
-      href: "/admin/delivery",
+      href: "/obscuron-nexus-92vX7q/delivery",
       alert: stats.delivery.short ? `${stats.delivery.short} closed short` : null,
     },
-    { label: "New leads", value: stats.newLeads, href: "/admin/leads", alert: stats.newLeads ? "Unanswered" : null },
-    { label: "Failed jobs", value: stats.failedJobs, href: "/admin/pipeline", alert: stats.failedJobs ? "Needs attention" : null },
+    { label: "New leads", value: stats.newLeads, href: "/obscuron-nexus-92vX7q/leads", alert: stats.newLeads ? "Unanswered" : null },
+    { label: "Failed jobs", value: stats.failedJobs, href: "/obscuron-nexus-92vX7q/pipeline", alert: stats.failedJobs ? "Needs attention" : null },
   ];
 
   return (
@@ -93,7 +93,7 @@ async function Overview() {
             title="Review queue"
             description="Highest priority and nearest SLA first"
             action={
-              <Link href="/admin/reviews" className="flex items-center gap-1 text-[13px] text-muted hover:text-fg">
+              <Link href="/obscuron-nexus-92vX7q/reviews" className="flex items-center gap-1 text-[13px] text-muted hover:text-fg">
                 Open queue <ArrowRight className="size-3.5" />
               </Link>
             }
@@ -106,7 +106,7 @@ async function Overview() {
                 const overdue = r.slaDueAt < now;
                 return (
                   <li key={r.id}>
-                    <Link href={`/admin/reviews/${r.id}`} className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-surface-2/40">
+                    <Link href={`/obscuron-nexus-92vX7q/reviews/${r.id}`} className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-surface-2/40">
                       <CompanyMark name={r.application.job.company.name} color={r.application.job.company.brandColor} size="sm" />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[13px] font-medium">
@@ -129,7 +129,7 @@ async function Overview() {
 
         <div className="space-y-6">
           <Panel>
-            <PanelHeader title="Recent ingestion" action={<Link href="/admin/pipeline" className="text-[13px] text-muted hover:text-fg">Pipeline</Link>} />
+            <PanelHeader title="Recent ingestion" action={<Link href="/obscuron-nexus-92vX7q/pipeline" className="text-[13px] text-muted hover:text-fg">Pipeline</Link>} />
             <ul className="divide-y divide-line">
               {runs.map((r) => (
                 <li key={r.id} className="flex items-center gap-3 px-5 py-3 text-[13px]">

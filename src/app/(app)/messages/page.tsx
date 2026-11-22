@@ -25,7 +25,7 @@ export default function MessagesPage() {
 async function Conversation() {
   const user = await requireCandidate();
   // Staff talk to clients from the other side.
-  if (isStaff(user)) redirect("/admin/inbox");
+  if (isStaff(user)) redirect("/obscuron-nexus-92vX7q/inbox");
   const { client, messages } = await myConversation(user);
 
   return (

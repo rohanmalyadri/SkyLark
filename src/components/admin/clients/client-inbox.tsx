@@ -135,7 +135,7 @@ export function ClientInbox({ threads, messages, now, staffName }: { threads: Th
                 <ClientStatusBadge status={active.client.status} />
                 <PaymentBadge status={active.client.paymentStatus} />
               </div>
-              <Link href={`/admin/clients/${active.client.id}`} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line-strong px-2.5 text-[13px] text-fg transition-colors hover:border-fg/40 hover:bg-surface">
+              <Link href={`/obscuron-nexus-92vX7q/clients/${active.client.id}`} className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line-strong px-2.5 text-[13px] text-fg transition-colors hover:border-fg/40 hover:bg-surface">
                 Profile <ExternalLink className="size-3.5 text-subtle" />
               </Link>
             </header>

@@ -16,7 +16,7 @@ import { cn, formatDate, timeAgo } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Candidates" };
 
-export default function CandidatesPage({ searchParams }: PageProps<"/admin/candidates">) {
+export default function CandidatesPage({ searchParams }: PageProps<"/obscuron-nexus-92vX7q/candidates">) {
   return (
     <>
       <PageHeader eyebrow="Operations" title="Candidates" description="Review queue and directory. Approve, reject or request changes on candidate profiles; flagged details are checked automatically." />
@@ -49,10 +49,10 @@ function href(f: CandidateFilters, patch: Partial<CandidateFilters>) {
   if (next.status !== "all") sp.set("status", next.status);
   if (next.sort !== "queue") sp.set("sort", next.sort);
   const s = sp.toString();
-  return `/admin/candidates${s ? `?${s}` : ""}`;
+  return `/obscuron-nexus-92vX7q/candidates${s ? `?${s}` : ""}`;
 }
 
-async function List({ searchParams }: { searchParams: PageProps<"/admin/candidates">["searchParams"] }) {
+async function List({ searchParams }: { searchParams: PageProps<"/obscuron-nexus-92vX7q/candidates">["searchParams"] }) {
   await requireStaff();
   const filters = parseCandidateFilters(await searchParams);
   const { rows, counts } = await candidates(filters);
@@ -113,7 +113,7 @@ async function List({ searchParams }: { searchParams: PageProps<"/admin/candidat
                         <div className="flex items-center gap-3">
                           <UserAvatar name={user.fullName} src={user.avatarUrl} />
                           <div className="min-w-0">
-                            <Link href={`/admin/candidates/${user.id}`} className="font-medium text-fg after:absolute after:inset-0 hover:underline">
+                            <Link href={`/obscuron-nexus-92vX7q/candidates/${user.id}`} className="font-medium text-fg after:absolute after:inset-0 hover:underline">
                               {user.fullName}
                             </Link>
                             <p className="truncate text-xs text-subtle">{profile?.headline || user.email}</p>

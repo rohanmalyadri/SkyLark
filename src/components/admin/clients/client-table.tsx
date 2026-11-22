@@ -104,7 +104,7 @@ export function ClientTable({ rows, now, canDelete }: { rows: ThreadSummary[]; n
               {shown.map(({ client: c, unread }) => (
                 <tr key={c.id} className="group transition-colors hover:bg-surface/70">
                   <td className="px-5 py-3">
-                    <Link href={`/admin/clients/${c.id}`} className="flex items-center gap-3 outline-none">
+                    <Link href={`/obscuron-nexus-92vX7q/clients/${c.id}`} className="flex items-center gap-3 outline-none">
                       <ClientAvatar name={c.name} unread={unread > 0} />
                       <span className="min-w-0">
                         <span className="block truncate font-medium text-fg group-hover:underline group-hover:decoration-line-strong group-hover:underline-offset-4">{c.name}</span>
@@ -140,7 +140,7 @@ export function ClientTable({ rows, now, canDelete }: { rows: ThreadSummary[]; n
           <ul className="divide-y divide-line md:hidden">
             {shown.map(({ client: c, unread }) => (
               <li key={c.id} className="flex items-start gap-3 px-4 py-3.5">
-                <Link href={`/admin/clients/${c.id}`} className="flex min-w-0 flex-1 items-start gap-3">
+                <Link href={`/obscuron-nexus-92vX7q/clients/${c.id}`} className="flex min-w-0 flex-1 items-start gap-3">
                   <ClientAvatar name={c.name} unread={unread > 0} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-baseline justify-between gap-2">
@@ -179,10 +179,10 @@ function RowMenu({ client, canDelete, onDelete }: { client: Client; canDelete: b
         </button>
       </MenuTrigger>
       <MenuContent>
-        <MenuItem onSelect={() => router.push(`/admin/clients/${client.id}`)}>
+        <MenuItem onSelect={() => router.push(`/obscuron-nexus-92vX7q/clients/${client.id}`)}>
           <Users className="size-4" /> Open profile
         </MenuItem>
-        <MenuItem onSelect={() => router.push(`/admin/inbox?c=${client.id}`)}>
+        <MenuItem onSelect={() => router.push(`/obscuron-nexus-92vX7q/inbox?c=${client.id}`)}>
           <MessageSquareText className="size-4" /> Open conversation
         </MenuItem>
         {canDelete && (
