@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight, ArrowUp, FileCheck2, ListChecks, Loader2, Paperclip, RotateCcw } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { ArrowRight, ArrowUp, Check, ListChecks, Paperclip, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { completeOnboardingAction, intakeChatAction, uploadResumeAction } from "@/app/actions/candidate";
@@ -19,6 +20,8 @@ interface ChatMessage {
   text: string;
   saved?: string[];
   tone?: "error";
+  /** Restored from storage after a reload: shown without the entrance animation. */
+  restored?: boolean;
 }
 
 interface ChatState {
@@ -87,8 +90,12 @@ export function ChatIntake({
     restored.current = true;
     try {
       const saved = window.sessionStorage.getItem(STORAGE_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from storage
-      if (saved) setState(JSON.parse(saved) as ChatState);
+      if (saved) {
+        const parsed = JSON.parse(saved) as ChatState;
+        // Messages brought back from storage render in place; only new ones animate in.
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from storage
+        setState({ ...parsed, messages: parsed.messages.map((m) => ({ ...m, restored: true })) });
+      }
     } catch {
       /* storage unavailable: start fresh */
     }
@@ -195,12 +202,15 @@ export function ChatIntake({
 
   if (finishing) return <Finishing phase={finishing.phase} matches={finishing.matches} countries={draft.preferredCountries.length} />;
 
+  const thinking = turn.pending || upload.pending;
+  const canSend = !busy && input.trim().length > 0;
+
   return (
     <div className="flex flex-col">
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={SPRING_SOFT} className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="headline text-[32px] sm:text-[40px]">Let&apos;s set up your profile</h1>
-          <p className="mt-2 text-[15px] text-muted">Answer in the chat. I&apos;ll fill in the details and check them as we go.</p>
+          <p className="mt-2 text-[15px] text-muted">Just answer in your own words. I&apos;ll fill in the details and check them as we go.</p>
         </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" onClick={restart} disabled={busy} aria-label="Start the chat again">
@@ -210,104 +220,253 @@ export function ChatIntake({
             <ListChecks /> Use the form
           </Button>
         </div>
-      </div>
+      </motion.div>
 
-      <div className="mb-3 flex items-center gap-3" aria-label={`${progress.done} of ${progress.total} topics covered`}>
-        <div className="h-1 flex-1 overflow-hidden rounded-full bg-black/10">
-          <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${(progress.done / progress.total) * 100}%` }} />
+      <motion.div
+        initial={{ opacity: 0, y: 24, scale: 0.985 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ ...SPRING_SOFT, delay: 0.06 }}
+        className="relative overflow-hidden rounded-[28px] border border-line bg-bg shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-12px_rgba(0,0,0,0.12)]"
+      >
+        {/* Progress: a hairline along the top edge that springs forward as topics are covered. */}
+        <div className="absolute inset-x-0 top-0 z-20 h-[3px] bg-black/[0.04]" role="progressbar" aria-label="Profile progress" aria-valuemin={0} aria-valuemax={progress.total} aria-valuenow={progress.done}>
+          <motion.div className="h-full origin-left rounded-r-full bg-accent" initial={false} animate={{ scaleX: progress.done / progress.total }} transition={SPRING_SOFT} style={{ width: "100%" }} />
         </div>
-        <span className="text-xs tabular-nums text-subtle">
-          {progress.done}/{progress.total}
-        </span>
-      </div>
+        <div className="flex items-center justify-between border-b border-line/70 px-5 pb-3 pt-4">
+          <div className="flex items-center gap-2.5">
+            <span className="relative grid size-8 place-items-center rounded-full bg-surface">
+              <SkylarkMark className="size-5" />
+              <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-bg bg-success" aria-hidden />
+            </span>
+            <span className="leading-tight">
+              <span className="block text-sm font-medium">Skylark</span>
+              <span className="block text-xs text-subtle">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.span key={thinking ? "t" : "o"} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.18 }} className="inline-block">
+                    {upload.pending ? "Reading your resume…" : turn.pending ? "Typing…" : "Profile assistant"}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+            </span>
+          </div>
+          <span className="text-xs tabular-nums text-subtle">
+            {progress.done} of {progress.total}
+          </span>
+        </div>
 
-      <div className="rounded-xl border border-line bg-bg">
-        <div ref={listRef} className="h-[min(56dvh,520px)] space-y-4 overflow-y-auto p-4 sm:p-5" role="log" aria-live="polite" aria-label="Onboarding chat">
-          {messages.map((m) => (
-            <Bubble key={m.id} message={m} />
-          ))}
-          {(turn.pending || upload.pending) && (
-            <div className="flex items-center gap-2 text-sm text-subtle">
-              <SkylarkMark className="size-6" />
-              <Loader2 className="size-4 animate-spin" /> {upload.pending ? "Reading your resume…" : "Thinking…"}
-            </div>
-          )}
-          {ready && !turn.pending && <Summary draft={draft} onFinish={() => void finish()} onEdit={() => onSwitchToForm(draft)} finishing={complete.pending} />}
+        <div
+          ref={listRef}
+          className="h-[min(50dvh,520px)] overflow-y-auto overscroll-contain px-4 pb-6 pt-5 [mask-image:linear-gradient(to_bottom,transparent,black_20px,black_calc(100%-20px),transparent)] sm:px-6"
+          role="log"
+          aria-live="polite"
+          aria-label="Onboarding chat"
+        >
+          <motion.ul layout="position" className="flex flex-col">
+            <AnimatePresence initial={true}>
+              {messages.map((m, i) => {
+                const prev = messages[i - 1];
+                const next = messages[i + 1];
+                const firstOfGroup = prev?.role !== m.role;
+                const lastOfGroup = next?.role !== m.role && !(m.role === "assistant" && i === messages.length - 1 && thinking);
+                return <Bubble key={m.id} message={m} firstOfGroup={firstOfGroup} lastOfGroup={lastOfGroup} index={i} fresh={!m.restored} />;
+              })}
+              {thinking && <TypingBubble key="typing" />}
+            </AnimatePresence>
+          </motion.ul>
+          <AnimatePresence>{ready && !turn.pending && <Summary key="summary" draft={draft} onFinish={() => void finish()} onEdit={() => onSwitchToForm(draft)} finishing={complete.pending} />}</AnimatePresence>
         </div>
 
         <form
-          className="flex items-end gap-2 border-t border-line p-3"
+          className="border-t border-line/70 bg-bg/80 p-3 backdrop-blur-xl sm:p-4"
           onSubmit={(e) => {
             e.preventDefault();
             void send();
           }}
         >
-          <Button type="button" variant="ghost" size="icon" onClick={() => fileRef.current?.click()} disabled={busy} aria-label="Attach your resume">
-            <Paperclip />
-          </Button>
-          <input
-            ref={fileRef}
-            type="file"
-            className="sr-only"
-            accept=".pdf,.docx,.txt"
-            aria-label="Upload resume"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              e.target.value = "";
-              if (f) void onFile(f);
-            }}
-          />
-          <label htmlFor="intake-input" className="sr-only">
-            Your answer
-          </label>
-          <textarea
-            id="intake-input"
-            ref={inputRef}
-            rows={1}
-            value={input}
-            maxLength={2000}
-            autoFocus
-            onChange={(e) => {
-              setInput(e.target.value);
-              e.target.style.height = "auto";
-              e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
-                e.preventDefault();
-                void send();
-              }
-            }}
-            placeholder={ready ? "Anything to change? Tell me here." : "Type your answer…"}
-            className="max-h-40 min-h-9 flex-1 resize-none bg-transparent px-1 py-2 text-[15px] leading-snug outline-none placeholder:text-subtle"
-          />
-          <Button type="submit" variant="accent" size="icon" disabled={busy || !input.trim()} aria-label="Send">
-            <ArrowUp />
-          </Button>
+          <div className="flex items-end gap-1.5 rounded-[22px] border border-line-strong bg-bg py-1 pl-1.5 pr-1 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-[border-color,box-shadow] duration-300 focus-within:border-accent/50 focus-within:shadow-[0_0_0_4px_color-mix(in_oklab,var(--accent)_14%,transparent)]">
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.88 }}
+              transition={SPRING_SNAPPY}
+              onClick={() => fileRef.current?.click()}
+              disabled={busy}
+              aria-label="Attach your resume"
+              className="grid size-9 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-surface hover:text-fg disabled:opacity-40"
+            >
+              <Paperclip className="size-[18px]" />
+            </motion.button>
+            <input
+              ref={fileRef}
+              type="file"
+              className="sr-only"
+              accept=".pdf,.docx,.txt"
+              aria-label="Upload resume"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                e.target.value = "";
+                if (f) void onFile(f);
+              }}
+            />
+            <label htmlFor="intake-input" className="sr-only">
+              Your answer
+            </label>
+            <textarea
+              id="intake-input"
+              ref={inputRef}
+              rows={1}
+              value={input}
+              maxLength={2000}
+              autoFocus
+              onChange={(e) => {
+                setInput(e.target.value);
+                e.target.style.height = "auto";
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  void send();
+                }
+              }}
+              placeholder={ready ? "Anything to change? Tell me here." : "Type your answer…"}
+              className="max-h-40 min-h-9 flex-1 resize-none bg-transparent px-1.5 py-[7px] text-[15px] leading-snug outline-none placeholder:text-subtle"
+            />
+            <motion.button
+              type="submit"
+              aria-label="Send"
+              disabled={!canSend}
+              initial={false}
+              animate={canSend ? { scale: 1, opacity: 1 } : { scale: 0.82, opacity: 0.35 }}
+              whileTap={canSend ? { scale: 0.86 } : undefined}
+              transition={SPRING_SNAPPY}
+              className="grid size-9 shrink-0 place-items-center rounded-full bg-accent text-white shadow-[0_4px_12px_-4px_var(--accent)]"
+            >
+              <ArrowUp className="size-[18px]" strokeWidth={2.5} />
+            </motion.button>
+          </div>
         </form>
-      </div>
-      <p className="mt-3 text-xs text-subtle">Answers are read by Google Gemini to fill in your profile, and every value is checked before it&apos;s saved. Press Enter to send, Shift+Enter for a new line.</p>
+      </motion.div>
+      <p className="mt-3 px-1 text-xs text-subtle">Answers are read by Google Gemini to fill in your profile, and every value is checked before it&apos;s saved. Enter to send, Shift+Enter for a new line.</p>
     </div>
   );
 }
 
-function Bubble({ message: m }: { message: ChatMessage }) {
-  if (m.role === "user")
-    return (
-      <div className="flex flex-col items-end">
-        <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-fg px-4 py-2.5 text-[15px] leading-relaxed text-white">{m.text}</div>
+/* ---------- Motion ---------- */
+
+/** Apple-style springs: quick to start, settle without wobble. */
+const SPRING_BUBBLE = { type: "spring", stiffness: 520, damping: 38, mass: 0.9 } as const;
+const SPRING_SOFT = { type: "spring", stiffness: 260, damping: 30, mass: 1 } as const;
+const SPRING_SNAPPY = { type: "spring", stiffness: 700, damping: 32 } as const;
+
+function Bubble({ message: m, firstOfGroup, lastOfGroup, index, fresh }: { message: ChatMessage; firstOfGroup: boolean; lastOfGroup: boolean; index: number; fresh: boolean }) {
+  const user = m.role === "user";
+  // The opening messages arrive one after another; later ones appear as they're sent.
+  const delay = fresh && index < 2 ? 0.25 + index * 0.45 : user ? 0 : 0.05;
+  return (
+    <motion.li
+      layout="position"
+      initial={fresh ? { opacity: 0, y: 16, scale: 0.9, filter: "blur(6px)" } : false}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, scale: 0.94, transition: { duration: 0.15 } }}
+      transition={{ ...SPRING_BUBBLE, delay, filter: { duration: 0.3, delay } }}
+      style={{ transformOrigin: user ? "100% 100%" : "0% 100%" }}
+      className={cn("flex w-full", user ? "justify-end" : "items-end gap-2", firstOfGroup ? "mt-4 first:mt-0" : "mt-1")}
+    >
+      {!user && (
+        <span className="mb-0.5 grid size-7 shrink-0 place-items-center">
+          {lastOfGroup && (
+            <motion.span initial={fresh ? { opacity: 0, scale: 0.6 } : false} animate={{ opacity: 1, scale: 1 }} transition={{ ...SPRING_SNAPPY, delay }} className="grid size-7 place-items-center rounded-full bg-surface">
+              <SkylarkMark className="size-4" />
+            </motion.span>
+          )}
+        </span>
+      )}
+      <div className={cn("flex max-w-[82%] flex-col", user ? "items-end" : "items-start")}>
+        <div
+          className={cn(
+            "whitespace-pre-wrap px-4 py-2.5 text-[15px] leading-[1.45] tracking-[-0.005em]",
+            user
+              ? cn("rounded-[20px] bg-fg text-white", lastOfGroup && "rounded-br-[6px]")
+              : m.tone === "error"
+                ? cn("rounded-[20px] border border-danger/25 bg-danger-soft text-danger", lastOfGroup && "rounded-bl-[6px]")
+                : cn("rounded-[20px] bg-surface text-fg", lastOfGroup && "rounded-bl-[6px]"),
+          )}
+        >
+          {!user && fresh && m.tone !== "error" ? <RevealText text={m.text} delay={delay + 0.08} /> : m.text}
+        </div>
         {!!m.saved?.length && (
-          <span className="mt-1 inline-flex items-center gap-1 text-xs text-success">
-            <FileCheck2 className="size-3" /> Saved: {m.saved.join(", ")}
-          </span>
+          <motion.ul className="mt-1.5 flex flex-wrap justify-end gap-1" aria-label="Saved to your profile" initial="hidden" animate="shown" variants={{ shown: { transition: { staggerChildren: 0.06, delayChildren: 0.1 } } }}>
+            {m.saved.map((s) => (
+              <motion.li
+                key={s}
+                variants={{ hidden: { opacity: 0, scale: 0.6, y: 4 }, shown: { opacity: 1, scale: 1, y: 0 } }}
+                transition={SPRING_SNAPPY}
+                className="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-medium text-success"
+              >
+                <Check className="size-3" strokeWidth={3} /> {s}
+              </motion.li>
+            ))}
+          </motion.ul>
         )}
       </div>
-    );
+    </motion.li>
+  );
+}
+
+/** Words fade up and un-blur in sequence, like text settling into place. */
+function RevealText({ text, delay }: { text: string; delay: number }) {
+  const reduce = useReducedMotion();
+  if (reduce) return <>{text}</>;
+  const words = text.split(/(\s+)/);
+  const step = Math.min(0.03, 0.9 / Math.max(1, words.length / 2));
   return (
-    <div className="flex items-start gap-2.5">
-      <SkylarkMark className="mt-0.5 size-6 shrink-0" />
-      <div className={cn("max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tl-md px-4 py-2.5 text-[15px] leading-relaxed", m.tone === "error" ? "border border-danger/30 bg-danger-soft text-danger" : "bg-surface text-fg")}>{m.text}</div>
-    </div>
+    <span aria-label={text}>
+      {words.map((w, i) =>
+        /^\s+$/.test(w) ? (
+          w
+        ) : (
+          <motion.span
+            key={i}
+            aria-hidden
+            className="inline-block"
+            initial={{ opacity: 0, y: 4, filter: "blur(4px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1], delay: delay + (i / 2) * step }}
+          >
+            {w}
+          </motion.span>
+        ),
+      )}
+    </span>
+  );
+}
+
+function TypingBubble() {
+  return (
+    <motion.li
+      layout="position"
+      initial={{ opacity: 0, y: 10, scale: 0.8 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.14 } }}
+      transition={SPRING_BUBBLE}
+      style={{ transformOrigin: "0% 100%" }}
+      className="mt-4 flex items-end gap-2"
+      aria-label="Skylark is typing"
+    >
+      <span className="mb-0.5 grid size-7 shrink-0 place-items-center rounded-full bg-surface">
+        <SkylarkMark className="size-4" />
+      </span>
+      <span className="flex h-[38px] items-center gap-1 rounded-[20px] rounded-bl-[6px] bg-surface px-4">
+        {[0, 1, 2].map((i) => (
+          <motion.span
+            key={i}
+            className="size-[7px] rounded-full bg-subtle"
+            animate={{ y: [0, -4, 0], opacity: [0.45, 1, 0.45] }}
+            transition={{ duration: 1.1, repeat: Infinity, ease: "easeInOut", delay: i * 0.16 }}
+          />
+        ))}
+      </span>
+    </motion.li>
   );
 }
 
@@ -333,17 +492,38 @@ function Summary({ draft: d, onFinish, onEdit, finishing }: { draft: ProfileDraf
   }, [d]);
 
   return (
-    <section className="rounded-xl border border-line-strong bg-surface p-4 sm:p-5" aria-label="Profile summary">
-      <h2 className="text-sm font-medium">Your profile</h2>
-      <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
+    <motion.section
+      initial={{ opacity: 0, y: 24, scale: 0.97, filter: "blur(6px)" }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, y: 12, transition: { duration: 0.15 } }}
+      transition={{ ...SPRING_SOFT, delay: 0.35, filter: { duration: 0.35, delay: 0.35 } }}
+      className="mt-6 rounded-[22px] border border-line bg-gradient-to-b from-surface to-bg p-5 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.12)] sm:p-6"
+      aria-label="Profile summary"
+    >
+      <div className="flex items-center gap-2">
+        <span className="grid size-6 place-items-center rounded-full bg-success text-white">
+          <Check className="size-3.5" strokeWidth={3} />
+        </span>
+        <h2 className="text-[15px] font-medium">Your profile is ready</h2>
+      </div>
+      <motion.dl
+        className="mt-4 grid gap-x-6 gap-y-2.5 text-sm sm:grid-cols-[max-content_1fr]"
+        initial="hidden"
+        animate="shown"
+        variants={{ shown: { transition: { staggerChildren: 0.035, delayChildren: 0.5 } } }}
+      >
         {rows.map(([k, v]) => (
-          <div key={k} className="contents">
-            <dt className="text-subtle">{k}</dt>
-            <dd className="break-words text-fg">{v}</dd>
-          </div>
+          <motion.div key={k} className="contents" variants={{ hidden: {}, shown: {} }}>
+            <motion.dt variants={{ hidden: { opacity: 0, x: -6 }, shown: { opacity: 1, x: 0 } }} transition={SPRING_SOFT} className="text-subtle">
+              {k}
+            </motion.dt>
+            <motion.dd variants={{ hidden: { opacity: 0, x: -6 }, shown: { opacity: 1, x: 0 } }} transition={SPRING_SOFT} className="break-words text-fg">
+              {v}
+            </motion.dd>
+          </motion.div>
         ))}
-      </dl>
-      <div className="mt-5 flex flex-wrap justify-end gap-2">
+      </motion.dl>
+      <div className="mt-6 flex flex-wrap justify-end gap-2">
         <Button variant="secondary" onClick={onEdit}>
           Edit in the form
         </Button>
@@ -351,6 +531,6 @@ function Summary({ draft: d, onFinish, onEdit, finishing }: { draft: ProfileDraf
           Find my matches <ArrowRight />
         </Button>
       </div>
-    </section>
+    </motion.section>
   );
 }
