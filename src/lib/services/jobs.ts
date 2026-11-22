@@ -1,4 +1,5 @@
 import "server-only";
+import { departmentOf } from "@/lib/pipeline/department";
 import { userRepo } from "@/lib/data";
 import type { ApplicationStatus, MatchWithJob, Seniority, User, WorkMode } from "@/lib/domain/types";
 import { notFound } from "@/lib/infra/errors";
@@ -46,7 +47,7 @@ export async function jobFeed(user: User, f: JobFilters) {
       if (f.view === "dismissed") return m.status === "dismissed";
       if (m.status === "dismissed") return false;
       if (f.view === "saved" && m.status !== "saved" && !m.applicationStatus) return false;
-      if (q && !`${m.job.title} ${m.job.department} ${m.job.company.name} ${m.job.requiredSkills.join(" ")}`.toLowerCase().includes(q)) return false;
+      if (q && !`${m.job.title} ${departmentOf(m.job)} ${m.job.company.name} ${m.job.requiredSkills.join(" ")}`.toLowerCase().includes(q)) return false;
       if (f.country && !m.job.locations.some((l) => l.country === f.country) && !m.job.remoteCountries.includes(f.country)) return false;
       if (f.mode && m.job.workMode !== f.mode) return false;
       if (f.seniority && m.job.seniority !== f.seniority) return false;
