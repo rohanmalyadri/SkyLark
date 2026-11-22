@@ -252,7 +252,7 @@ function CurrencyPicker({ fx, value, onChange }: { fx: FxRates; value: string; o
     return (
       <div className="currency-picker">
         <p className="text --xsmall currency-picker__note" role="status">
-          {fx.problem ?? "Prices are shown in US dollars."} Prices are in {BILLING_CURRENCY}.
+          {fx.problem ? `${fx.problem} ` : ""}Prices are in Indian rupees ({BILLING_CURRENCY}).
         </p>
       </div>
     );
@@ -272,8 +272,8 @@ function CurrencyPicker({ fx, value, onChange }: { fx: FxRates; value: string; o
       </Select>
       <p className="text --xsmall currency-picker__note">
         {value === BILLING_CURRENCY
-          ? `Billed in ${BILLING_CURRENCY}.`
-          : `Indicative only — you are charged in ${BILLING_CURRENCY}. European Central Bank rates${fx.date ? ` of ${fx.date}` : ""}.`}
+          ? `Billed in Indian rupees (${BILLING_CURRENCY}).`
+          : `Estimate only. You are charged in Indian rupees (${BILLING_CURRENCY}). European Central Bank rates${fx.date ? ` of ${fx.date}` : ""}.`}
       </p>
     </div>
   );

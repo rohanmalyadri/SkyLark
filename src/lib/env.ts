@@ -9,6 +9,15 @@ const csv = z
   .optional()
   .transform((v) => (v ?? "").split(",").map((s) => s.trim()).filter(Boolean));
 
+// Employers with public Greenhouse boards and offices across India, the UK, the US, Canada,
+// Australia, Singapore, Japan, Ireland and Latin America, so the catalog isn't Europe-only.
+const DEFAULT_GREENHOUSE_BOARDS = [
+  "gitlab", "figma", "mongodb", "airbnb", "twilio", // global
+  "stripe", "databricks", "okta", "zscaler", "rubrik", // large India, Canada, Australia and Singapore teams
+  "samsara", "deliveroo", "monzo", // Canada, UK
+  "groww", "hackerrank", "druva", // India
+].join(",");
+
 const ServerEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
@@ -54,7 +63,7 @@ const ServerEnvSchema = z.object({
   // variable to override the list; an empty value turns the source off.
   GREENHOUSE_BOARDS: z
     .string()
-    .default("gitlab,figma,mongodb,airbnb,twilio")
+    .default(DEFAULT_GREENHOUSE_BOARDS)
     .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean)),
   LEVER_COMPANIES: csv,
 });

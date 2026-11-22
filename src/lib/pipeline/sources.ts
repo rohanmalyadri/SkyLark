@@ -150,10 +150,12 @@ class GreenhouseSource implements JobSource {
   async fetchPostings() {
     const postings: RawPosting[] = [];
     let complete = true;
-    for (const token of serverEnv().GREENHOUSE_BOARDS) {
+    // A few boards at a time: one at a time takes too long for the function budget with a dozen boards.
+    const boards = [...serverEnv().GREENHOUSE_BOARDS];
+    const fetchBoard = async (token: string) => {
       try {
         const [board, meta] = await Promise.all([
-          getJson<GreenhouseBoard>("greenhouse", `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(token)}/jobs?content=true`, { timeoutMs: 15_000 }),
+          getJson<GreenhouseBoard>("greenhouse", `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(token)}/jobs?content=true`, { timeoutMs: 20_000 }),
           getJson<{ name: string }>("greenhouse", `https://boards-api.greenhouse.io/v1/boards/${encodeURIComponent(token)}`, { timeoutMs: 8_000 }),
         ]);
         for (const j of board.jobs) {
@@ -172,7 +174,10 @@ class GreenhouseSource implements JobSource {
       } catch {
         complete = false;
       }
-    }
+    };
+    await Promise.all(Array.from({ length: Math.min(4, boards.length) }, async () => {
+      for (let token = boards.shift(); token; token = boards.shift()) await fetchBoard(token);
+    }));
     return { postings, complete };
   }
 }

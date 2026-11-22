@@ -98,6 +98,31 @@ export function inferSeniority(title: string): Seniority {
 
 const EXONYMS: Record<string, string> = { cologne: "Köln", nuremberg: "Nürnberg", hanover: "Hannover", frankfurt: "Frankfurt am Main", munchen: "Munich", "the hague": "The Hague", "den haag": "The Hague", lisboa: "Lisbon", warszawa: "Warsaw", praha: "Prague", wien: "Vienna", "new york city": "New York", nyc: "New York", sf: "San Francisco", bangalore: "Bengaluru", gurugram: "Gurgaon", "mexico city": "Ciudad de México", "cdmx": "Ciudad de México", bogota: "Bogotá D.C.", "bogotá": "Bogotá D.C.", "new delhi": "Delhi" };
 const US_STATES = new Set("AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC".split(" "));
+const US_STATE_NAMES = new Set(["alabama", "alaska", "arizona", "arkansas", "california", "colorado", "connecticut", "delaware", "florida", "georgia", "hawaii", "idaho", "illinois", "indiana", "iowa", "kansas", "kentucky", "louisiana", "maine", "maryland", "massachusetts", "michigan", "minnesota", "mississippi", "missouri", "montana", "nebraska", "nevada", "new hampshire", "new jersey", "new mexico", "north carolina", "north dakota", "ohio", "oklahoma", "oregon", "pennsylvania", "rhode island", "south carolina", "south dakota", "tennessee", "texas", "utah", "vermont", "virginia", "washington", "west virginia", "wisconsin", "wyoming", "washington d.c.", "washington, d.c.", "d.c."]);
+// State names and codes that are also countries: only read as US states when the listing is clearly American.
+const AMBIGUOUS_STATES = new Set(["georgia", "IN", "DE", "CA"]);
+// Region names and ISO alpha-3 codes some boards use instead of a city or country name.
+const PLACE_ALIASES: Record<string, Place> = {
+  "san francisco bay area": { city: "San Francisco", country: "US" }, "sf bay area": { city: "San Francisco", country: "US" }, "bay area": { city: "San Francisco", country: "US" },
+  "silicon valley": { city: "San Jose", country: "US" }, "greater london": { city: "London", country: "GB" }, "city of london corporation": { city: "London", country: "GB" },
+  "delhi ncr": { city: "Delhi", country: "IN" }, ncr: { city: "Delhi", country: "IN" },
+  "new york city": { city: "New York", country: "US" }, nyc: { city: "New York", country: "US" }, "new york": { city: "New York", country: "US" },
+  "palo alto": { city: "Palo Alto", country: "US" }, "republic of ireland": { city: "", country: "IE" }, ksa: { city: "", country: "SA" },
+  "sao paulo": { city: "São Paulo", country: "BR" }, "são paulo": { city: "São Paulo", country: "BR" },
+};
+const ALPHA3: Record<string, string> = { USA: "US", GBR: "GB", IND: "IN", CAN: "CA", AUS: "AU", NZL: "NZ", IRL: "IE", DEU: "DE", FRA: "FR", NLD: "NL", ESP: "ES", PRT: "PT", ITA: "IT", POL: "PL", SGP: "SG", JPN: "JP", KOR: "KR", BRA: "BR", MEX: "MX", ARG: "AR", COL: "CO", CRI: "CR", ARE: "AE", ISR: "IL", ZAF: "ZA", PHL: "PH" };
+
+/** A country for one location fragment that is a country, a US state, or a known region; null otherwise. */
+function placeFromWhole(part: string, usContext: boolean): Place | null {
+  const lower = part.toLowerCase();
+  if (PLACE_ALIASES[lower]) return PLACE_ALIASES[lower]!;
+  if (ALPHA3[part]) return { city: "", country: ALPHA3[part]! };
+  const isState = US_STATE_NAMES.has(lower) || US_STATES.has(part);
+  if (isState && (usContext || !(AMBIGUOUS_STATES.has(lower) || AMBIGUOUS_STATES.has(part)))) return { city: "", country: "US" };
+  if (/^[a-z]{2,}$/i.test(part) && part.length > 2 && resolveCountry(part)) return { city: "", country: resolveCountry(part)! };
+  if (part === "UK" || part === "US" || part === "USA") return { city: "", country: part === "UK" ? "GB" : "US" };
+  return null;
+}
 /** The city as it appears in job listings, mapped to the GeoNames spelling where they differ. */
 export const datasetCityName = (city: string) => EXONYMS[city.toLowerCase()] ?? city;
 const GLOBAL = /\b(anywhere|worldwide|global(ly)?|world ?wide)\b/i;
@@ -106,11 +131,37 @@ export function parseLocation(text: string, opts: { remote?: boolean; countryHin
   const lower = text.toLowerCase();
   const workMode: WorkMode = opts.remote || /remote|home ?office/.test(lower) ? "remote" : /hybrid/.test(lower) ? "hybrid" : "onsite";
   const places: Place[] = [];
-  for (const segment of text.split(/[;|/•]|\s+or\s+/)) {
-    const cleaned = segment.replace(/\b(remote|hybrid|on-?site|home ?office|full[- ]?time)\b/gi, "").replace(/[()]/g, "").replace(/\s+-\s*$/, "");
-    const parts = cleaned.split(/,|\s-\s/).map((s) => s.trim()).filter(Boolean);
+  const segments = text.split(/[;|/•]|\s+or\s+/i).map((segment) =>
+    segment
+      .replace(/:.*$/, "") // "Remote - Canada: Select locations"
+      .replace(/\b(remote|hybrid|on-?site|in-office|home ?office|full[- ]?time|distributed)\b/gi, "")
+      .replace(/[()]/g, "")
+      .replace(/^\s*-+\s*|\s*-+\s*$/g, "") // "US-Remote", "Remote - "
+      .split(/,|\s-\s|\s+in\s+the\s+/i)
+      .map((s) => s.trim())
+      .filter(Boolean),
+  );
+  // "Remote - AZ; Remote - GA" or "Atlanta, Georgia": an American listing, so state names and codes mean US states.
+  const usContext = segments.some((parts) => parts.some((p) => US_STATE_NAMES.has(p.toLowerCase()) ? !AMBIGUOUS_STATES.has(p.toLowerCase()) : US_STATES.has(p) && !AMBIGUOUS_STATES.has(p)) || parts.some((p) => /^(us|usa|united states)$/i.test(p)));
+  for (const parts of segments) {
     if (parts.length === 0) continue;
     const last = parts[parts.length - 1]!;
+    if (parts.length === 1) {
+      const whole = placeFromWhole(last, usContext);
+      if (whole) {
+        if (!places.some((p) => p.city === whole.city && p.country === whole.country)) places.push(whole);
+        continue;
+      }
+    } else {
+      const stateHere = US_STATE_NAMES.has(last.toLowerCase()) && resolveCity(datasetCityName(parts[0]!), "US")?.country === "US";
+      const region = stateHere ? { city: "", country: "US" } : placeFromWhole(last, usContext);
+      // "Bellevue, Washington", "City of London Corporation, GBR": the last part names the state or country.
+      if (region && (region.country === "US" || ALPHA3[last])) {
+        const city = PLACE_ALIASES[parts[0]!.toLowerCase()]?.city || parts[0]!;
+        if (!places.some((p) => p.city === city && p.country === region.country)) places.push({ city, country: region.country });
+        continue;
+      }
+    }
     // "San Francisco, CA": a US state code, not Canada.
     const usState = parts.length > 1 && US_STATES.has(last) && resolveCity(datasetCityName(parts[0]!), "US")?.country === "US";
     const countryFromLast = usState ? "US" : parts.length > 1 || !resolveCity(parts[0]!, opts.countryHints?.[0]) ? resolveCountry(last) : null;

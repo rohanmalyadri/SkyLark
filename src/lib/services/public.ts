@@ -53,7 +53,8 @@ export async function publicCatalogStats(): Promise<CatalogStats> {
   "use cache";
   cacheTag("jobs");
   cacheLife("hours");
-  const jobs = await systemRepo().listJobs({ status: "active", limit: 2000 });
+  // Every active listing, not just the newest page: the busiest board would otherwise fill the map.
+  const jobs = await systemRepo().listJobLocations();
   const byCountry = new Map<string, number>();
   const byCity = new Map<string, { city: string; country: string; roles: number }>();
   for (const job of jobs)

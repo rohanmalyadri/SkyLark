@@ -57,7 +57,7 @@ describe("the currency list", () => {
 
 describe("fetching live rates", () => {
   it("reads the ECB reference rates and reports the publication date", async () => {
-    fetchMock.mockReturnValueOnce(json({ amount: 1, base: "USD", date: "2026-10-16", rates: { EUR: 0.88865, GBP: 0.74989, INR: 94.96 } }));
+    fetchMock.mockReturnValueOnce(json({ amount: 1, base: "INR", date: "2026-10-16", rates: { EUR: 0.01036, GBP: 0.00897, USD: 0.01182 } }));
     const { fetchExchangeRates } = await import("./fx");
     const fx = await fetchExchangeRates();
 
@@ -66,17 +66,17 @@ describe("fetching live rates", () => {
     expect(fx.problem).toBeNull();
     // The base currency is always present at parity so the UI never special-cases it.
     expect(fx.rates[BILLING_CURRENCY]).toBe(1);
-    expect(fx.rates.INR).toBe(94.96);
+    expect(fx.rates.USD).toBe(0.01182);
   });
 
   it("drops zero, negative and non-numeric rates instead of pricing against them", async () => {
-    fetchMock.mockReturnValueOnce(json({ amount: 1, base: "USD", date: "2026-10-16", rates: { EUR: 0.9, GBP: 0, INR: -5, JPY: "158" } }));
+    fetchMock.mockReturnValueOnce(json({ amount: 1, base: "INR", date: "2026-10-16", rates: { EUR: 0.9, GBP: 0, USD: -5, JPY: "158" } }));
     const { fetchExchangeRates } = await import("./fx");
     const fx = await fetchExchangeRates();
 
     expect(fx.rates.EUR).toBe(0.9);
     expect(fx.rates.GBP).toBeUndefined();
-    expect(fx.rates.INR).toBeUndefined();
+    expect(fx.rates.USD).toBeUndefined();
     expect(fx.rates.JPY).toBeUndefined();
   });
 
@@ -87,7 +87,7 @@ describe("fetching live rates", () => {
 
     expect(fx.live).toBe(false);
     expect(fx.problem).toMatch(/couldn't be reached|unavailable/i);
-    // Crucially: no invented rates, so the pricing page simply stays in USD.
+    // Crucially: no invented rates, so the pricing page simply stays in the billing currency (INR).
     expect(Object.keys(fx.rates)).toEqual([BILLING_CURRENCY]);
   });
 
