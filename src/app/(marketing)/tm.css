@@ -794,7 +794,7 @@ html.tm-locked { overflow: hidden; }
 }
 
 /* ---------- Obscuron X Labs sign-off (under the footer) ---------- */
-.tm .obscuron { background: #fff; border-top: 1px solid var(--medium); color: var(--darkest); overflow: hidden; padding: 0 0 3.333vw; position: relative; touch-action: pan-y; z-index: 1; }
+.tm .obscuron { background: var(--lighter); color: var(--darkest); overflow: hidden; padding: 0 0 3.333vw; position: relative; touch-action: pan-y; z-index: 1; }
 .tm .obscuron-stage { display: block; font-family: var(--font-geist-mono), ui-monospace, monospace; height: 30vw; width: 100%; }
 .tm .obscuron-link { align-items: flex-end; display: flex; gap: 2vw; justify-content: space-between; margin-top: -1.5vw; padding: 0 3.333vw; position: relative; }
 .tm .obscuron-sans, .tm .obscuron-serif { display: inline-block; line-height: 0.9; transition: transform 0.9s var(--expoOut), color 0.5s var(--p2Out); white-space: nowrap; }

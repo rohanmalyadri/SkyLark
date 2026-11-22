@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 /**
- * "A Obscuron X Labs Product" sign-off under the footer.
+ * "An Obscuron X Labs Product" sign-off under the footer.
  *
  * A canvas paints a skylark gliding over a ridge line, both built from small red mono glyphs.
  * The pointer heats blocks of glyphs to solid red as it passes (they cool off on their own),
@@ -27,7 +27,7 @@ const BANDS = [
   [16, 21],
 ]; // ramp slices per density band
 const LEVELS = 8; // red alpha levels in the atlas
-const BG = "#ffffff";
+const BG = "#f2f2f2"; // matches the footer (--lighter) so the two read as one surface
 const RED = "216, 20, 19";
 const HOT = "#d81413";
 
@@ -200,8 +200,9 @@ export function ObscuronSignature() {
           const i = y * cols + x;
           const dist = Math.hypot(x - cx, (y - cy) * 1.15) / radius;
           if (dist > 1) continue;
-          const filled = terrain[i] > 0 || mask[i] > 20;
-          const p = (1 - dist * dist) * (filled ? 0.95 : 0.12) * strength;
+          // Only glyphs that belong to the bird or the hills light up; blank space stays blank.
+          if (terrain[i] < 0.08 && mask[i] < 40) continue;
+          const p = (1 - dist * dist) * 0.95 * strength;
           if (hash(i * 31 + jitter) < p) heat[i] = Math.max(heat[i], 0.7 + 0.3 * strength);
         }
       }
@@ -288,7 +289,11 @@ export function ObscuronSignature() {
           let d = Math.max(terrain[i], b);
           if (b > 0.05) d = Math.max(d, 0.4 + 0.6 * b * (0.6 + 0.4 * seedA[i]));
           const hv = heat[i];
-          if (d < 0.08 && hv < 0.02) continue;
+          if (d < 0.08) {
+            // The bird moved off this cell: drop any leftover heat so nothing glows in blank space.
+            heat[i] = 0;
+            continue;
+          }
           const r = seedA[i];
           if (d > 0 && r < 0.12 && hv < 0.02) continue; // sparse holes read as texture
           // Glyph pick: band from density, member from a slowly changing per-cell hash.
@@ -389,10 +394,10 @@ export function ObscuronSignature() {
         target="_blank"
         rel="noopener"
         className="obscuron-link"
-        aria-label="A Obscuron X Labs Product (opens obscuronxlabs.in in a new tab)"
+        aria-label="An Obscuron X Labs Product (opens obscuronxlabs.in in a new tab)"
       >
         <span className="obscuron-sans" aria-hidden>
-          A Obscuron X
+          An Obscuron X
         </span>
         <span className="obscuron-serif" aria-hidden>
           Labs Product
