@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Instrument_Serif, Inter_Tight } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const sans = Inter_Tight({ variable: "--font-inter-tight", subsets: ["latin"], display: "swap" });
@@ -12,8 +13,8 @@ export const metadata: Metadata = {
   description:
     "Skylark is a human-assisted job application service. Share your profile once; we match you to roles you're eligible for, tailor each application, and a specialist reviews and submits it — while you prepare for interviews.",
   applicationName: "Skylark",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
-  openGraph: { type: "website", siteName: "Skylark" },
+  metadataBase: new URL(siteUrl(process.env.NEXT_PUBLIC_APP_URL, process.env.NODE_ENV === "production")),
+  openGraph: { type: "website", siteName: "Skylark", url: "/" },
 };
 
 export const viewport: Viewport = {

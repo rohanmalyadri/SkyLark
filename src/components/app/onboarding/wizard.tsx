@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Check, FileCheck2, Loader2, UploadCloud } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, FileCheck2, Loader2, MessageSquareText, UploadCloud } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import { completeOnboardingAction, uploadResumeAction } from "@/app/actions/candidate";
@@ -18,11 +18,28 @@ import { cn } from "@/lib/utils";
 
 const STEPS = ["Resume", "About you", "Work authorization", "Preferences", "Skills & experience"] as const;
 
-export function OnboardingWizard({ profile, firstName, fullName, avatarUrl, hasResume }: { profile: CandidateProfile; firstName: string; fullName: string; avatarUrl: string | null; hasResume: boolean }) {
+export function OnboardingWizard({
+  profile,
+  draft: initialDraft,
+  firstName,
+  fullName,
+  avatarUrl,
+  hasResume,
+  onSwitchToChat,
+}: {
+  profile: CandidateProfile;
+  /** Answers already given in the chat, carried over when switching to the form. */
+  draft?: ProfileDraft;
+  firstName: string;
+  fullName: string;
+  avatarUrl: string | null;
+  hasResume: boolean;
+  onSwitchToChat?: (draft: ProfileDraft) => void;
+}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [d, setD] = useState<ProfileDraft>(() => {
-    const draft = toDraft(profile);
+    const draft = initialDraft ?? toDraft(profile);
     return draft.experience.length ? draft : { ...draft, experience: [{ id: crypto.randomUUID(), company: "", title: "", startDate: "", endDate: null, description: "", highlights: [], skills: [] }] };
   });
   const [uploaded, setUploaded] = useState<string | null>(hasResume ? "Resume on file" : null);
@@ -117,6 +134,13 @@ export function OnboardingWizard({ profile, firstName, fullName, avatarUrl, hasR
 
   return (
     <div>
+      {onSwitchToChat && (
+        <div className="mb-6 flex justify-end">
+          <Button variant="secondary" size="sm" onClick={() => onSwitchToChat(d)}>
+            <MessageSquareText /> Answer in a chat instead
+          </Button>
+        </div>
+      )}
       <ol className="mb-10 grid grid-cols-5 gap-2" aria-label="Onboarding progress">
         {STEPS.map((s, i) => (
           <li key={s} aria-current={i === step ? "step" : undefined}>
@@ -317,7 +341,7 @@ function StepShell({ title, body, children }: { title: string; body: string; chi
   );
 }
 
-function Finishing({ phase, matches, countries }: { phase: number; matches: number; countries: number }) {
+export function Finishing({ phase, matches, countries }: { phase: number; matches: number; countries: number }) {
   const lines = ["Reading your profile", `Checking work authorization across ${countries || "your"} target countries`, "Scoring roles on seven factors", matches ? `${matches} roles ranked for you` : "Done"];
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center text-center" role="status" aria-live="polite">

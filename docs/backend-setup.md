@@ -45,7 +45,10 @@ exists on the domain the visitor started from, so a stale value breaks sign-in w
 or expired".
 
 Optional extras (see `.env.example`): `ANTHROPIC_API_KEY` for AI tailoring (otherwise a rules engine is
-used), `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` for Indian and US listings, `GITHUB_TOKEN`, `STACKEXCHANGE_KEY`.
+used), `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` for Indian and US listings, `GITHUB_TOKEN`, `STACKEXCHANGE_KEY`,
+and `GEMINI_API_KEY` (mark Sensitive) to turn on the chat-style onboarding. Without it, onboarding is the
+step-by-step form only. A free-tier Gemini key is rate-limited to a handful of requests a minute, so turn on
+billing for the Google AI Studio project before real traffic.
 
 ## Region
 
