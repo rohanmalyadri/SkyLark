@@ -82,3 +82,15 @@ export function mapCities<T extends { city: string; country: string; roles: numb
   }
   return [...firsts, ...rest].slice(0, max);
 }
+
+/**
+ * Decorative pins for markets Skylark covers, shown where the live catalog has no city in that
+ * country yet. They carry no job counts: the tooltip says "Market we cover", never "N open roles".
+ */
+export const COVERED_MARKETS: [city: string, country: string][] = [
+  ["New York", "US"], ["San Francisco", "US"], ["Toronto", "CA"], ["Mexico City", "MX"],
+  ["São Paulo", "BR"], ["Buenos Aires", "AR"], ["Bogotá", "CO"], ["Lagos", "NG"],
+  ["Nairobi", "KE"], ["Cape Town", "ZA"], ["Dubai", "AE"], ["Bengaluru", "IN"],
+  ["Delhi", "IN"], ["Singapore", "SG"], ["Tokyo", "JP"], ["Seoul", "KR"],
+  ["Sydney", "AU"],
+];

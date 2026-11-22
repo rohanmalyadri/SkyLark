@@ -7,7 +7,8 @@ export interface MapLocation {
   key: string;
   city: string;
   country: string;
-  roles: number;
+  /** Open roles in the live catalog; null for a decorative "market we cover" pin. */
+  roles: number | null;
   x: number;
   y: number;
 }
@@ -25,13 +26,13 @@ export function MapLocations({ locations }: { locations: MapLocation[] }) {
           onMouseEnter={() => setOpen(l.key)}
           onMouseLeave={() => setOpen((o) => (o === l.key ? null : o))}
         >
-          <button type="button" className="dot" aria-label={`${l.city}: ${l.roles} open roles`} aria-expanded={open === l.key} onClick={() => setOpen((o) => (o === l.key ? null : l.key))}>
+          <button type="button" className="dot" aria-label={l.roles == null ? `${l.city}: market we cover` : `${l.city}: ${l.roles} open roles`} aria-expanded={open === l.key} onClick={() => setOpen((o) => (o === l.key ? null : l.key))}>
             <span aria-hidden />
           </button>
           <div className="tooltip" role="tooltip">
             <p className="text --xlarge --bold">{l.city}</p>
             <p className="text --medium">
-              {l.roles} open {l.roles === 1 ? "role" : "roles"} · {l.country}
+              {l.roles == null ? "Market we cover" : `${l.roles} open ${l.roles === 1 ? "role" : "roles"}`} · {l.country}
             </p>
           </div>
         </div>
