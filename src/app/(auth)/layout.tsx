@@ -12,7 +12,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <main id="main" className="mx-auto flex w-full max-w-[400px] flex-1 flex-col justify-center py-14">
           {children}
         </main>
-        <p className="text-center text-xs text-subtle lg:text-left">Protected by row-level security and signed sessions.</p>
+        <p className="text-center text-xs text-subtle lg:text-left">Protected by row-level security system by{" "}
+          <a href="https://www.obscuronxlabs.in/" target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-fg">
+            Obscuron X Labs
+          </a>
+        </p>
       </div>
 
       <aside className="relative isolate hidden overflow-hidden bg-[#D6D6D4] lg:block" aria-hidden>
