@@ -1,5 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["syd1"],
-  "crons": [{ "path": "/api/cron/worker", "schedule": "0 9 * * *" }]
+  "crons": [{ "path": "/api/cron/worker", "schedule": "0 9 * * *" }],
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "skylark-ten-mu.vercel.app" }],
+      "destination": "https://www.skylarkgo.in/:path*",
+      "permanent": true
+    }
+  ]
 }
