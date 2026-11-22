@@ -14,7 +14,7 @@ import { formatDate } from "@/lib/utils";
 import { countryName, DEFAULT_REVIEW_CHECKLIST, REVIEW_SLA_HOURS } from "@/lib/domain/constants";
 import { cityCoords, listCountries } from "@/lib/geo";
 import { hasCountryArt } from "@/lib/country-art";
-import { CITY_COORDS, mapCities, mapPosition } from "@/lib/geo-cities";
+import { CITY_COORDS, COVERED_MARKETS, mapCities, mapPosition } from "@/lib/geo-cities";
 import { datasetCityName } from "@/lib/pipeline/normalize";
 import { FACTOR_WEIGHTS, MATCH_MODEL_VERSION } from "@/lib/services/matching/engine";
 import { exchangeRates } from "@/lib/services/fx";
@@ -338,6 +338,13 @@ async function International() {
     const at = CITY_COORDS[`${c.city}|${c.country}`] ?? cityCoords(datasetCityName(c.city), c.country);
     return at ? [{ key: `${c.city}|${c.country}`, city: c.city, country: countryName(c.country), roles: c.roles, ...mapPosition(at[0], at[1]) }] : [];
   });
+  // Fill continents the catalog doesn't reach yet with decorative pins (no job counts).
+  const pinned = new Set(markers.map((m) => m.key.split("|")[1]));
+  for (const [city, country] of COVERED_MARKETS) {
+    const at = CITY_COORDS[`${city}|${country}`];
+    if (!at || pinned.has(country)) continue;
+    markers.push({ key: `${city}|${country}|market`, city, country: countryName(country), roles: null, ...mapPosition(at[0], at[1]) });
+  }
   return (
     <section className="component component--map" aria-labelledby="intl-title">
       <div className="wrap --full">
