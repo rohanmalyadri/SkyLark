@@ -62,6 +62,15 @@ export default function PrivacyPage() {
           ),
         },
         {
+          id: "payments",
+          title: "Payments",
+          body: (
+            <p>
+              Subscriptions are paid through Razorpay. Your name and email are passed to Razorpay to set up the payment, and Razorpay handles your card, UPI or bank details directly. We never see or store them; we keep only a record of each payment (amount, date and reference) for your receipts.
+            </p>
+          ),
+        },
+        {
           id: "share",
           title: "When we share information",
           body: (

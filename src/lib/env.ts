@@ -25,6 +25,11 @@ const ServerEnvSchema = z.object({
   /** "on" once the Google provider is enabled on the Supabase project (Auth → Providers). */
   SUPABASE_GOOGLE_AUTH: z.enum(["on", "off"]).default("off"),
 
+  /* Payments (Razorpay). Without the key pair, paid checkout is off outside demo mode. */
+  RAZORPAY_KEY_ID: z.string().regex(/^rzp_(test|live)_/).optional(),
+  RAZORPAY_KEY_SECRET: z.string().min(10).optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().min(8).optional(),
+
   /* Reference data & enrichment */
   STACKEXCHANGE_KEY: optionalKey,
   LIGHTCAST_CLIENT_ID: optionalKey,
@@ -76,3 +81,6 @@ export const nativeGoogleEnabled = () => {
 
 /** Whether the "Continue with Google" button should be offered at all. */
 export const googleSignInAvailable = () => (serverEnv().dataMode === "supabase" ? serverEnv().SUPABASE_GOOGLE_AUTH === "on" : nativeGoogleEnabled());
+
+/** Razorpay checkout is live (test or live keys) once both halves of the key pair are set. */
+export const razorpayEnabled = () => !!serverEnv().RAZORPAY_KEY_ID && !!serverEnv().RAZORPAY_KEY_SECRET;

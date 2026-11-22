@@ -174,6 +174,8 @@ export interface Repository {
   upsertSubscription(sub: NewRow<Subscription>): Promise<Subscription>;
   listPayments(userId: string): Promise<Payment[]>;
   createPayment(payment: NewRow<Payment>): Promise<Payment>;
+  /** Payments are unique by provider reference (e.g. a Razorpay order id). */
+  getPaymentByRef(providerRef: string): Promise<Payment | null>;
 
   /* notifications & settings */
   listNotifications(userId: string, limit?: number): Promise<Notification[]>;

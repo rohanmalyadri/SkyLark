@@ -1,8 +1,10 @@
 "use client";
 
 import { Check, LogOut } from "lucide-react";
-import { useState } from "react";
-import { cancelPlanAction, changePlanAction, updateAccountAction, updateSettingsAction } from "@/app/actions/candidate";
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import { cancelPlanAction, confirmCheckoutAction, startCheckoutAction, updateAccountAction, updateSettingsAction } from "@/app/actions/candidate";
 import { signOutAction } from "@/app/actions/auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,7 @@ import { ScoreBar } from "@/components/ui/score";
 import { Switch } from "@/components/ui/switch";
 import type { Plan, Subscription, UserSettings } from "@/lib/domain/types";
 import { useAction } from "@/lib/hooks/use-action";
+import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { cn, formatDate, formatMoney } from "@/lib/utils";
 
 export function AccountForm({ name, email }: { name: string; email: string }) {
@@ -142,7 +145,31 @@ export function BillingPanel({ plans, subscription, current, usage }: { plans: P
   const [target, setTarget] = useState<Plan | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const change = useAction(changePlanAction, { onSuccess: () => (setTarget(null), setAgreed(false)) });
+  const router = useRouter();
+  const [paying, startPaying] = useTransition();
+  const closeDialog = () => (setTarget(null), setAgreed(false));
+
+  const pay = (plan: Plan) =>
+    startPaying(async () => {
+      try {
+        const started = await startCheckoutAction(plan.id, interval, agreed);
+        if (!started.ok) return void toast.error(started.error);
+        if (started.data.kind === "activated") {
+          toast.success(`You're on ${started.data.planName}`);
+          return closeDialog(), router.refresh();
+        }
+        closeDialog();
+        const outcome = await openRazorpayCheckout(started.data);
+        if (outcome.kind === "dismissed") return void toast("Payment cancelled. You haven't been charged.");
+        const confirmed = await confirmCheckoutAction({ subscriptionId: outcome.result.razorpay_subscription_id, paymentId: outcome.result.razorpay_payment_id, signature: outcome.result.razorpay_signature });
+        if (!confirmed.ok) return void toast.error(confirmed.error);
+        if (confirmed.data.status === "pending") toast("Payment received. Your plan will switch on as soon as Razorpay confirms it.");
+        else toast.success(`Payment received. You're on ${confirmed.data.planName}.`);
+        router.refresh();
+      } catch {
+        toast.error("The payment window couldn't open. Check your connection and try again.");
+      }
+    });
   const cancel = useAction(cancelPlanAction, { onSuccess: () => setCancelOpen(false) });
 
   const meter = (label: string, used: number, limit: number | null) => (
@@ -162,7 +189,11 @@ export function BillingPanel({ plans, subscription, current, usage }: { plans: P
     <Panel id="billing" className="scroll-mt-20">
       <PanelHeader
         title="Subscription & billing"
-        description={subscription ? `${current.name} · renews ${formatDate(subscription.currentPeriodEnd, { month: "long", day: "numeric" })}${subscription.cancelAtPeriodEnd ? " · cancels at period end" : ""}` : "You're on the Entry allowance"}
+        description={
+          subscription
+            ? `${current.name} · ${subscription.cancelAtPeriodEnd ? "ends" : "renews"} ${formatDate(subscription.currentPeriodEnd, { month: "long", day: "numeric" })}${subscription.status === "past_due" ? " · payment overdue" : ""}`
+            : "You're on the Entry allowance"
+        }
         action={
           subscription && !subscription.cancelAtPeriodEnd ? (
             <Button size="sm" variant="ghost" onClick={() => setCancelOpen(true)}>
@@ -188,7 +219,7 @@ export function BillingPanel({ plans, subscription, current, usage }: { plans: P
         </div>
         <div className="grid gap-3 md:grid-cols-3">
           {plans.map((p) => {
-            const isCurrent = p.id === current.id && (subscription?.interval ?? "month") === interval;
+            const isCurrent = p.id === current.id && (subscription?.interval ?? "month") === interval && !subscription?.cancelAtPeriodEnd;
             const price = interval === "year" ? p.priceYearly : p.priceMonthly;
             return (
               <div key={p.id} className={cn("flex flex-col rounded-lg border p-4", p.id === current.id ? "border-accent-line bg-accent-soft/20" : "border-line")}>
@@ -207,7 +238,7 @@ export function BillingPanel({ plans, subscription, current, usage }: { plans: P
                     </li>
                   ))}
                 </ul>
-                <Button size="sm" variant={isCurrent ? "secondary" : "outline"} disabled={isCurrent} className="mt-4" onClick={() => setTarget(p)}>
+                <Button size="sm" variant={isCurrent ? "secondary" : "outline"} disabled={isCurrent || p.priceMonthly <= 0} className="mt-4" onClick={() => setTarget(p)}>
                   {isCurrent ? "Current plan" : p.sortOrder > current.sortOrder ? "Upgrade" : "Switch"}
                 </Button>
               </div>
@@ -216,8 +247,15 @@ export function BillingPanel({ plans, subscription, current, usage }: { plans: P
         </div>
       </div>
 
-      <Dialog open={!!target} onOpenChange={(o) => !o && (setTarget(null), setAgreed(false))}>
-        <DialogContent title={`Switch to ${target?.name}?`} description={target ? `You'll be charged ${formatMoney(interval === "year" ? target.priceYearly : target.priceMonthly, target.currency)} today (${interval === "year" ? "annual" : "monthly"}). This demo uses a mock payment provider — no real charge is made.` : ""}>
+      <Dialog open={!!target} onOpenChange={(o) => !o && closeDialog()}>
+        <DialogContent
+          title={`Switch to ${target?.name}?`}
+          description={
+            target
+              ? `${formatMoney(interval === "year" ? target.priceYearly : target.priceMonthly, target.currency)} today, then every ${interval === "year" ? "year" : "month"} until you cancel. You'll set up the payment securely with Razorpay (card or UPI).${subscription && subscription.planId !== target.id ? " Your current plan stops billing once the new one starts." : ""}`
+              : ""
+          }
+        >
           <label className="mb-5 flex cursor-pointer items-start gap-3 rounded-md border border-[#e5e5e5] bg-[#f7f7f7] p-3 text-[13px] leading-relaxed text-[#555]">
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 size-4 shrink-0 cursor-pointer accent-[#aaaaaa]" />
             <span>
@@ -225,15 +263,15 @@ export function BillingPanel({ plans, subscription, current, usage }: { plans: P
               <a href="/terms" target="_blank" rel="noopener" className="text-[#2b2b2b] underline underline-offset-2 hover:text-black">
                 Terms &amp; Conditions
               </a>
-              , including the one-time payment and no-refund policy.
+              , including automatic renewal until I cancel and the no-refund policy.
             </span>
           </label>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => (setTarget(null), setAgreed(false))}>
+            <Button variant="ghost" onClick={closeDialog}>
               Cancel
             </Button>
-            <Button disabled={!agreed} loading={change.pending} onClick={() => target && agreed && void change.execute(target.id, interval, agreed)}>
-              Confirm and pay
+            <Button disabled={!agreed} loading={paying} onClick={() => target && agreed && pay(target)}>
+              Continue to payment
             </Button>
           </div>
         </DialogContent>
