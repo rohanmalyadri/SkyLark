@@ -30,7 +30,9 @@ async function Health() {
         {healthy ? <CheckCircle2 className="size-5 text-success" /> : <XCircle className="size-5 text-warning" />}
         <div className="flex-1">
           <p className="text-sm font-medium">{healthy ? "All systems operational" : "Degraded — see checks below"}</p>
-          <p className="text-xs text-subtle">Data mode: {dataMode === "supabase" ? "Supabase (PostgreSQL + Auth + Storage)" : "Demo (in-memory seeded store)"} · public probe at /api/health</p>
+          <p className="text-xs text-subtle">Data mode: {dataMode === "supabase" ? "Supabase (PostgreSQL + Auth + Storage)" : "Demo (in-memory seeded store)"} · public probe at{" "}
+            <a href="/api/health" target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-fg">/api/health</a>
+          </p>
         </div>
       </Panel>
       <Panel>

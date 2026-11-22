@@ -10,8 +10,6 @@ const LINKS = [
   ["Sign in", "/login"],
   ["Privacy", "/privacy"],
   ["Terms & Conditions", "/terms"],
-  ["Operations console", "/admin"],
-  ["System status", "/api/health"],
 ] as const;
 
 export function SiteFooter() {

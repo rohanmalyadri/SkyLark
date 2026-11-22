@@ -5,7 +5,7 @@ import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const sans = Inter_Tight({ variable: "--font-inter-tight", subsets: ["latin"], display: "swap" });
-const serif = Instrument_Serif({ variable: "--font-instrument-serif", subsets: ["latin"], weight: "400", display: "swap" });
+const serif = Instrument_Serif({ variable: "--font-instrument-serif", subsets: ["latin"], weight: "400", style: ["normal", "italic"], display: "swap" });
 const mono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
