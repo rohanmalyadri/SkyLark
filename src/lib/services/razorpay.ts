@@ -61,7 +61,12 @@ async function call<T>(path: string, init?: { method: "POST" | "PATCH"; body: un
   const json = (await res.json().catch(() => ({}))) as T & { error?: { description?: string; code?: string } };
   if (!res.ok) {
     logger.error("razorpay.api_error", { path: path.replace(/(sub|pay|plan)_\w+/g, "$1_*"), status: res.status, code: json.error?.code, description: json.error?.description });
-    throw new AppError("internal", "The payment provider couldn't be reached. Please try again in a moment.");
+    throw new AppError(
+      "internal",
+      res.status >= 500 || res.status === 429
+        ? "The payment provider couldn't be reached. Please try again in a moment."
+        : "Payments are temporarily unavailable. Please try again later or contact us.",
+    );
   }
   return json;
 }
