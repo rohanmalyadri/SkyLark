@@ -37,7 +37,7 @@ export function UserMenu({ name, email, role, avatarUrl }: { name: string; email
           <>
             <MenuSeparator />
             <MenuLabel>Staff</MenuLabel>
-            <MenuItem onSelect={() => router.push("/admin")}>
+            <MenuItem onSelect={() => router.push("/obscuron-nexus-92vX7q")}>
               <ShieldCheck /> Operations console
             </MenuItem>
           </>

@@ -9,6 +9,15 @@ const csv = z
   .optional()
   .transform((v) => (v ?? "").split(",").map((s) => s.trim()).filter(Boolean));
 
+// Employers with public Greenhouse boards and offices across India, the UK, the US, Canada,
+// Australia, Singapore, Japan, Ireland and Latin America, so the catalog isn't Europe-only.
+const DEFAULT_GREENHOUSE_BOARDS = [
+  "gitlab", "figma", "mongodb", "airbnb", "twilio", // global
+  "stripe", "databricks", "okta", "zscaler", "rubrik", // large India, Canada, Australia and Singapore teams
+  "samsara", "deliveroo", "monzo", // Canada, UK
+  "groww", "hackerrank", "druva", // India
+].join(",");
+
 const ServerEnvSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
@@ -21,7 +30,7 @@ const ServerEnvSchema = z.object({
   AI_MODEL: z.string().default("claude-opus-5-5"),
   /** Google Gemini key for the chat-style onboarding. Without it, onboarding shows only the form. */
   GEMINI_API_KEY: z.string().min(10).optional(),
-  GEMINI_MODEL: z.string().default("gemini-flash-latest"),
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
   CRON_SECRET: z.string().min(16).optional(),
   ADMIN_EMAILS: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().endsWith(".apps.googleusercontent.com").optional(),
@@ -50,7 +59,12 @@ const ServerEnvSchema = z.object({
   ADZUNA_APP_KEY: optionalKey,
   ADZUNA_COUNTRIES: csv,
   MUSE_API_KEY: optionalKey,
-  GREENHOUSE_BOARDS: csv,
+  // Global employers with public Greenhouse boards, so the catalog isn't Europe-only. Set the
+  // variable to override the list; an empty value turns the source off.
+  GREENHOUSE_BOARDS: z
+    .string()
+    .default(DEFAULT_GREENHOUSE_BOARDS)
+    .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean)),
   LEVER_COMPANIES: csv,
 });
 

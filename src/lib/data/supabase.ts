@@ -1,4 +1,5 @@
 import "server-only";
+import { inferDepartment } from "@/lib/pipeline/department";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { APPLICATION_STATUSES } from "@/lib/domain/types";
 import type {
@@ -9,6 +10,9 @@ import type {
   AuditLog,
   BackgroundJob,
   CandidateProfile,
+  Client,
+  ClientMessage,
+  ClientNote,
   Company,
   HumanReview,
   HumanReviewWithContext,
@@ -37,10 +41,13 @@ import type {
   UserSettings,
 } from "@/lib/domain/types";
 import { defaultSettings, emptySelfIdentification } from "@/lib/seed/dataset";
-import type { AdminStats, Repository, DeliveryRunQuery, LeadQuery} from "./repository";
+import type { AdminStats, ClientQuery, Repository, DeliveryRunQuery, LeadQuery } from "./repository";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Row = Record<string, any>;
+
+/** PostgREST's default max-rows: larger reads must be paged. */
+const PAGE_ROWS = 1000;
 
 function check(res: { data: any; error: { message: string; code?: string } | null }, ctx: string): any {
   if (res.error) throw new Error(`[db:${ctx}] ${res.error.message}`);
@@ -136,7 +143,8 @@ const toAnswers = (r: Row): ApplicationAnswers => ({
   screening: r.screening ?? {},
   background: r.background ?? {},
   // Read separately, through the privileged repository, by getSelfIdentification.
-  selfIdentification: r.self_identification ?? emptySelfIdentification(),
+  // The column defaults to an empty object, so fill in any field a row is missing.
+  selfIdentification: { ...emptySelfIdentification(), ...(r.self_identification ?? {}) },
   delivery: r.delivery ?? {},
   updatedAt: r.updated_at,
 });
@@ -199,6 +207,61 @@ const toPromoCode = (r: Row): PromoCode => ({
   createdAt: r.created_at,
 });
 
+const toClient = (r: Row): Client => ({
+  id: r.id,
+  name: r.name,
+  email: r.email,
+  phone: r.phone,
+  company: r.company,
+  city: r.city,
+  status: r.status,
+  amount: r.amount == null ? null : Number(r.amount),
+  currency: "INR",
+  paymentStatus: r.payment_status,
+  paymentSource: r.payment_source,
+  paidAt: r.paid_at,
+  paymentMethod: r.payment_method,
+  paymentReference: r.payment_reference,
+  userId: r.user_id ?? null,
+  lastInteractionAt: r.last_interaction_at,
+  createdAt: r.created_at,
+  updatedAt: r.updated_at,
+});
+
+const toClientMessage = (r: Row): ClientMessage => ({
+  id: r.id,
+  clientId: r.client_id,
+  direction: r.direction,
+  authorName: r.author_name,
+  authorId: r.author_id,
+  body: r.body,
+  sample: r.sample,
+  readAt: r.read_at,
+  createdAt: r.created_at,
+});
+
+const toClientNote = (r: Row): ClientNote => ({ id: r.id, clientId: r.client_id, authorId: r.author_id, authorName: r.author_name, body: r.body, createdAt: r.created_at });
+
+const CLIENT_COLUMNS: Record<string, string> = {
+  name: "name",
+  email: "email",
+  phone: "phone",
+  company: "company",
+  city: "city",
+  status: "status",
+  amount: "amount",
+  paymentStatus: "payment_status",
+  paymentSource: "payment_source",
+  paidAt: "paid_at",
+  paymentMethod: "payment_method",
+  paymentReference: "payment_reference",
+  userId: "user_id",
+  lastInteractionAt: "last_interaction_at",
+};
+
+const fromClientPatch = (patch: Record<string, unknown>): Row =>
+  Object.fromEntries(Object.entries(patch).filter(([k, v]) => v !== undefined && CLIENT_COLUMNS[k]).map(([k, v]) => [CLIENT_COLUMNS[k], v]));
+
 const toLead = (r: Row): Lead => ({
   id: r.id,
   name: r.name,
@@ -249,7 +312,7 @@ const toJob = (r: Row): Job => ({
   id: r.id,
   companyId: r.company_id,
   title: r.title,
-  department: r.department,
+  department: r.department || inferDepartment(r.title, r.required_skills ?? []),
   seniority: r.seniority,
   employmentType: r.employment_type,
   locations: r.locations,
@@ -533,14 +596,40 @@ export class SupabaseRepository implements Repository {
     return toCompany(check(await this.db.from("companies").upsert(fromCompany(company), { onConflict: "domain" }).select().single(), "upsertCompany"));
   }
   async listJobs(opts: { status?: "active" | "closed"; limit?: number; search?: string } = {}) {
-    let q = this.db.from("jobs").select(JOB_SELECT).order("posted_at", { ascending: false }).limit(opts.limit ?? 500);
-    if (opts.status) q = q.eq("status", opts.status);
-    if (opts.search) q = q.textSearch("search", opts.search, { type: "websearch" });
-    return check(await q, "listJobs").map(toJobWithCompany);
+    // PostgREST returns at most 1000 rows per request, so read larger limits a page at a time.
+    const limit = opts.limit ?? 500;
+    const rows: Row[] = [];
+    while (rows.length < limit) {
+      const size = Math.min(PAGE_ROWS, limit - rows.length);
+      let q = this.db.from("jobs").select(JOB_SELECT).order("posted_at", { ascending: false }).order("id").range(rows.length, rows.length + size - 1);
+      if (opts.status) q = q.eq("status", opts.status);
+      if (opts.search) q = q.textSearch("search", opts.search, { type: "websearch" });
+      const page: Row[] = check(await q, "listJobs");
+      rows.push(...page);
+      if (page.length < size) break;
+    }
+    return rows.map(toJobWithCompany);
+  }
+  async listJobLocations() {
+    const out: { companyId: string; locations: Job["locations"] }[] = [];
+    for (;;) {
+      const page: Row[] = check(await this.db.from("jobs").select("id, company_id, locations").eq("status", "active").order("id").range(out.length, out.length + PAGE_ROWS - 1), "listJobLocations");
+      out.push(...page.map((r) => ({ companyId: r.company_id as string, locations: (r.locations ?? []) as Job["locations"] })));
+      if (page.length < PAGE_ROWS) return out;
+    }
   }
   async getJob(id: string) {
     const r = check(await this.db.from("jobs").select(JOB_SELECT).eq("id", id).maybeSingle(), "getJob");
     return r ? toJobWithCompany(r) : null;
+  }
+  async countJobs(opts: { status?: "active" | "closed"; source?: string }) {
+    // A plain select is capped by PostgREST's max-rows (1000), so ask for the count instead.
+    let q = this.db.from("jobs").select("id", { count: "exact", head: true });
+    if (opts.status) q = q.eq("status", opts.status);
+    if (opts.source) q = q.eq("source", opts.source);
+    const { count, error } = await q;
+    if (error) throw new Error(`[db:countJobs] ${error.message}`);
+    return count ?? 0;
   }
   async findJobsByFingerprint(fingerprints: string[]) {
     // Chunked: a feed holds hundreds of listings and `.in()` goes in the URL, which PostgREST caps.
@@ -551,13 +640,25 @@ export class SupabaseRepository implements Repository {
     }
     return found;
   }
+  async findJobsByExternalId(source: string, externalIds: string[]) {
+    const found: { externalId: string; fingerprint: string }[] = [];
+    for (let i = 0; i < externalIds.length; i += 100) {
+      const rows = check(await this.db.from("jobs").select("external_id, fingerprint").eq("source", source).in("external_id", externalIds.slice(i, i + 100)), "findExternalIds");
+      found.push(...rows.map((r: Row) => ({ externalId: r.external_id as string, fingerprint: r.fingerprint as string })));
+    }
+    return found;
+  }
   async insertJobs(jobs: Parameters<Repository["insertJobs"]>[0]) {
-    if (!jobs.length) return [];
-    const rows = check(
-      await this.db.from("jobs").upsert(jobs.map((j) => fromJob(j as Partial<Job>)), { onConflict: "fingerprint", ignoreDuplicates: true }).select(),
-      "insertJobs",
-    );
-    return rows.map(toJob);
+    // Batched: a first import of a large board is thousands of listings with full descriptions.
+    const out: Job[] = [];
+    for (let i = 0; i < jobs.length; i += 250) {
+      const rows = check(
+        await this.db.from("jobs").upsert(jobs.slice(i, i + 250).map((j) => fromJob(j as Partial<Job>)), { onConflict: "fingerprint", ignoreDuplicates: true }).select(),
+        "insertJobs",
+      );
+      out.push(...rows.map(toJob));
+    }
+    return out;
   }
   async updateJob(id: string, patch: { status?: "active" | "closed" }) {
     check(await this.db.from("jobs").update(patch).eq("id", id), "updateJob");
@@ -959,7 +1060,7 @@ export class SupabaseRepository implements Repository {
   async getSelfIdentification(userId: string) {
     // Only reachable with the service role; a session client is refused by the column grant.
     const r = check(await this.db.from("application_answers").select("self_identification").eq("user_id", userId).maybeSingle(), "getSelfIdentification");
-    return r ? (r.self_identification ?? emptySelfIdentification()) : null;
+    return r ? { ...emptySelfIdentification(), ...(r.self_identification ?? {}) } : null;
   }
   async upsertAnswers(answers: Omit<ApplicationAnswers, "updatedAt">) {
     const row = {
@@ -1214,6 +1315,71 @@ export class SupabaseRepository implements Repository {
     if (patch.ownerId !== undefined) row.owner_id = patch.ownerId;
     if (patch.note !== undefined) row.note = patch.note;
     return toLead(check(await this.db.from("leads").update(row).eq("id", id).select().single(), "updateLead"));
+  }
+
+  /* clients (CRM) */
+  async listClients(query: ClientQuery = {}) {
+    let q = this.db.from("clients").select("*").order("last_interaction_at", { ascending: false, nullsFirst: false }).limit(query.limit ?? 500);
+    if (query.status?.length) q = q.in("status", query.status);
+    if (query.paymentStatus?.length) q = q.in("payment_status", query.paymentStatus);
+    // Strip PostgREST filter syntax so a search term can't add conditions of its own.
+    const term = query.search?.replace(/[%,().*\\]/g, " ").trim();
+    if (term) q = q.or(`name.ilike.%${term}%,email.ilike.%${term}%,phone.ilike.%${term}%,company.ilike.%${term}%,city.ilike.%${term}%`);
+    return check(await q, "listClients").map(toClient);
+  }
+  async getClient(id: string) {
+    const r = check(await this.db.from("clients").select("*").eq("id", id).maybeSingle(), "getClient");
+    return r ? toClient(r) : null;
+  }
+  async createClient(client: Parameters<Repository["createClient"]>[0]) {
+    const row: Row = { ...fromClientPatch(client), ...(client.id ? { id: client.id } : {}), ...(client.createdAt ? { created_at: client.createdAt } : {}) };
+    return toClient(check(await this.db.from("clients").insert(row).select().single(), "createClient"));
+  }
+  async updateClient(id: string, patch: Parameters<Repository["updateClient"]>[1]) {
+    return toClient(check(await this.db.from("clients").update(fromClientPatch(patch)).eq("id", id).select().single(), "updateClient"));
+  }
+  async getClientByUserId(userId: string) {
+    const r = check(await this.db.from("clients").select("*").eq("user_id", userId).maybeSingle(), "getClientByUserId");
+    return r ? toClient(r) : null;
+  }
+  async deleteClient(id: string) {
+    // Messages and notes go with it (on delete cascade).
+    check(await this.db.from("clients").delete().eq("id", id), "deleteClient");
+  }
+  async listClientMessages(opts: { clientId?: string; limit?: number } = {}) {
+    let q = this.db.from("client_messages").select("*").order("created_at", { ascending: false }).limit(opts.limit ?? 2000);
+    if (opts.clientId) q = q.eq("client_id", opts.clientId);
+    return (check(await q, "listClientMessages") as Row[]).map(toClientMessage).reverse();
+  }
+  async addClientMessage(message: Parameters<Repository["addClientMessage"]>[0]) {
+    const row: Row = {
+      ...(message.id ? { id: message.id } : {}),
+      client_id: message.clientId,
+      direction: message.direction,
+      author_name: message.authorName,
+      author_id: message.authorId,
+      body: message.body,
+      sample: message.sample,
+      read_at: message.readAt,
+      ...(message.createdAt ? { created_at: message.createdAt } : {}),
+    };
+    const saved = toClientMessage(check(await this.db.from("client_messages").insert(row).select().single(), "addClientMessage"));
+    check(await this.db.from("clients").update({ last_interaction_at: saved.createdAt }).eq("id", saved.clientId), "touchClient");
+    return saved;
+  }
+  async markClientMessagesRead(clientId: string, at: string, direction: "inbound" | "outbound" = "inbound") {
+    const rows = check(
+      await this.db.from("client_messages").update({ read_at: at }).eq("client_id", clientId).eq("direction", direction).is("read_at", null).select("id"),
+      "markClientMessagesRead",
+    );
+    return (rows ?? []).length;
+  }
+  async listClientNotes(clientId: string) {
+    return check(await this.db.from("client_notes").select("*").eq("client_id", clientId).order("created_at", { ascending: false }), "listClientNotes").map(toClientNote);
+  }
+  async addClientNote(note: Parameters<Repository["addClientNote"]>[0]) {
+    const row: Row = { client_id: note.clientId, author_id: note.authorId, author_name: note.authorName, body: note.body, ...(note.createdAt ? { created_at: note.createdAt } : {}) };
+    return toClientNote(check(await this.db.from("client_notes").insert(row).select().single(), "addClientNote"));
   }
 
   /* idempotency & analytics */

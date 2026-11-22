@@ -263,6 +263,38 @@ describe("the managed service", () => {
     });
   });
 
+  it("keeps client records, conversations and notes staff-only and server-written", async () => {
+    await db.exec(`insert into public.clients (id, name, status, amount, payment_status) values ('00000000-0000-4000-8000-0000000c1e01', 'Harsha Gottipati', 'active', 13902, 'paid');
+      insert into public.client_messages (client_id, direction, author_name, body) values ('00000000-0000-4000-8000-0000000c1e01', 'inbound', 'Harsha Gottipati', 'Payment done');
+      insert into public.client_notes (client_id, author_name, body) values ('00000000-0000-4000-8000-0000000c1e01', 'Ops', 'Marked paid on the client''s word');`);
+
+    await asUser(A, async () => {
+      for (const t of ["clients", "client_messages", "client_notes"]) expect((await db.query(`select 1 from public.${t}`)).rows).toHaveLength(0);
+      await expect(db.query(`insert into public.clients (name) values ('Someone')`)).rejects.toThrow(/permission denied/i);
+    });
+    await asUser(STAFF, async () => {
+      expect((await db.query(`select name, amount from public.clients`)).rows).toEqual([{ name: "Harsha Gottipati", amount: 13902 }]);
+      expect((await db.query(`select body from public.client_messages`)).rows).toHaveLength(1);
+      await expect(db.query(`update public.clients set payment_status = 'refunded'`)).rejects.toThrow(/permission denied/i);
+    });
+
+    // A staff-entered payment can't carry a gateway reference; only a gateway row may.
+    await expect(db.exec(`update public.clients set payment_reference = 'pay_123' where name = 'Harsha Gottipati'`)).rejects.toThrow(/clients_reference_needs_gateway/);
+    // Deleting a client takes its conversation and notes with it.
+    await db.exec(`delete from public.clients where name = 'Harsha Gottipati'`);
+    expect((await db.query(`select 1 from public.client_messages union all select 1 from public.client_notes`)).rows).toHaveLength(0);
+  });
+
+  it("links a client to at most one account, and unlinks it when the account goes", async () => {
+    await db.exec(`insert into public.clients (name, user_id) values ('Linked Client', '${A}')`);
+    await expect(db.exec(`insert into public.clients (name, user_id) values ('Second Record', '${A}')`)).rejects.toThrow(/clients_user_idx/);
+    // Candidates still can't read client rows directly, even their own; the server reads for them.
+    await asUser(A, async () => {
+      expect((await db.query(`select 1 from public.clients`)).rows).toHaveLength(0);
+    });
+    await db.exec(`delete from public.clients where name = 'Linked Client'`);
+  });
+
   it("publishes live promo codes but lets nobody redeem one from the browser", async () => {
     await db.exec(`insert into public.promo_codes (code, kind, value, description) values
       ('LIVE20', 'percent', 20, 'Live'),

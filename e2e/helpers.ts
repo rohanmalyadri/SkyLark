@@ -23,7 +23,7 @@ export async function demoSignIn(page: Page, who: "Candidate" | "Operations") {
   } else {
     await page.getByRole("button", { name: new RegExp(`^${who}`) }).click();
   }
-  await expect(page).toHaveURL(who === "Candidate" ? /\/dashboard/ : /\/admin/);
+  await expect(page).toHaveURL(who === "Candidate" ? /\/dashboard/ : /\/obscuron-nexus-92vX7q/);
 }
 
 /** Types into a suggestion input and waits for the debounced lookup to settle. */

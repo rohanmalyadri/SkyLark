@@ -94,6 +94,22 @@ const DraftSchema = z.object({
   }),
 });
 
+const PartialEducationSchema = z.object({
+  school: z.string().max(130).optional(),
+  degree: z.string().max(40).optional(),
+  field: z.string().max(90).optional(),
+  year: z.number().int().optional(),
+});
+type PartialEducation = z.infer<typeof PartialEducationSchema>;
+
+/** A plausible graduation year typed on its own, e.g. "2029" or "I graduate in 2029". */
+function yearInText(message: string): number | undefined {
+  const years = [...message.matchAll(/\b(19[5-9]\d|20\d\d)\b/g)].map((m) => Number(m[1]));
+  const max = new Date().getFullYear() + 7;
+  const ok = years.filter((y) => y >= 1950 && y <= max);
+  return ok.length ? ok[ok.length - 1] : undefined;
+}
+
 export const IntakeTurnSchema = z.object({
   draft: DraftSchema,
   asked: z.array(z.enum(INTAKE_TOPICS)).max(INTAKE_TOPICS.length),
@@ -107,6 +123,8 @@ export const IntakeTurnSchema = z.object({
     )
     .max(40),
   message: z.string().trim().min(1, "Type an answer first").max(2000, "Keep answers under 2,000 characters"),
+  /** A qualification from an earlier answer that still lacks some details. */
+  partialEducation: PartialEducationSchema.nullish(),
 });
 
 /* ---------- What Gemini returns ---------- */
@@ -496,8 +514,23 @@ const topicSnapshot = (d: IntakeDraft, t: IntakeTopic) => {
   }
 };
 
-async function applyUpdates(draft: IntakeDraft, raw: Extraction, message = "", lastTopic: IntakeTopic | null = null) {
+async function applyUpdates(draft: IntakeDraft, raw: Extraction, message = "", lastTopic: IntakeTopic | null = null, partial: PartialEducation | null = null) {
   const u: Extraction = prune(raw) ?? {};
+  // A follow-up to an incomplete qualification ("2029") completes the one from the earlier answer.
+  if (lastTopic === "education" && partial) {
+    const first = u.education?.[0] ?? {};
+    const merged = {
+      school: first.school ?? partial.school,
+      degree: first.degree ?? partial.degree,
+      field: first.field ?? partial.field,
+      year: first.year ?? partial.year ?? yearInText(message),
+    };
+    u.education = [merged, ...(u.education?.slice(1) ?? [])];
+  } else if (lastTopic === "education" && u.education?.[0] && !u.education[0].year) {
+    const year = yearInText(message);
+    if (year) u.education[0] = { ...u.education[0], year };
+  }
+  let partialEducation: PartialEducation | null = null;
   if (u.salaryMin !== undefined && u.salaryMin <= 0) delete u.salaryMin;
   // Cheap guards against values the model infers without the candidate saying them
   // (living in India is not Indian citizenship; a job title is not a years count).
@@ -729,7 +762,14 @@ async function applyUpdates(draft: IntakeDraft, raw: Extraction, message = "", l
         !entry.year && "the graduation year",
       ].filter(Boolean) as string[];
       if (missing.length) {
-        flag("education", `For that qualification I still need ${missing.join(", ")}.`);
+        // Keep what we have so the next answer can fill the gap.
+        partialEducation ??= {
+          ...(entry.school && { school: entry.school.slice(0, 130) }),
+          ...((DEGREE_LEVELS as readonly string[]).includes(entry.degree) && { degree: entry.degree }),
+          ...(entry.field && { field: entry.field.slice(0, 90) }),
+          ...(entry.year && { year: entry.year }),
+        };
+        flag("education", `For that qualification I still need ${listPhrase(missing)}.`);
         continue;
       }
       const res = EducationSchema.safeParse(entry);
@@ -759,7 +799,7 @@ async function applyUpdates(draft: IntakeDraft, raw: Extraction, message = "", l
   }
 
   const changed = [...saved].filter((t) => JSON.stringify(topicSnapshot(d, t)) !== JSON.stringify(topicSnapshot(draft, t)));
-  return { draft: d, problems, saved: changed };
+  return { draft: d, problems, saved: changed, partialEducation };
 }
 
 const TOPIC_NOUN: Record<IntakeTopic, string> = {
@@ -785,7 +825,7 @@ const listPhrase = (xs: string[]) => (xs.length <= 1 ? (xs[0] ?? "") : `${xs.sli
 
 export async function intakeTurn(user: User, input: unknown): Promise<IntakeTurnResult> {
   await rateLimit("intake", user.id);
-  const { draft, asked: askedIn, history, message } = IntakeTurnSchema.parse(input);
+  const { draft, asked: askedIn, history, message, partialEducation: partialIn } = IntakeTurnSchema.parse(input);
   const asked = [...askedIn] as IntakeTopic[];
   const current = draft as IntakeDraft;
   const lastTopic = asked.at(-1) ?? null;
@@ -822,7 +862,7 @@ export async function intakeTurn(user: User, input: unknown): Promise<IntakeTurn
     turns,
     schema: OUTPUT_SCHEMA,
   });
-  const { draft: next, problems, saved } = await applyUpdates(current, out.updates ?? {}, message, lastTopic);
+  const { draft: next, problems, saved, partialEducation } = await applyUpdates(current, out.updates ?? {}, message, lastTopic, partialIn ?? null);
 
   const nextAsked = uniq([...asked, ...((out.declinedTopics ?? []).filter((t) => (INTAKE_TOPICS as readonly string[]).includes(t) && !REQUIRED_TOPICS.includes(t)) as IntakeTopic[])]);
   const pending = pendingTopics(next, nextAsked);
@@ -864,5 +904,6 @@ export async function intakeTurn(user: User, input: unknown): Promise<IntakeTurn
     saved: saved.map((s) => TOPIC_LABEL[s]),
     topic,
     complete: pending.length === 0 && problems.length === 0,
+    partialEducation,
   };
 }

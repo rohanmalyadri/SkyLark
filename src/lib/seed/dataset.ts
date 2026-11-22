@@ -357,8 +357,8 @@ export function buildDataset(base = Date.now()): Dataset {
     id: seedId(`pay:demo:${i}`),
     userId: demoId,
     subscriptionId: seedId("sub:demo"),
-    amount: 49,
-    currency: "USD",
+    amount: 3999,
+    currency: "INR",
     status: "succeeded" as const,
     provider: "mock",
     providerRef: `pi_demo_${i}`,
@@ -371,7 +371,7 @@ export function buildDataset(base = Date.now()): Dataset {
     { id: seedId("n:2"), userId: demoId, type: "review", title: "Review started", body: "Sam is reviewing your Helix Payments application.", href: `/applications?open=${seedId("app:demo:helix-sfe")}`, readAt: null, createdAt: hoursAgo(5, base) },
     { id: seedId("n:3"), userId: demoId, type: "application", title: "Interview scheduled", body: "Orbital Health — technical interview in 2 days.", href: `/applications?open=${seedId("app:demo:orbital-sfe")}`, readAt: null, createdAt: hoursAgo(20, base) },
     { id: seedId("n:4"), userId: demoId, type: "application", title: "Offer received", body: "Verdant Energy sent an offer. Deadline in 5 days.", href: `/applications?open=${seedId("app:demo:verdant-fs")}`, readAt: hoursAgo(30, base), createdAt: daysAgo(2, base) },
-    { id: seedId("n:5"), userId: demoId, type: "billing", title: "Payment received", body: "Professional plan renewed — $49.00.", href: "/settings#billing", readAt: daysAgo(4, base), createdAt: daysAgo(4, base) },
+    { id: seedId("n:5"), userId: demoId, type: "billing", title: "Payment received", body: "Professional plan renewed — ₹3,999.", href: "/settings#billing", readAt: daysAgo(4, base), createdAt: daysAgo(4, base) },
   ];
 
   const settings = users.map((u) => defaultSettings(u.id));

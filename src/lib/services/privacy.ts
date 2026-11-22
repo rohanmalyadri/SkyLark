@@ -30,6 +30,8 @@ export async function exportMyData(user: User) {
     repo.getVerification(user.id),
   ]);
   const skillRequests = await systemRepo().listSkillRequests({ userId: user.id });
+  const supportClient = await systemRepo().getClientByUserId(user.id);
+  const supportMessages = supportClient ? (await systemRepo().listClientMessages({ clientId: supportClient.id })).filter((m) => !m.sample) : [];
   const events = (await Promise.all(applications.map((a) => repo.listEvents(a.id)))).flat();
   await audit(user, "privacy.data_exported", "user", user.id);
   return {
@@ -46,6 +48,8 @@ export async function exportMyData(user: User) {
     settings,
     subscription,
     payments,
+    // Internal staff notes about the client are the business's own records and aren't included.
+    messagesWithTeam: supportMessages.map((m) => ({ from: m.direction === "inbound" ? "you" : m.authorName, body: m.body, sentAt: m.createdAt, readAt: m.readAt })),
   };
 }
 

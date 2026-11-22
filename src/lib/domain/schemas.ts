@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { checkGithub, checkLinkedin, checkPortfolio, type LinkCheck } from "@/lib/validation/links";
 import { implausibleTokens, nameProblem, textProblem, tidyName } from "@/lib/validation/text";
-import { APPLICATION_STATUSES, DEGREE_LEVELS, DISABILITY_STATUSES, GENDER_IDENTITIES, LEAD_STATUSES, RACE_ETHNICITIES, TERNARY, VETERAN_STATUSES } from "./types";
+import { APPLICATION_STATUSES, CLIENT_PAYMENT_STATUSES, CLIENT_STATUSES, DEGREE_LEVELS, DISABILITY_STATUSES, GENDER_IDENTITIES, LEAD_STATUSES, RACE_ETHNICITIES, TERNARY, VETERAN_STATUSES } from "./types";
 
 /*
  * Input schemas. They run in the browser for inline feedback and again on the server, which is
@@ -173,8 +173,9 @@ export const SettingsSchema = z.object({
 export const PlanUpdateSchema = z.object({
   name: z.string().trim().min(2).max(40),
   tagline: z.string().trim().max(140),
-  priceMonthly: z.number().min(0).max(10_000),
-  priceYearly: z.number().min(0).max(100_000),
+  // Large enough for rupee prices (e.g. ₹1,15,200 a year), which Razorpay subscriptions charge in.
+  priceMonthly: z.number().min(0).max(1_000_000),
+  priceYearly: z.number().min(0).max(10_000_000),
   features: z.array(z.string().trim().min(2).max(120)).min(1).max(12),
   highlighted: z.boolean(),
   active: z.boolean(),
@@ -294,6 +295,49 @@ export const LeadUpdateSchema = z.object({
   status: z.enum(LEAD_STATUSES).optional(),
   note: z.string().trim().max(2000).optional(),
   claim: z.boolean().optional(),
+});
+
+/* ---------- Clients ---------- */
+
+const rupees = z.coerce.number().int("Use whole rupees").min(0, "Amount can't be negative").max(100_000_000, "That amount looks too large");
+
+export const ClientInputSchema = z.object({
+  name: PersonName,
+  email: z.email("Enter a valid email").max(254).transform((v) => v.toLowerCase()).or(z.literal("")),
+  phone: z.string().trim().max(32).regex(/^[+0-9 ()-]*$/, "Use digits, spaces and + ( ) - only"),
+  company: z.string().trim().max(120),
+  city: z.string().trim().max(80),
+  status: z.enum(CLIENT_STATUSES),
+  amount: rupees.nullable(),
+  paymentStatus: z.enum(CLIENT_PAYMENT_STATUSES),
+  /** YYYY-MM-DD from a date input, or empty when nobody knows the date. */
+  paidOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a valid date").or(z.literal("")),
+  paymentMethod: z.string().trim().max(60),
+});
+
+export const ClientPatchSchema = ClientInputSchema.partial();
+
+export const ClientMessageSchema = z.object({
+  clientId: z.string().min(1).max(64),
+  body: z.string().trim().min(1, "Write a message first").max(4000),
+  /** Staff logging something the client said elsewhere (call, WhatsApp, email). */
+  direction: z.enum(["inbound", "outbound"]).default("outbound"),
+});
+
+/** A signed-in user writing to the team. The client record comes from the session, never the browser. */
+export const MyMessageSchema = z.object({
+  body: z.string().trim().min(1, "Write a message first").max(4000),
+});
+
+export const ClientAccountLinkSchema = z.object({
+  clientId: z.string().min(1).max(64),
+  /** Empty unlinks. */
+  email: z.email("Enter a valid email").max(254).transform((v) => v.toLowerCase()).or(z.literal("")),
+});
+
+export const ClientNoteSchema = z.object({
+  clientId: z.string().min(1).max(64),
+  body: z.string().trim().min(1, "Write a note first").max(2000),
 });
 
 /* ---------- Partners & promo codes ---------- */

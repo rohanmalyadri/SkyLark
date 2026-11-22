@@ -87,7 +87,7 @@ and job imports overrun the 60-second function limit. If the database ever moves
 ## 4. Check it worked
 
 - `https://www.skylarkgo.in/api/health` returns `"mode":"supabase"`.
-- Sign up with the `ADMIN_EMAILS` address, sign out and back in: you land in `/admin`.
+- Sign up with the `ADMIN_EMAILS` address, sign out and back in: you land in `/obscuron-nexus-92vX7q`.
 - The daily cron (`/api/cron/worker`, 09:00 UTC) imports jobs. To fill the board straight away, open
   **Admin → Pipeline** and run an import.
 

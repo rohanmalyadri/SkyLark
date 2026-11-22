@@ -735,6 +735,73 @@ export interface Lead {
   updatedAt: string;
 }
 
+/* ---------- Clients (the CRM: people who buy the service, their payments and conversations) ---------- */
+
+export const CLIENT_STATUSES = ["lead", "in_discussion", "active", "completed", "on_hold"] as const;
+export type ClientStatus = (typeof CLIENT_STATUSES)[number];
+
+export const CLIENT_PAYMENT_STATUSES = ["paid", "pending", "unpaid", "refunded"] as const;
+export type ClientPaymentStatus = (typeof CLIENT_PAYMENT_STATUSES)[number];
+
+/**
+ * Where a payment status came from. Only "gateway" means a payment provider independently
+ * confirmed the money; "manual" is a staff member's say-so and must be labelled as such.
+ */
+export const PAYMENT_SOURCES = ["manual", "gateway"] as const;
+export type PaymentSource = (typeof PAYMENT_SOURCES)[number];
+
+export interface Client {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  city: string;
+  status: ClientStatus;
+  /** Agreed or paid amount in whole rupees; null while the price is still being discussed. */
+  amount: number | null;
+  currency: "INR";
+  paymentStatus: ClientPaymentStatus;
+  paymentSource: PaymentSource;
+  /** Only set when someone knows the real date; never guessed. */
+  paidAt: string | null;
+  /** Only set when verified (gateway) or entered by staff who saw it. */
+  paymentMethod: string | null;
+  /** Gateway reference. Only a gateway may set this; staff entries leave it null. */
+  paymentReference: string | null;
+  /** The user account this client chats from, when they have one. One account, one client. */
+  userId: string | null;
+  lastInteractionAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ClientMessageDirection = "inbound" | "outbound";
+
+export interface ClientMessage {
+  id: string;
+  clientId: string;
+  /** inbound = written by the client, outbound = written by our team. */
+  direction: ClientMessageDirection;
+  authorName: string;
+  /** Staff author for outbound messages; null for the client. */
+  authorId: string | null;
+  body: string;
+  /** Seeded illustration rather than a real exchange. Shown with a "Sample" label. */
+  sample: boolean;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export interface ClientNote {
+  id: string;
+  clientId: string;
+  authorId: string | null;
+  authorName: string;
+  body: string;
+  createdAt: string;
+}
+
 /* ---------- Notifications, settings, audit ---------- */
 
 export interface Notification {

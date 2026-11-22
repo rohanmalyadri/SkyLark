@@ -66,8 +66,8 @@ const answered = (v: unknown) => v !== null && v !== undefined && v !== "";
 export function completeness(answers: ApplicationAnswers): AnswerCompleteness {
   const sections: SectionCompleteness[] = ANSWER_SECTIONS.map((section) => {
     if (section === "selfIdentification") {
-      const s = answers.selfIdentification;
-      const fields = [s.gender, s.hispanicOrLatino, s.raceEthnicity.length ? "set" : null, s.veteranStatus, s.disabilityStatus];
+      const s = { ...emptySelfIdentification(), ...answers.selfIdentification };
+      const fields = [s.gender, s.hispanicOrLatino, s.raceEthnicity?.length ? "set" : null, s.veteranStatus, s.disabilityStatus];
       return { section, label: SECTION_LABEL[section], answered: fields.filter(answered).length, total: fields.length, required: false, missing: [] };
     }
     if (section === "delivery") {

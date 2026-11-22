@@ -48,6 +48,13 @@ function answerRequired(a: ApplicationAnswers): ApplicationAnswers {
 }
 
 describe("answer completeness", () => {
+  it("copes with a stored self-identification that has no fields yet", async () => {
+    // The database column defaults to {}, so a fresh row has none of the fields.
+    const { completeness, emptyAnswers } = await load();
+    const a = { ...emptyAnswers("u1"), selfIdentification: {} as ApplicationAnswers["selfIdentification"] };
+    expect(() => completeness(a)).not.toThrow();
+  });
+
   it("treats an empty vault as blocking, not as a page of implicit noes", async () => {
     const { completeness, emptyAnswers } = await load();
     const status = completeness(emptyAnswers("u1"));

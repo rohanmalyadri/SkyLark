@@ -122,4 +122,6 @@ export interface IntakeTurnResult {
   /** Topic the reply asks about; null once everything is covered. */
   topic: IntakeTopic | null;
   complete: boolean;
+  /** An incomplete qualification to send back with the next answer, so a follow-up can finish it. */
+  partialEducation?: { school?: string; degree?: string; field?: string; year?: number } | null;
 }

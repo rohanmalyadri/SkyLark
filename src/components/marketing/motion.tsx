@@ -5,6 +5,7 @@ import { MorphSVGPlugin } from "gsap/MorphSVGPlugin";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import Lenis from "lenis";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { jumpTo, registerScroller } from "@/lib/smooth-scroll";
 import { StageShapes } from "./stage-shapes";
@@ -43,6 +44,17 @@ export function SmoothScroll() {
 
 export function Cursor() {
   const ref = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  // A click that navigates (e.g. a "View" stage picture) swaps the page under a still pointer,
+  // so drop the disc until the pointer moves over something that asks for it again.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const bubble = el.querySelector<HTMLElement>(".bubble")!;
+    gsap.to(bubble, { scale: 0, duration: 0.3, ease: "expo.out", overwrite: "auto" });
+    gsap.to(bubble.querySelector("span"), { opacity: 0, duration: 0.2, overwrite: "auto" });
+    gsap.to(el.querySelector(".follow"), { scale: 1, duration: 0.3, overwrite: "auto" });
+  }, [pathname]);
   useEffect(() => {
     const el = ref.current;
     if (!el || reduced() || !window.matchMedia("(hover: hover) and (min-width: 1024px)").matches) return;

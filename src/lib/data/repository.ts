@@ -9,6 +9,12 @@ import type {
   BackgroundJob,
   BackgroundJobStatus,
   CandidateProfile,
+  Client,
+  ClientMessage,
+  ClientMessageDirection,
+  ClientNote,
+  ClientPaymentStatus,
+  ClientStatus,
   Company,
   DeliveryRun,
   DeliveryRunStatus,
@@ -83,6 +89,15 @@ export interface LeadQuery {
   limit?: number;
 }
 
+export interface ClientQuery {
+  status?: ClientStatus[];
+  paymentStatus?: ClientPaymentStatus[];
+  search?: string;
+  limit?: number;
+}
+
+export type ClientPatch = Partial<Omit<Client, "id" | "createdAt" | "updatedAt" | "currency">>;
+
 export type NewRow<T> = Omit<T, "id" | "createdAt"> & { id?: string; createdAt?: string };
 
 /**
@@ -127,7 +142,13 @@ export interface Repository {
   upsertCompany(company: NewRow<Company>): Promise<Company>;
   listJobs(opts?: { status?: Job["status"]; limit?: number; search?: string }): Promise<JobWithCompany[]>;
   getJob(id: string): Promise<JobWithCompany | null>;
+  /** Company and places of every active listing, light enough to read the whole catalog. */
+  listJobLocations(): Promise<{ companyId: string; locations: Job["locations"] }[]>;
+  /** Exact number of listings with this status, optionally only from one source. */
+  countJobs(opts: { status?: Job["status"]; source?: string }): Promise<number>;
   findJobsByFingerprint(fingerprints: string[]): Promise<string[]>;
+  /** Stored listings from one source by the source's own id, with the fingerprint they were saved under. */
+  findJobsByExternalId(source: string, externalIds: string[]): Promise<{ externalId: string; fingerprint: string }[]>;
   insertJobs(jobs: NewRow<Job>[]): Promise<Job[]>;
   updateJob(id: string, patch: Partial<Pick<Job, "status">>): Promise<void>;
   /** Marks listings as still live at the source (re-opening any that had been closed). */
@@ -248,6 +269,25 @@ export interface Repository {
   createLead(lead: NewRow<Omit<Lead, "updatedAt">>): Promise<Lead>;
   listLeads(query?: LeadQuery): Promise<Lead[]>;
   updateLead(id: string, patch: Partial<Pick<Lead, "status" | "ownerId" | "note">>): Promise<Lead>;
+
+  /* clients (CRM) */
+  listClients(query?: ClientQuery): Promise<Client[]>;
+  getClient(id: string): Promise<Client | null>;
+  getClientByUserId(userId: string): Promise<Client | null>;
+  createClient(client: NewRow<Omit<Client, "updatedAt">>): Promise<Client>;
+  updateClient(id: string, patch: ClientPatch): Promise<Client>;
+  /** Removes the client with their messages and notes. */
+  deleteClient(id: string): Promise<void>;
+  /** Oldest first. Without a client id, every client's messages (for inbox previews and stats). */
+  listClientMessages(opts?: { clientId?: string; limit?: number }): Promise<ClientMessage[]>;
+  addClientMessage(message: NewRow<ClientMessage>): Promise<ClientMessage>;
+  /**
+   * Marks unread messages in one direction as read; returns how many changed. "inbound" is the
+   * team reading the client's messages, "outbound" is the client reading the team's replies.
+   */
+  markClientMessagesRead(clientId: string, at: string, direction?: ClientMessageDirection): Promise<number>;
+  listClientNotes(clientId: string): Promise<ClientNote[]>;
+  addClientNote(note: NewRow<ClientNote>): Promise<ClientNote>;
 
   /* idempotency & analytics */
   getIdempotentResponse(key: string): Promise<unknown | null>;

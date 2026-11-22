@@ -65,21 +65,21 @@ test.describe("the specialist's side", () => {
     // The demo operations account is an admin, who is also an operator, so check the guard
     // copy exists for the reviewer case by visiting as a candidate first.
     await demoSignIn(page, "Candidate");
-    await page.goto("/admin/delivery");
+    await page.goto("/obscuron-nexus-92vX7q/delivery");
     // Candidates are bounced out of the console entirely.
     await expect(page).toHaveURL(/\/dashboard/);
   });
 
   test("an admin sees the board with today's totals", async ({ page }) => {
     await demoSignIn(page, "Operations");
-    await page.goto("/admin/delivery");
+    await page.goto("/obscuron-nexus-92vX7q/delivery");
     await expect(page.getByRole("heading", { name: "Delivery board" })).toBeVisible();
     await expect(page.getByText(/sent today/i)).toBeVisible();
   });
 
   test("the lead inbox is staff-only and filterable", async ({ page }) => {
     await demoSignIn(page, "Operations");
-    await page.goto("/admin/leads");
+    await page.goto("/obscuron-nexus-92vX7q/leads");
     await expect(page.getByRole("heading", { name: "Enquiries" })).toBeVisible();
     await page.getByRole("button", { name: /^qualified/i }).click();
     await expect(page.getByRole("button", { name: /^qualified/i })).toHaveAttribute("aria-pressed", "true");
@@ -87,7 +87,7 @@ test.describe("the specialist's side", () => {
 
   test("partners show their code and share link", async ({ page }) => {
     await demoSignIn(page, "Operations");
-    await page.goto("/admin/partners");
+    await page.goto("/obscuron-nexus-92vX7q/partners");
     await expect(page.getByRole("heading", { name: "Partners & codes" })).toBeVisible();
     await expect(page.getByText("COMPASS20").first()).toBeVisible();
     await expect(page.getByRole("heading", { name: "Promo codes" })).toBeVisible();
@@ -155,7 +155,7 @@ test("the new screens fit a phone without horizontal scrolling", async ({ page }
   }
 
   await demoSignIn(page, "Operations");
-  for (const path of ["/admin/delivery", "/admin/partners", "/admin/leads"]) {
+  for (const path of ["/obscuron-nexus-92vX7q/delivery", "/obscuron-nexus-92vX7q/partners", "/obscuron-nexus-92vX7q/leads"]) {
     await page.goto(path);
     await page.waitForLoadState("networkidle");
     expect(await page.evaluate(noHorizontalScroll), path).toBe(true);

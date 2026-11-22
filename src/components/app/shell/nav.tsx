@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Activity, Briefcase, ClipboardCheck, Gauge, Handshake, Inbox, KanbanSquare, LayoutGrid, ListChecks, Radar, ScrollText, Send, Settings, ShieldCheck, Sparkles, Tag, Users, UserRound, Workflow } from "lucide-react";
+import { Activity, Briefcase, ClipboardCheck, Contact, Gauge, Handshake, Inbox, IndianRupee, LayoutDashboard, MessageCircle, MessagesSquare, KanbanSquare, LayoutGrid, ListChecks, Radar, ScrollText, Send, Settings, ShieldCheck, Sparkles, Tag, Users, UserRound, Workflow } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -11,29 +11,34 @@ export const CANDIDATE_NAV = [
   { href: "/jobs", label: "Job intelligence", short: "Jobs", icon: Radar },
   { href: "/applications", label: "Applications", icon: KanbanSquare },
   { href: "/answers", label: "Application answers", short: "Answers", icon: ListChecks },
+  { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/profile", label: "Profile & resumes", short: "Profile", icon: UserRound },
   { href: "/settings", label: "Settings", icon: Settings },
 ] as const;
 
 export const ADMIN_NAV = [
-  { href: "/admin", label: "Overview", icon: Gauge },
-  { href: "/admin/delivery", label: "Delivery board", short: "Delivery", icon: Send },
-  { href: "/admin/reviews", label: "Review queue", short: "Reviews", icon: ClipboardCheck },
-  { href: "/admin/candidates", label: "Candidates", icon: Users },
-  { href: "/admin/skills", label: "Skill requests", short: "Skills", icon: Sparkles },
-  { href: "/admin/jobs", label: "Jobs & applications", short: "Jobs", icon: Briefcase },
-  { href: "/admin/pipeline", label: "Pipeline", icon: Workflow },
-  { href: "/admin/pricing", label: "Pricing", icon: Tag },
-  { href: "/admin/partners", label: "Partners & codes", short: "Partners", icon: Handshake },
-  { href: "/admin/leads", label: "Leads", icon: Inbox },
-  { href: "/admin/audit", label: "Audit log", short: "Audit", icon: ScrollText },
-  { href: "/admin/health", label: "System health", short: "Health", icon: Activity },
+  { href: "/obscuron-nexus-92vX7q", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/obscuron-nexus-92vX7q/clients", label: "Clients", icon: Contact },
+  { href: "/obscuron-nexus-92vX7q/inbox", label: "Client inbox", short: "Inbox", icon: MessagesSquare },
+  { href: "/obscuron-nexus-92vX7q/payments", label: "Payments", icon: IndianRupee },
+  { href: "/obscuron-nexus-92vX7q/operations", label: "Operations", short: "Ops", icon: Gauge },
+  { href: "/obscuron-nexus-92vX7q/delivery", label: "Delivery board", short: "Delivery", icon: Send },
+  { href: "/obscuron-nexus-92vX7q/reviews", label: "Review queue", short: "Reviews", icon: ClipboardCheck },
+  { href: "/obscuron-nexus-92vX7q/candidates", label: "Candidates", icon: Users },
+  { href: "/obscuron-nexus-92vX7q/skills", label: "Skill requests", short: "Skills", icon: Sparkles },
+  { href: "/obscuron-nexus-92vX7q/jobs", label: "Jobs & applications", short: "Jobs", icon: Briefcase },
+  { href: "/obscuron-nexus-92vX7q/pipeline", label: "Pipeline", icon: Workflow },
+  { href: "/obscuron-nexus-92vX7q/pricing", label: "Pricing", icon: Tag },
+  { href: "/obscuron-nexus-92vX7q/partners", label: "Partners & codes", short: "Partners", icon: Handshake },
+  { href: "/obscuron-nexus-92vX7q/leads", label: "Leads", icon: Inbox },
+  { href: "/obscuron-nexus-92vX7q/audit", label: "Audit log", short: "Audit", icon: ScrollText },
+  { href: "/obscuron-nexus-92vX7q/health", label: "System health", short: "Health", icon: Activity },
 ] as const;
 
 type Item = { href: string; label: string; short?: string; icon: React.ComponentType<{ className?: string }> };
 
 function isActive(pathname: string, href: string) {
-  if (href === "/admin" || href === "/dashboard") return pathname === href;
+  if (href === "/obscuron-nexus-92vX7q" || href === "/dashboard") return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -76,9 +81,9 @@ function SidebarNavList({ items, label, pathname }: { items: readonly Item[]; la
 
 export function StaffLink() {
   const pathname = usePathname();
-  const active = pathname.startsWith("/admin");
+  const active = pathname.startsWith("/obscuron-nexus-92vX7q");
   return (
-    <Link href="/admin" className={cn("flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] transition-colors", active ? "bg-surface-2 text-fg" : "text-muted hover:bg-surface-2/60 hover:text-fg")}>
+    <Link href="/obscuron-nexus-92vX7q" className={cn("flex h-8 items-center gap-2.5 rounded-md px-2.5 text-[13px] transition-colors", active ? "bg-surface-2 text-fg" : "text-muted hover:bg-surface-2/60 hover:text-fg")}>
       <ShieldCheck className="size-4 text-subtle" /> Operations console
     </Link>
   );

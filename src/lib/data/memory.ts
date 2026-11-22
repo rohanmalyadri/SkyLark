@@ -16,7 +16,8 @@ import type {
   UserSettings,
 } from "@/lib/domain/types";
 import { buildDataset, defaultSettings, emptyAnswers, emptySelfIdentification, type Dataset } from "@/lib/seed/dataset";
-import type { AdminStats, DeliveryRunQuery, LeadQuery, Repository } from "./repository";
+import { crmStore, saveCrm } from "./crm-store";
+import type { AdminStats, ClientQuery, DeliveryRunQuery, LeadQuery, Repository } from "./repository";
 
 interface Store extends Dataset {
   idempotency: Map<string, unknown>;
@@ -123,6 +124,12 @@ export class MemoryRepository implements Repository {
       }
     });
     s.passwords.delete(id);
+    // The client record is the business's own (what was agreed and paid); it stays, unlinked.
+    const crm = crmStore();
+    if (crm.clients.some((c) => c.userId === id)) {
+      crm.clients.forEach((c) => c.userId === id && (c.userId = null));
+      saveCrm();
+    }
   }
 
   /* profiles */
@@ -226,9 +233,19 @@ export class MemoryRepository implements Repository {
   async getJob(id: string) {
     return this.withCompany(id);
   }
+  async listJobLocations() {
+    return this.s.jobs.filter((j) => j.status === "active").map((j) => ({ companyId: j.companyId, locations: clone(j.locations) }));
+  }
+  async countJobs(opts: { status?: "active" | "closed"; source?: string }) {
+    return this.s.jobs.filter((j) => (!opts.status || j.status === opts.status) && (!opts.source || j.source === opts.source)).length;
+  }
   async findJobsByFingerprint(fingerprints: string[]) {
     const set = new Set(fingerprints);
     return this.s.jobs.filter((j) => set.has(j.fingerprint)).map((j) => j.fingerprint);
+  }
+  async findJobsByExternalId(source: string, externalIds: string[]) {
+    const set = new Set(externalIds);
+    return this.s.jobs.filter((j) => j.source === source && set.has(j.externalId)).map((j) => ({ externalId: j.externalId, fingerprint: j.fingerprint }));
   }
   async insertJobs(jobs: Parameters<Repository["insertJobs"]>[0]) {
     const rows = jobs.map((j) => ({ ...j, id: j.id ?? randomUUID(), createdAt: j.createdAt ?? nowIso() }));
@@ -743,6 +760,88 @@ export class MemoryRepository implements Repository {
     if (!l) throw new Error("lead not found");
     Object.assign(l, clone(patch), { updatedAt: nowIso() });
     return clone(l);
+  }
+
+  /* clients (CRM): file-backed so demo edits survive restarts */
+  async listClients(query: ClientQuery = {}) {
+    const q = query.search?.trim().toLowerCase();
+    return clone(
+      crmStore()
+        .clients.filter(
+          (c) =>
+            (!query.status?.length || query.status.includes(c.status)) &&
+            (!query.paymentStatus?.length || query.paymentStatus.includes(c.paymentStatus)) &&
+            (!q || [c.name, c.email, c.phone, c.company, c.city].some((f) => f.toLowerCase().includes(q))),
+        )
+        .sort((a, b) => (b.lastInteractionAt ?? b.createdAt).localeCompare(a.lastInteractionAt ?? a.createdAt))
+        .slice(0, query.limit ?? 500),
+    );
+  }
+  async getClient(id: string) {
+    return clone(crmStore().clients.find((c) => c.id === id) ?? null);
+  }
+  async getClientByUserId(userId: string) {
+    return clone(crmStore().clients.find((c) => c.userId === userId) ?? null);
+  }
+  async createClient(client: Parameters<Repository["createClient"]>[0]) {
+    const createdAt = client.createdAt ?? nowIso();
+    const row = { ...client, id: client.id ?? randomUUID(), createdAt, updatedAt: createdAt };
+    crmStore().clients.push(row);
+    saveCrm();
+    return clone(row);
+  }
+  async updateClient(id: string, patch: Parameters<Repository["updateClient"]>[1]) {
+    const c = crmStore().clients.find((x) => x.id === id);
+    if (!c) throw new Error("client not found");
+    Object.assign(c, patch, { updatedAt: nowIso() });
+    saveCrm();
+    return clone(c);
+  }
+  async deleteClient(id: string) {
+    const s = crmStore();
+    s.clients = s.clients.filter((c) => c.id !== id);
+    s.messages = s.messages.filter((m) => m.clientId !== id);
+    s.notes = s.notes.filter((n) => n.clientId !== id);
+    saveCrm();
+  }
+  async listClientMessages(opts: { clientId?: string; limit?: number } = {}) {
+    const rows = crmStore()
+      .messages.filter((m) => !opts.clientId || m.clientId === opts.clientId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    return clone(opts.limit ? rows.slice(-opts.limit) : rows);
+  }
+  async addClientMessage(message: Parameters<Repository["addClientMessage"]>[0]) {
+    const s = crmStore();
+    const row = { ...message, id: message.id ?? randomUUID(), createdAt: message.createdAt ?? nowIso() };
+    s.messages.push(row);
+    const c = s.clients.find((x) => x.id === row.clientId);
+    if (c) c.lastInteractionAt = row.createdAt;
+    saveCrm();
+    return clone(row);
+  }
+  async markClientMessagesRead(clientId: string, at: string, direction: "inbound" | "outbound" = "inbound") {
+    let changed = 0;
+    for (const m of crmStore().messages) {
+      if (m.clientId === clientId && m.direction === direction && !m.readAt) {
+        m.readAt = at;
+        changed++;
+      }
+    }
+    if (changed) saveCrm();
+    return changed;
+  }
+  async listClientNotes(clientId: string) {
+    return clone(
+      crmStore()
+        .notes.filter((n) => n.clientId === clientId)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    );
+  }
+  async addClientNote(note: Parameters<Repository["addClientNote"]>[0]) {
+    const row = { ...note, id: note.id ?? randomUUID(), createdAt: note.createdAt ?? nowIso() };
+    crmStore().notes.push(row);
+    saveCrm();
+    return clone(row);
   }
 
   /* idempotency & analytics */

@@ -1,4 +1,4 @@
-import type { ApplicationStatus, AuthStatus, FactorRating, PipelineStage, ReviewStatus, Role, Seniority, VerificationStatus } from "./types";
+import type { ApplicationStatus, AuthStatus, ClientPaymentStatus, ClientStatus, FactorRating, PaymentSource, PipelineStage, ReviewStatus, Role, Seniority, VerificationStatus } from "./types";
 
 export const COUNTRIES: Record<string, string> = {
   US: "United States",
@@ -101,6 +101,26 @@ export const RATING_META: Record<FactorRating, { label: string; tone: Tone }> = 
 };
 
 export type Tone = "neutral" | "accent" | "success" | "warning" | "danger";
+
+export const CLIENT_STATUS_META: Record<ClientStatus, { label: string; tone: Tone }> = {
+  lead: { label: "New lead", tone: "neutral" },
+  in_discussion: { label: "In discussion", tone: "warning" },
+  active: { label: "Active", tone: "success" },
+  completed: { label: "Completed", tone: "neutral" },
+  on_hold: { label: "On hold", tone: "neutral" },
+};
+
+export const CLIENT_PAYMENT_META: Record<ClientPaymentStatus, { label: string; tone: Tone }> = {
+  paid: { label: "Paid", tone: "success" },
+  pending: { label: "Payment pending", tone: "warning" },
+  unpaid: { label: "Not yet paid", tone: "neutral" },
+  refunded: { label: "Refunded", tone: "danger" },
+};
+
+export const PAYMENT_SOURCE_META: Record<PaymentSource, { label: string; hint: string }> = {
+  manual: { label: "Recorded manually", hint: "Entered by staff. Not confirmed by a payment gateway." },
+  gateway: { label: "Gateway verified", hint: "Confirmed by the payment provider." },
+};
 
 export const DEFAULT_REVIEW_CHECKLIST = [
   { key: "eligibility", label: "Work authorization and sponsorship verified" },
