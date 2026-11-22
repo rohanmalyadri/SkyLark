@@ -10,9 +10,14 @@ import { logger } from "@/lib/infra/logger";
  */
 
 const ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
-const FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-flash-lite-latest"];
-// The primary model gets a little longer; fallbacks are faster models.
-const TIMEOUT_MS = [15_000, 12_000, 10_000];
+const FALLBACK_MODELS = ["gemini-flash-lite-latest", "gemini-flash-latest"];
+/*
+ * A chat reply has to come back in seconds. Each model gets a short try, the whole call has one
+ * overall budget, and a fallback isn't started when too little of that budget is left.
+ */
+const ATTEMPT_MS = [8_000, 5_000, 4_000];
+const TOTAL_MS = 14_000;
+const MIN_ATTEMPT_MS = 2_500;
 
 /** Gemini 2.5 takes a token budget (0 = no thinking); Gemini 3 and later take a level. */
 const thinkingFor = (model: string) => (model.includes("2.5") ? { thinkingBudget: 0 } : { thinkingLevel: "low" });
@@ -45,19 +50,21 @@ export async function geminiJson<T>(opts: { system: string; turns: GeminiTurn[];
   let lastError: unknown = null;
   const started = Date.now();
   for (const [i, model] of models.entries()) {
+    const left = TOTAL_MS - (Date.now() - started);
+    if (left < MIN_ATTEMPT_MS) break;
     try {
       const res = await fetch(`${ENDPOINT}/${encodeURIComponent(model)}:generateContent`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-goog-api-key": env.GEMINI_API_KEY },
         body: body(model),
-        signal: AbortSignal.timeout(TIMEOUT_MS[Math.min(i, TIMEOUT_MS.length - 1)]!),
+        signal: AbortSignal.timeout(Math.min(left, ATTEMPT_MS[Math.min(i, ATTEMPT_MS.length - 1)]!)),
         cache: "no-store",
       });
       if (!res.ok) {
         // e.g. a model that doesn't accept this request shape: try the next one.
         const detail = await res.text().catch(() => "");
         lastError = new Error(`gemini ${model} ${res.status}: ${detail.slice(0, 300)}`);
-        logger.debug("gemini.retry", { model, status: res.status });
+        logger.info("gemini.retry", { model, status: res.status, ms: Date.now() - started });
         continue;
       }
       const json = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[]; promptFeedback?: { blockReason?: string } };
@@ -67,14 +74,14 @@ export async function geminiJson<T>(opts: { system: string; turns: GeminiTurn[];
         continue;
       }
       const parsed = JSON.parse(text) as T;
-      logger.debug("gemini.ok", { model, ms: Date.now() - started, fallback: i > 0 });
+      logger.info("gemini.ok", { model, ms: Date.now() - started, fallback: i > 0 });
       return parsed;
     } catch (err) {
       lastError = err;
-      logger.debug("gemini.retry", { model, error: err });
+      logger.info("gemini.retry", { model, ms: Date.now() - started, error: err instanceof Error ? err.name : String(err) });
       // A timeout or malformed JSON on one model is worth one try on the next.
     }
   }
-  logger.warn("gemini.failed", { error: lastError });
+  logger.warn("gemini.failed", { ms: Date.now() - started, error: lastError });
   throw new AppError("internal", "The assistant is busy right now. Try sending that again in a moment, or switch to the form.");
 }
