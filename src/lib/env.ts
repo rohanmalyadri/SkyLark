@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { DEV_SESSION_SECRET } from "@/lib/auth/demo-session";
+import { siteUrl } from "@/lib/site";
 
 const optionalKey = z.string().min(4).optional();
 const csv = z
@@ -18,6 +19,9 @@ const ServerEnvSchema = z.object({
   SESSION_SECRET: z.string().min(32).optional(),
   ANTHROPIC_API_KEY: z.string().min(10).optional(),
   AI_MODEL: z.string().default("claude-opus-5-5"),
+  /** Google Gemini key for the chat-style onboarding. Without it, onboarding shows only the form. */
+  GEMINI_API_KEY: z.string().min(10).optional(),
+  GEMINI_MODEL: z.string().default("gemini-flash-latest"),
   CRON_SECRET: z.string().min(16).optional(),
   ADMIN_EMAILS: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().endsWith(".apps.googleusercontent.com").optional(),
@@ -50,7 +54,7 @@ const ServerEnvSchema = z.object({
   LEVER_COMPANIES: csv,
 });
 
-export type ServerEnv = z.infer<typeof ServerEnvSchema> & { dataMode: "supabase" | "demo"; sessionSecret: string };
+export type ServerEnv = z.infer<typeof ServerEnvSchema> & { dataMode: "supabase" | "demo"; sessionSecret: string; siteUrl: string };
 
 let cached: ServerEnv | null = null;
 
@@ -68,9 +72,13 @@ export function serverEnv(): ServerEnv {
 
   // Empty in production without SESSION_SECRET: sessions can't be signed or verified, so demo sign-in fails closed.
   const sessionSecret = env.SESSION_SECRET ?? (env.NODE_ENV === "production" ? "" : DEV_SESSION_SECRET);
-  cached = { ...env, dataMode, sessionSecret };
+  // Absolute links (auth redirects, share links) always use the public domain in production.
+  cached = { ...env, dataMode, sessionSecret, siteUrl: siteUrl(raw.NEXT_PUBLIC_APP_URL, env.NODE_ENV === "production") };
   return cached;
 }
+
+/** Whether the chat-style onboarding can run (needs a Gemini key). */
+export const chatIntakeAvailable = () => !!serverEnv().GEMINI_API_KEY;
 
 export const isDemoMode = () => serverEnv().dataMode === "demo";
 

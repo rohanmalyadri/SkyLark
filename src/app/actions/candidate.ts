@@ -7,6 +7,7 @@ import * as apps from "@/lib/services/applications";
 import { cancelSubscription, confirmCheckout, startCheckout } from "@/lib/services/billing";
 import { setMatchVisibility } from "@/lib/services/jobs";
 import * as profile from "@/lib/services/profile";
+import { intakeTurn } from "@/lib/services/intake";
 import * as skillsService from "@/lib/services/skills";
 import { deleteMyAccount } from "@/lib/services/privacy";
 import { redirect } from "next/navigation";
@@ -94,6 +95,11 @@ export async function updateProfileAction(input: unknown) {
 
 export async function completeOnboardingAction(input: unknown) {
   return run("onboarding.complete", (u) => profile.completeOnboarding(u, input), { refresh: false });
+}
+
+/** One message of the chat-style onboarding: Gemini reads the answer, the server validates what it extracted. */
+export async function intakeChatAction(input: unknown) {
+  return run("onboarding.chat", (u) => intakeTurn(u, input), { roles: ["candidate"], refresh: false });
 }
 
 export async function uploadResumeAction(form: FormData) {
