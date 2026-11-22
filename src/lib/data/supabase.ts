@@ -542,12 +542,29 @@ export class SupabaseRepository implements Repository {
     const r = check(await this.db.from("jobs").select(JOB_SELECT).eq("id", id).maybeSingle(), "getJob");
     return r ? toJobWithCompany(r) : null;
   }
+  async countJobs(opts: { status?: "active" | "closed"; source?: string }) {
+    // A plain select is capped by PostgREST's max-rows (1000), so ask for the count instead.
+    let q = this.db.from("jobs").select("id", { count: "exact", head: true });
+    if (opts.status) q = q.eq("status", opts.status);
+    if (opts.source) q = q.eq("source", opts.source);
+    const { count, error } = await q;
+    if (error) throw new Error(`[db:countJobs] ${error.message}`);
+    return count ?? 0;
+  }
   async findJobsByFingerprint(fingerprints: string[]) {
     // Chunked: a feed holds hundreds of listings and `.in()` goes in the URL, which PostgREST caps.
     const found: string[] = [];
     for (let i = 0; i < fingerprints.length; i += 100) {
       const rows = check(await this.db.from("jobs").select("fingerprint").in("fingerprint", fingerprints.slice(i, i + 100)), "findFingerprints");
       found.push(...rows.map((r: Row) => r.fingerprint as string));
+    }
+    return found;
+  }
+  async findJobsByExternalId(source: string, externalIds: string[]) {
+    const found: { externalId: string; fingerprint: string }[] = [];
+    for (let i = 0; i < externalIds.length; i += 100) {
+      const rows = check(await this.db.from("jobs").select("external_id, fingerprint").eq("source", source).in("external_id", externalIds.slice(i, i + 100)), "findExternalIds");
+      found.push(...rows.map((r: Row) => ({ externalId: r.external_id as string, fingerprint: r.fingerprint as string })));
     }
     return found;
   }

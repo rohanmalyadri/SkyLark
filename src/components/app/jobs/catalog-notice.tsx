@@ -7,7 +7,6 @@ import { cn, timeAgo } from "@/lib/utils";
  * notice says so plainly instead of presenting old or sample data as current.
  */
 export function CatalogNotice({ status, className }: { status: CatalogStatus; className?: string }) {
-  const sources = status.sources.filter((s) => s.site);
   if (status.live) {
     return (
       <p className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-subtle", className)}>
@@ -16,17 +15,7 @@ export function CatalogNotice({ status, className }: { status: CatalogStatus; cl
           Live listings · {status.activeLiveJobs} open roles · refreshed {timeAgo(status.lastSuccessAt!)}
         </span>
         <span aria-hidden>·</span>
-        <span>
-          Jobs by{" "}
-          {sources.map((s, i) => (
-            <span key={s.id}>
-              {i > 0 && ", "}
-              <a href={s.site!} target="_blank" rel="noopener" className="underline underline-offset-2 hover:text-fg">
-                {s.name}
-              </a>
-            </span>
-          ))}
-        </span>
+        <span>Jobs by SkyLark AI</span>
       </p>
     );
   }

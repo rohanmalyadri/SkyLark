@@ -3,7 +3,7 @@ import { systemRepo } from "@/lib/data";
 import type { IngestionRun } from "@/lib/domain/types";
 import { logger } from "@/lib/infra/logger";
 import { enqueueAndKick } from "@/lib/pipeline/queue";
-import { isSampleJob, SOURCE_META, type SourceId } from "@/lib/pipeline/source-meta";
+import { SAMPLE_SOURCE, SOURCE_META, type SourceId } from "@/lib/pipeline/source-meta";
 import { enabledSources } from "@/lib/pipeline/sources";
 
 /** Live listings older than this are refreshed in the background when someone browses jobs. */
@@ -24,11 +24,10 @@ export interface CatalogStatus {
 
 export async function catalogStatus(): Promise<CatalogStatus> {
   const repo = systemRepo();
-  const [runs, jobs] = await Promise.all([repo.listIngestionRuns(100), repo.listJobs({ status: "active", limit: 5000 })]);
+  const [runs, activeJobs, activeSampleJobs] = await Promise.all([repo.listIngestionRuns(100), repo.countJobs({ status: "active" }), repo.countJobs({ status: "active", source: SAMPLE_SOURCE })]);
   const sources = enabledSources().map((s) => ({ id: s.id, name: s.name, site: SOURCE_META[s.id].site, lastRun: runs.find((r) => r.source === s.id && r.status !== "running") ?? null }));
   const lastSuccessAt = runs.filter((r) => r.status === "succeeded" && sources.some((s) => s.id === r.source)).map((r) => r.finishedAt ?? r.startedAt).sort().at(-1) ?? null;
-  const activeSampleJobs = jobs.filter(isSampleJob).length;
-  const activeLiveJobs = jobs.length - activeSampleJobs;
+  const activeLiveJobs = activeJobs - activeSampleJobs;
   const live = !!lastSuccessAt && Date.now() - new Date(lastSuccessAt).getTime() < STALE_AFTER_MS && activeLiveJobs > 0;
 
   let problem: string | null = null;

@@ -119,6 +119,22 @@ describe("ingestion pipeline", () => {
     expect((await live()).map((j) => j.title)).toEqual(["Data Engineer"]);
   });
 
+  it("doesn't insert a listing twice when the board renames it", async () => {
+    const { runIngestion } = await import("./ingest");
+    const { systemRepo } = await import("@/lib/data");
+    const repo = systemRepo();
+    respond(page([{ slug: "renamed", title: "Data Engineer" }]));
+    await runIngestion("arbeitnow");
+
+    // Same board id, new title: the fingerprint changes but (source, external_id) must stay unique.
+    respond(page([{ slug: "renamed", title: "Senior Data Engineer" }, { slug: "renamed", title: "Lead Data Engineer" }]));
+    const second = await runIngestion("arbeitnow");
+    expect(second).toMatchObject({ inserted: 0 });
+    const stored = (await repo.listJobs({ limit: 5000 })).filter((j) => j.source === "arbeitnow" && j.externalId === "renamed");
+    expect(stored).toHaveLength(1);
+    expect(stored[0]!.status).toBe("active");
+  });
+
   it("records a failed run and leaves stored listings alone when the API is down", async () => {
     const { runIngestion } = await import("./ingest");
     const { systemRepo } = await import("@/lib/data");
