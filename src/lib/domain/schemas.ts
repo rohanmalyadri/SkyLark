@@ -173,8 +173,9 @@ export const SettingsSchema = z.object({
 export const PlanUpdateSchema = z.object({
   name: z.string().trim().min(2).max(40),
   tagline: z.string().trim().max(140),
-  priceMonthly: z.number().min(0).max(10_000),
-  priceYearly: z.number().min(0).max(100_000),
+  // Large enough for rupee prices (e.g. ₹1,15,200 a year), which Razorpay subscriptions charge in.
+  priceMonthly: z.number().min(0).max(1_000_000),
+  priceYearly: z.number().min(0).max(10_000_000),
   features: z.array(z.string().trim().min(2).max(120)).min(1).max(12),
   highlighted: z.boolean(),
   active: z.boolean(),

@@ -115,7 +115,7 @@ describe("checkout with Razorpay", () => {
     const res = await startCheckout(user, "professional", "year");
     expect(res).toMatchObject({ kind: "razorpay", keyId: "rzp_test_abc123", subscriptionId: "sub_TEST1" });
     const createPlan = calls.find((c) => c.url.endsWith("/v1/plans") && c.method === "POST")!;
-    expect(createPlan.body).toMatchObject({ period: "yearly", interval: 1, item: { currency: "USD" } });
+    expect(createPlan.body).toMatchObject({ period: "yearly", interval: 1, item: { currency: "INR", amount: 3_840_000 } });
     expect(Number.isInteger((createPlan.body as { item: { amount: number } }).item.amount)).toBe(true);
     const createSub = calls.find((c) => c.url.endsWith("/v1/subscriptions"))!;
     expect(createSub.body).toMatchObject({ plan_id: "plan_NEW", total_count: 10, notes: { userId: user.id, planId: "professional", interval: "year" } });
