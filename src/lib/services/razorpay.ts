@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { serverEnv } from "@/lib/env";
+import { razorpayEnabled, serverEnv } from "@/lib/env";
 import { AppError } from "@/lib/infra/errors";
 import { logger } from "@/lib/infra/logger";
 
@@ -45,7 +45,7 @@ export interface RazorpayPayment {
 
 function keys() {
   const { RAZORPAY_KEY_ID: id, RAZORPAY_KEY_SECRET: secret } = serverEnv();
-  if (!id || !secret) throw new AppError("internal", "Payments aren't set up yet. Please try again later.");
+  if (!id || !secret || !razorpayEnabled()) throw new AppError("internal", "Payments aren't set up yet. Please try again later.");
   return { id, secret };
 }
 

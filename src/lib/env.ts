@@ -26,9 +26,10 @@ const ServerEnvSchema = z.object({
   SUPABASE_GOOGLE_AUTH: z.enum(["on", "off"]).default("off"),
 
   /* Payments (Razorpay). Without the key pair, paid checkout is off outside demo mode. */
-  RAZORPAY_KEY_ID: z.string().regex(/^rzp_(test|live)_/).optional(),
-  RAZORPAY_KEY_SECRET: z.string().min(10).optional(),
-  RAZORPAY_WEBHOOK_SECRET: z.string().min(8).optional(),
+  // Kept loose on purpose: a mistyped payment key must switch checkout off, not take the whole site down.
+  RAZORPAY_KEY_ID: z.string().trim().optional(),
+  RAZORPAY_KEY_SECRET: z.string().trim().optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().trim().optional(),
 
   /* Reference data & enrichment */
   STACKEXCHANGE_KEY: optionalKey,
@@ -83,4 +84,4 @@ export const nativeGoogleEnabled = () => {
 export const googleSignInAvailable = () => (serverEnv().dataMode === "supabase" ? serverEnv().SUPABASE_GOOGLE_AUTH === "on" : nativeGoogleEnabled());
 
 /** Razorpay checkout is live (test or live keys) once both halves of the key pair are set. */
-export const razorpayEnabled = () => !!serverEnv().RAZORPAY_KEY_ID && !!serverEnv().RAZORPAY_KEY_SECRET;
+export const razorpayEnabled = () => /^rzp_(test|live)_[A-Za-z0-9]+$/.test(serverEnv().RAZORPAY_KEY_ID ?? "") && (serverEnv().RAZORPAY_KEY_SECRET ?? "").length >= 10;
