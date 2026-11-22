@@ -12,7 +12,7 @@ import { TrustWall } from "@/components/marketing/trust-wall";
 import { allPosts, readingMinutes } from "@/lib/content/posts";
 import { formatDate } from "@/lib/utils";
 import { countryName, DEFAULT_REVIEW_CHECKLIST, REVIEW_SLA_HOURS } from "@/lib/domain/constants";
-import { cityCoords, listCountries } from "@/lib/geo";
+import { cityCoords, listCountries, resolveCountry } from "@/lib/geo";
 import { hasCountryArt } from "@/lib/country-art";
 import { CITY_COORDS, COVERED_MARKETS, mapCities, mapPosition } from "@/lib/geo-cities";
 import { datasetCityName } from "@/lib/pipeline/normalize";
@@ -326,6 +326,8 @@ async function Numbers() {
   );
 }
 
+const NOT_A_CITY = /^(jobs?|remote|hybrid|on-?site|various|multiple|anywhere|worldwide|n\/a|tbd|flexible)$/i;
+
 async function International() {
   const stats = await publicCatalogStats();
   const names = stats.countries.map(countryName);
@@ -334,10 +336,18 @@ async function International() {
   const codes = stats.countries.filter(hasCountryArt);
   const ring = codes.length ? Array.from({ length: Math.max(12, codes.length) }, (_, i) => codes[i % codes.length]!) : [];
   const step = 360 / Math.max(ring.length, 1);
-  const markers: MapLocation[] = mapCities(stats.cities).flatMap((c) => {
+  // Older listings carry parse leftovers as cities ("UK" became a town in Russia, "job" a French
+  // village): skip names that are countries or filler words, and merge spellings of one place
+  // ("Zurich"/"Zürich", "Frankfurt"/"Frankfurt am Main") into one pin.
+  const markers: MapLocation[] = [];
+  for (const c of mapCities(stats.cities.filter((c) => !NOT_A_CITY.test(c.city) && [null, c.country].includes(resolveCountry(c.city))), 60)) {
     const at = CITY_COORDS[`${c.city}|${c.country}`] ?? cityCoords(datasetCityName(c.city), c.country);
-    return at ? [{ key: `${c.city}|${c.country}`, city: c.city, country: countryName(c.country), roles: c.roles, ...mapPosition(at[0], at[1]) }] : [];
-  });
+    if (!at) continue;
+    const pos = mapPosition(at[0], at[1]);
+    const near = markers.find((m) => m.key.endsWith(`|${c.country}`) && Math.hypot(m.x - pos.x, m.y - pos.y) < 0.6);
+    if (near) near.roles = (near.roles ?? 0) + c.roles;
+    else if (markers.length < 40) markers.push({ key: `${c.city}|${c.country}`, city: c.city, country: countryName(c.country), roles: c.roles, ...pos });
+  }
   // Fill continents the catalog doesn't reach yet with decorative pins (no job counts).
   const pinned = new Set(markers.map((m) => m.key.split("|")[1]));
   for (const [city, country] of COVERED_MARKETS) {
