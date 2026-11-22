@@ -27,9 +27,9 @@ const BANDS = [
   [16, 21],
 ]; // ramp slices per density band
 const LEVELS = 8; // red alpha levels in the atlas
-const BG = "#0b0b0b";
+const BG = "#ffffff";
 const RED = "216, 20, 19";
-const HOT = "#e8391d";
+const HOT = "#d81413";
 
 // Bird, facing right, in a 400 x 200 box. Body and the two wings are separate so the wings can flap.
 const BODY_D =
@@ -103,7 +103,7 @@ export function ObscuronSignature() {
       actx.textAlign = "center";
       actx.textBaseline = "middle";
       for (let l = 0; l <= LEVELS; l++) {
-        actx.fillStyle = l === LEVELS ? "rgba(11, 11, 11, 0.9)" : `rgba(${RED}, ${0.3 + (0.7 * (l + 1)) / LEVELS})`;
+        actx.fillStyle = l === LEVELS ? "rgba(255, 255, 255, 0.95)" : `rgba(${RED}, ${0.22 + (0.78 * (l + 1)) / LEVELS})`;
         for (let c = 1; c < RAMP.length; c++) actx.fillText(RAMP[c], c * cw + cw / 2, l * cw + cw / 2 + cw * 0.04);
       }
     };
