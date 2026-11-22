@@ -44,6 +44,14 @@ export const CITY_COORDS: Record<string, [number, number]> = {
   "Hyderabad|IN": [17.39, 78.49],
   "Mumbai|IN": [19.08, 72.88],
   "Delhi|IN": [28.61, 77.21],
+  "Bangalore|IN": [12.97, 77.59],
+  "Gurugram|IN": [28.46, 77.03],
+  "Pune|IN": [18.52, 73.86],
+  "Chennai|IN": [13.08, 80.27],
+  "Bogotá|CO": [4.71, -74.07],
+  "Buenos Aires|AR": [-34.6, -58.38],
+  "Nairobi|KE": [-1.29, 36.82],
+  "Lagos|NG": [6.52, 3.38],
   "Tel Aviv|IL": [32.09, 34.78],
   "São Paulo|BR": [-23.55, -46.63],
   "Mexico City|MX": [19.43, -99.13],
@@ -57,4 +65,20 @@ export const MAP_BOUNDS = { lon0: -125, lon1: 155, lat0: -45, lat1: 75 };
 export function mapPosition(lat: number, lon: number) {
   const { lon0, lon1, lat0, lat1 } = MAP_BOUNDS;
   return { x: ((lon - lon0) / (lon1 - lon0)) * 100, y: ((lat1 - lat) / (lat1 - lat0)) * 100 };
+}
+
+/**
+ * The cities to pin on the map: the busiest city in every country first, so each market shows
+ * even when one region dominates the catalog, then the busiest of the rest, up to `max`.
+ */
+export function mapCities<T extends { city: string; country: string; roles: number }>(cities: T[], max = 40): T[] {
+  const sorted = [...cities].filter((c) => c.city).sort((a, b) => b.roles - a.roles);
+  const seen = new Set<string>();
+  const firsts: T[] = [];
+  const rest: T[] = [];
+  for (const c of sorted) {
+    (seen.has(c.country) ? rest : firsts).push(c);
+    seen.add(c.country);
+  }
+  return [...firsts, ...rest].slice(0, max);
 }

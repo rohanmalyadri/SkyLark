@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import type { NewRow } from "@/lib/data/repository";
 import type { Job, Place, Salary, Seniority, SponsorshipPolicy, WorkMode } from "@/lib/domain/types";
 import { resolveCity, resolveCountry } from "@/lib/geo";
+import { inferDepartment } from "./department";
+import { CITY_COORDS } from "@/lib/geo-cities";
 import { TECH_TERMS } from "@/lib/skills/catalog";
 import { DEGREE_RE } from "./normalize-degree";
 import { z } from "zod";
@@ -94,18 +96,24 @@ export function inferSeniority(title: string): Seniority {
 
 /* ---------- Location ---------- */
 
-const EXONYMS: Record<string, string> = { cologne: "Köln", nuremberg: "Nürnberg", hanover: "Hannover", frankfurt: "Frankfurt am Main", munchen: "Munich", "the hague": "The Hague", "den haag": "The Hague", lisboa: "Lisbon", warszawa: "Warsaw", praha: "Prague", wien: "Vienna", "new york city": "New York", nyc: "New York", sf: "San Francisco" };
+const EXONYMS: Record<string, string> = { cologne: "Köln", nuremberg: "Nürnberg", hanover: "Hannover", frankfurt: "Frankfurt am Main", munchen: "Munich", "the hague": "The Hague", "den haag": "The Hague", lisboa: "Lisbon", warszawa: "Warsaw", praha: "Prague", wien: "Vienna", "new york city": "New York", nyc: "New York", sf: "San Francisco", bangalore: "Bengaluru", gurugram: "Gurgaon", "mexico city": "Ciudad de México", "cdmx": "Ciudad de México", bogota: "Bogotá D.C.", "bogotá": "Bogotá D.C.", "new delhi": "Delhi" };
+const US_STATES = new Set("AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC".split(" "));
+/** The city as it appears in job listings, mapped to the GeoNames spelling where they differ. */
+export const datasetCityName = (city: string) => EXONYMS[city.toLowerCase()] ?? city;
 const GLOBAL = /\b(anywhere|worldwide|global(ly)?|world ?wide)\b/i;
 
 export function parseLocation(text: string, opts: { remote?: boolean; countryHints?: string[] } = {}): { places: Place[]; workMode: WorkMode; remoteCountries: string[]; global: boolean } {
   const lower = text.toLowerCase();
   const workMode: WorkMode = opts.remote || /remote|home ?office/.test(lower) ? "remote" : /hybrid/.test(lower) ? "hybrid" : "onsite";
   const places: Place[] = [];
-  for (const segment of text.split(/[;|/]|\s+or\s+/)) {
+  for (const segment of text.split(/[;|/•]|\s+or\s+/)) {
     const cleaned = segment.replace(/\b(remote|hybrid|on-?site|home ?office|full[- ]?time)\b/gi, "").replace(/[()]/g, "").replace(/\s+-\s*$/, "");
     const parts = cleaned.split(/,|\s-\s/).map((s) => s.trim()).filter(Boolean);
     if (parts.length === 0) continue;
-    const countryFromLast = parts.length > 1 || !resolveCity(parts[0]!, opts.countryHints?.[0]) ? resolveCountry(parts[parts.length - 1]!) : null;
+    const last = parts[parts.length - 1]!;
+    // "San Francisco, CA": a US state code, not Canada.
+    const usState = parts.length > 1 && US_STATES.has(last) && resolveCity(datasetCityName(parts[0]!), "US")?.country === "US";
+    const countryFromLast = usState ? "US" : parts.length > 1 || !resolveCity(parts[0]!, opts.countryHints?.[0]) ? resolveCountry(last) : null;
     if (parts.length === 1 && countryFromLast) {
       places.push({ city: "", country: countryFromLast });
       continue;
@@ -122,6 +130,8 @@ export function parseLocation(text: string, opts: { remote?: boolean; countryHin
         }
       }
     }
+    // A name several countries share ("Toronto") resolves to the major job market of that name.
+    country ??= Object.keys(CITY_COORDS).find((k) => k.startsWith(`${cityRaw}|`))?.split("|")[1] ?? null;
     if (country && !places.some((p) => p.city === cityRaw && p.country === country)) places.push({ city: cityRaw, country });
   }
   const global = workMode === "remote" && GLOBAL.test(text);
@@ -264,7 +274,7 @@ export function normalizePosting(raw: RawPosting, companyId: string, now: string
   return {
     companyId,
     title,
-    department: r.department?.trim() || "",
+    department: r.department?.trim() || inferDepartment(title, required),
     seniority: inferSeniority(r.title),
     employmentType: r.employmentType ?? (/\b(part[- ]time|teilzeit|werkstudent|working student)\b/i.test(r.title) ? "part_time" : /\b(contract|freelance|freelancer)\b/i.test(r.title) ? "contract" : "full_time"),
     locations: places,

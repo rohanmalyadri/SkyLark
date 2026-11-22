@@ -345,24 +345,27 @@
 .tm .card { display: block; position: relative; width: 23vw; }
 .tm .card .gradient { background: linear-gradient(-90deg, #eee, #efefef); inset: 0; position: absolute; transition: opacity 0.4s var(--p2Out); }
 .tm .card .gradient.--hover { background: linear-gradient(-90deg, #dedede, #f3f3f3); opacity: 0.0001; }
-.tm .card .group { align-items: center; display: flex; flex-direction: column; height: 13.917vw; justify-content: flex-end; opacity: 0.0001; padding: 2.5vw; position: relative; text-align: center; transition: opacity 0.4s var(--p2Out); }
+.tm .card .group { align-items: center; display: flex; flex-direction: column; height: 13.917vw; justify-content: flex-end; padding: 2.5vw; position: relative; text-align: center; }
+/* The domain name always shows, so the card never reads as an empty panel; its skills fade in on hover. */
+.tm .card .group > .text { opacity: 0.0001; transition: opacity 0.4s var(--p2Out); }
 .tm .card .group .title { margin-top: 0.625vw; position: relative; top: 1vw; transition: top 1.2s var(--expoOut); }
 .tm .card .image { height: 25vw; position: relative; }
 .tm .card .image img { mix-blend-mode: multiply; }
 @media (hover: hover) {
   .tm .card:hover .gradient { opacity: 0; }
   .tm .card:hover .gradient.--hover { opacity: 1; }
-  .tm .card:hover .group { opacity: 1; }
+  .tm .card:hover .group > .text { opacity: 1; }
   .tm .card:hover .group .title { top: 0; }
 }
-.tm .card:focus-visible .group { opacity: 1; }
+.tm .card:focus-visible .group > .text { opacity: 1; }
 @media (max-width: 1100px) {
   .tm .component--teams .text-block-center { margin-bottom: min(12.5vw, 49.6px); }
   .tm .draggable { overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
   .tm .draggable::-webkit-scrollbar { display: none; }
   .tm .draggable .inner { gap: min(2.5vw, 9.9225px); padding: 0 min(5vw, 19.845px); }
   .tm .card { scroll-snap-align: center; width: min(77.5vw, 307.6px); }
-  .tm .card .group { gap: min(2.5vw, 9.9225px); height: auto; opacity: 1; padding: min(12.5vw, 49.6px) min(4.722vw, 18.74px) min(5vw, 19.845px); }
+  .tm .card .group { gap: min(2.5vw, 9.9225px); height: auto; padding: min(12.5vw, 49.6px) min(4.722vw, 18.74px) min(5vw, 19.845px); }
+  .tm .card .group > .text { opacity: 1; }
   .tm .card .group .title { top: 0; }
   .tm .card .image { height: min(80vw, 317.52px); }
 }

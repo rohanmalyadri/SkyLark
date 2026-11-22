@@ -1,4 +1,5 @@
 import "server-only";
+import { inferDepartment } from "@/lib/pipeline/department";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { APPLICATION_STATUSES } from "@/lib/domain/types";
 import type {
@@ -249,7 +250,7 @@ const toJob = (r: Row): Job => ({
   id: r.id,
   companyId: r.company_id,
   title: r.title,
-  department: r.department,
+  department: r.department || inferDepartment(r.title, r.required_skills ?? []),
   seniority: r.seniority,
   employmentType: r.employment_type,
   locations: r.locations,

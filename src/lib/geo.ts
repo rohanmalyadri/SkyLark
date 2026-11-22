@@ -111,3 +111,17 @@ export function resolveCity(name: string, hintCountry?: string): { city: string;
   }
   return hits.length === 1 ? hits[0]! : null;
 }
+
+let coordIndex: Map<string, [number, number]> | null = null;
+
+/** Latitude and longitude of a city from the GeoNames data, for placing map markers. */
+export function cityCoords(city: string, country: string): [number, number] | null {
+  if (!coordIndex) {
+    coordIndex = new Map();
+    for (const c of City.getAllCities()) {
+      const key = `${fold(c.name)}|${c.countryCode}`;
+      if (!coordIndex.has(key) && c.latitude && c.longitude) coordIndex.set(key, [Number(c.latitude), Number(c.longitude)]);
+    }
+  }
+  return coordIndex.get(`${fold(city)}|${country.toUpperCase()}`) ?? null;
+}
