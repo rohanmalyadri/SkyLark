@@ -4,9 +4,10 @@ import { z } from "zod";
 import { userRepo } from "@/lib/data";
 import { AccountNameSchema, ApplicationStatusSchema, SettingsSchema } from "@/lib/domain/schemas";
 import * as apps from "@/lib/services/applications";
-import { cancelSubscription, changePlan } from "@/lib/services/billing";
+import { cancelSubscription, confirmCheckout, startCheckout } from "@/lib/services/billing";
 import { setMatchVisibility } from "@/lib/services/jobs";
 import * as profile from "@/lib/services/profile";
+import { intakeTurn } from "@/lib/services/intake";
 import * as skillsService from "@/lib/services/skills";
 import { deleteMyAccount } from "@/lib/services/privacy";
 import { redirect } from "next/navigation";
@@ -94,6 +95,11 @@ export async function updateProfileAction(input: unknown) {
 
 export async function completeOnboardingAction(input: unknown) {
   return run("onboarding.complete", (u) => profile.completeOnboarding(u, input), { refresh: false });
+}
+
+/** One message of the chat-style onboarding: Gemini reads the answer, the server validates what it extracted. */
+export async function intakeChatAction(input: unknown) {
+  return run("onboarding.chat", (u) => intakeTurn(u, input), { roles: ["candidate"], refresh: false });
 }
 
 export async function uploadResumeAction(form: FormData) {
@@ -190,14 +196,27 @@ export async function updateAccountAction(fullName: string) {
   }, { message: "Account updated" });
 }
 
-export async function changePlanAction(planId: string, interval: string, acceptedTerms: boolean, promoCode = "") {
-  return run("billing.change", async (u) => {
+/** Starts a subscription. Razorpay returns one for the browser to authorise; demo mode activates at once. */
+export async function startCheckoutAction(planId: string, interval: string, acceptedTerms: boolean, promoCode = "") {
+  return run("billing.checkout", async (u) => {
     if (acceptedTerms !== true) throw new AppError("validation", "Please agree to the Terms & Conditions before paying.");
     const plan = z.enum(["entry", "professional", "executive"]).parse(planId);
     const every = z.enum(["month", "year"]).parse(interval);
-    await changePlan(u, plan, every, PromoCodeInputSchema.parse(promoCode) || undefined);
-    await audit(u, "billing.terms_accepted", "user", u.id, { planId, termsVersion: "2026-10-17" });
-  }, { message: "Plan updated" });
+    const result = await startCheckout(u, plan, every, PromoCodeInputSchema.parse(promoCode) || undefined);
+    await audit(u, "billing.terms_accepted", "user", u.id, { planId, termsVersion: "2026-11-22" });
+    return result;
+  }, { refresh: false });
+}
+
+const RazorpayResultSchema = z.object({
+  subscriptionId: z.string().regex(/^sub_[A-Za-z0-9]+$/),
+  paymentId: z.string().regex(/^pay_[A-Za-z0-9]+$/),
+  signature: z.string().regex(/^[a-f0-9]{64}$/),
+});
+
+/** Called with what Razorpay Checkout hands the browser on success; verified server-side. */
+export async function confirmCheckoutAction(input: unknown) {
+  return run("billing.confirm", (u) => confirmCheckout(u, RazorpayResultSchema.parse(input)));
 }
 
 export async function cancelPlanAction() {

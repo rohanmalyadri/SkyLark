@@ -449,9 +449,14 @@ export class MemoryRepository implements Repository {
     return clone(this.s.payments.filter((p) => p.userId === userId).sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
   }
   async createPayment(payment: Parameters<Repository["createPayment"]>[0]) {
+    // Mirrors the unique constraint on payments.provider_ref.
+    if (this.s.payments.some((p) => p.providerRef === payment.providerRef)) throw new Error(`[db:createPayment] duplicate provider_ref ${payment.providerRef}`);
     const row = { ...payment, id: payment.id ?? randomUUID(), createdAt: payment.createdAt ?? nowIso() };
     this.s.payments.push(row);
     return clone(row);
+  }
+  async getPaymentByRef(providerRef: string) {
+    return clone(this.s.payments.find((p) => p.providerRef === providerRef) ?? null);
   }
 
   /* notifications & settings */

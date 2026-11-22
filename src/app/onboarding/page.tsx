@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { OnboardingWizard } from "@/components/app/onboarding/wizard";
+import { OnboardingFlow } from "@/components/app/onboarding/flow";
 import { Logo } from "@/components/ui/marks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth/dal";
+import { chatIntakeAvailable } from "@/lib/env";
 import { getProfileBundle } from "@/lib/services/profile";
 
 export const metadata: Metadata = { title: "Set up your profile" };
@@ -33,5 +34,5 @@ async function Onboarding() {
   if (user.role !== "candidate") redirect("/admin");
   if (user.onboardedAt) redirect("/dashboard");
   const { profile, resumes } = await getProfileBundle(user);
-  return <OnboardingWizard profile={profile} firstName={user.fullName.split(" ")[0] ?? ""} fullName={user.fullName} avatarUrl={user.avatarUrl} hasResume={resumes.length > 0} />;
+  return <OnboardingFlow profile={profile} firstName={user.fullName.split(" ")[0] ?? ""} fullName={user.fullName} avatarUrl={user.avatarUrl} hasResume={resumes.length > 0} chatAvailable={chatIntakeAvailable()} />;
 }

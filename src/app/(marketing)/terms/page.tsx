@@ -11,7 +11,7 @@ export default function TermsPage() {
     <LegalPage
       label="Terms"
       title="Terms & Conditions"
-      updated="17 October 2026"
+      updated="22 November 2026"
       intro={<p>These terms apply when you purchase a Skylark plan. Please read them carefully before making a payment.</p>}
       sections={[
         {
@@ -24,34 +24,24 @@ export default function TermsPage() {
           ),
         },
         {
-          id: "one-time-payment",
-          title: "One-Time Payment Policy",
+          id: "subscription",
+          title: "Subscription & Automatic Renewal",
           body: (
             <>
-              <p>All plans are offered as a one-time, non-recurring payment.</p>
-              <p>The payment grants access to services for a defined service cycle, which begins from the date of onboarding completion or 48 hours from payment (whichever is earlier).</p>
-              <p>The service cycle will conclude based on:</p>
-              <ul>
-                <li>Completion of promised deliverables (e.g., number of applications), OR</li>
-                <li>Completion of the defined duration of the plan</li>
-              </ul>
-              <p>This is not a subscription and will not automatically renew.</p>
+              <p>Paid plans are subscriptions billed monthly or annually, as chosen at checkout.</p>
+              <p>Your first payment is taken when you subscribe. Your subscription then renews automatically at the end of each billing period, and the plan price in effect at that time is charged to the card or UPI mandate you authorised, until you cancel.</p>
+              <p>Payments are processed by Razorpay. We do not store your card or bank details.</p>
+              <p>If a renewal payment fails, we may retry it. If it cannot be collected, your plan will be paused or moved back to the free allowance.</p>
             </>
           ),
         },
         {
-          id: "renewal",
-          title: "Renewal & Re-engagement Pricing",
+          id: "cancellation",
+          title: "Cancellation",
           body: (
             <>
-              <p>Upon completion of the service cycle, services will be considered fulfilled.</p>
-              <p>Users may opt for re-engagement:</p>
-              <ul>
-                <li>Only through manual confirmation via the assigned Account Manager</li>
-                <li>Based on current pricing and service structure</li>
-                <li>Requires a new payment before continuation</li>
-              </ul>
-              <p>No automatic renewals will occur.</p>
+              <p>You can cancel at any time from Settings → Subscription &amp; billing.</p>
+              <p>Cancelling stops future renewals. You keep access to your plan until the end of the billing period you have already paid for, and you will not be charged again.</p>
             </>
           ),
         },
@@ -66,7 +56,7 @@ export default function TermsPage() {
                 <li>Service is initiated, OR</li>
                 <li>Onboarding process has begun</li>
               </ul>
-              <p>No cancellations or refunds will be processed under any circumstances.</p>
+              <p>No refunds, including partial refunds for unused time, will be processed under any circumstances. Cancelling only stops future renewals.</p>
             </>
           ),
         },
@@ -147,7 +137,7 @@ export default function TermsPage() {
               <p>By proceeding with the payment, you confirm that:</p>
               <ul>
                 <li>You have read and understood these Terms &amp; Conditions</li>
-                <li>You agree to the one-time payment structure and renewal pricing</li>
+                <li>You agree to the subscription structure, including automatic renewal until you cancel</li>
                 <li>You accept all policies outlined above</li>
               </ul>
             </>

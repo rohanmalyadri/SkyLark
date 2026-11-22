@@ -34,7 +34,7 @@ export interface GoogleProfile {
 const b64url = (buf: Buffer) => buf.toString("base64url");
 const sign = (data: string) => createHmac("sha256", serverEnv().sessionSecret).update(`google:${data}`).digest("base64url");
 
-export const googleRedirectUri = () => `${serverEnv().NEXT_PUBLIC_APP_URL}/auth/google/callback`;
+export const googleRedirectUri = () => `${serverEnv().siteUrl}/auth/google/callback`;
 
 /** Builds the Google consent URL and the signed cookie value that must accompany it. */
 export function startGoogleSignIn(next: string) {
