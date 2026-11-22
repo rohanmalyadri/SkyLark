@@ -3,6 +3,7 @@ import { userRepo } from "@/lib/data";
 import type { ApplicationStatus, MatchWithJob, Seniority, User, WorkMode } from "@/lib/domain/types";
 import { notFound } from "@/lib/infra/errors";
 import { rankMatches, scoreMatch } from "./matching/engine";
+import { jobDiscipline } from "@/lib/pipeline/discipline";
 
 export interface JobFilters {
   q: string;
@@ -46,7 +47,7 @@ export async function jobFeed(user: User, f: JobFilters) {
       if (f.view === "dismissed") return m.status === "dismissed";
       if (m.status === "dismissed") return false;
       if (f.view === "saved" && m.status !== "saved" && !m.applicationStatus) return false;
-      if (q && !`${m.job.title} ${m.job.department} ${m.job.company.name} ${m.job.requiredSkills.join(" ")}`.toLowerCase().includes(q)) return false;
+      if (q && !`${m.job.title} ${m.job.department} ${jobDiscipline(m.job)} ${m.job.company.name} ${m.job.requiredSkills.join(" ")}`.toLowerCase().includes(q)) return false;
       if (f.country && !m.job.locations.some((l) => l.country === f.country) && !m.job.remoteCountries.includes(f.country)) return false;
       if (f.mode && m.job.workMode !== f.mode) return false;
       if (f.seniority && m.job.seniority !== f.seniority) return false;

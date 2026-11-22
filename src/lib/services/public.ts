@@ -1,6 +1,7 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { systemRepo } from "@/lib/data";
+import { jobDiscipline, OTHER_DISCIPLINE } from "@/lib/pipeline/discipline";
 
 export const PLANS_TAG = "plans";
 
@@ -26,10 +27,14 @@ export async function publicDomains(): Promise<PublicDomain[]> {
   const jobs = await systemRepo().listJobs({ status: "active", limit: 2000 });
   const byDept = new Map<string, { count: number; skills: Map<string, number> }>();
   for (const job of jobs) {
-    const d = byDept.get(job.department) ?? { count: 0, skills: new Map() };
+    // Grouped by inferred discipline: most sources send no department, which used to collapse every
+    // listing into one unnamed card.
+    const name = jobDiscipline(job);
+    if (name === OTHER_DISCIPLINE) continue;
+    const d = byDept.get(name) ?? { count: 0, skills: new Map() };
     d.count++;
     for (const s of job.requiredSkills) d.skills.set(s, (d.skills.get(s) ?? 0) + 1);
-    byDept.set(job.department, d);
+    byDept.set(name, d);
   }
   return [...byDept.entries()]
     .map(([name, d]) => ({ name, openRoles: d.count, skills: [...d.skills.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([s]) => s) }))
