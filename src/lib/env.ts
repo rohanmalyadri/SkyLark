@@ -21,7 +21,7 @@ const ServerEnvSchema = z.object({
   AI_MODEL: z.string().default("claude-opus-5-5"),
   /** Google Gemini key for the chat-style onboarding. Without it, onboarding shows only the form. */
   GEMINI_API_KEY: z.string().min(10).optional(),
-  GEMINI_MODEL: z.string().default("gemini-flash-latest"),
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
   CRON_SECRET: z.string().min(16).optional(),
   ADMIN_EMAILS: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().endsWith(".apps.googleusercontent.com").optional(),

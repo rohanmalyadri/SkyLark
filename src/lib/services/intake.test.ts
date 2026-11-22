@@ -185,3 +185,21 @@ describe("chat intake reads sponsorship and relocation directly when the model m
     expect(r.draft.relocationCountries.sort()).toEqual(["DE", "NL"]);
   });
 });
+
+describe("chat intake education follow-up", () => {
+  it("keeps a qualification missing its year and completes it from a follow-up", async () => {
+    gemini.next = { updates: { education: [{ school: "SRM University AP", degree: "Bachelor's", field: "Computer Science" }] }, reply: "Thanks!", nextTopic: "education" };
+    const first = await ask(freshDraft(), ["education"], "B.Tech CSE at SRM University AP, 2nd year");
+    expect(first.draft.education).toEqual([]);
+    expect(first.topic).toBe("education");
+    expect(first.reply).toContain("graduation year");
+    expect(first.partialEducation).toMatchObject({ school: "SRM University AP", degree: "Bachelor's", field: "Computer Science" });
+
+    gemini.next = { updates: {}, reply: "Thanks!", nextTopic: "links" };
+    const second = await intakeTurn(user, { draft: first.draft, asked: first.asked, history: [{ role: "assistant", text: first.reply }], message: "2029", partialEducation: first.partialEducation });
+    expect(second.draft.education).toHaveLength(1);
+    expect(second.draft.education[0]).toMatchObject({ school: "SRM University AP", degree: "Bachelor's", field: "Computer Science", year: 2029 });
+    expect(second.saved).toEqual(["Education"]);
+    expect(second.partialEducation).toBeNull();
+  });
+});

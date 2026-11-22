@@ -9,7 +9,7 @@ import { cleanDraft, type ProfileDraft } from "@/components/app/profile/fields";
 import { Button } from "@/components/ui/button";
 import { SkylarkMark } from "@/components/ui/marks";
 import { AUTH_STATUS_LABEL, SENIORITY_LABEL, countryName } from "@/lib/domain/constants";
-import { TOPIC_QUESTION, intakeProgress, pendingTopics, type IntakeTopic } from "@/lib/domain/intake";
+import { TOPIC_QUESTION, intakeProgress, pendingTopics, type IntakeTopic, type IntakeTurnResult } from "@/lib/domain/intake";
 import { useAction } from "@/lib/hooks/use-action";
 import { cn } from "@/lib/utils";
 import { Finishing } from "./wizard";
@@ -28,7 +28,13 @@ interface ChatState {
   draft: ProfileDraft;
   asked: IntakeTopic[];
   messages: ChatMessage[];
+  /** A qualification still missing a detail, sent back so the next answer can finish it. */
+  partialEducation?: IntakeTurnResult["partialEducation"];
 }
+
+/** Longest the chat waits for a reply before giving the input back. */
+const REPLY_TIMEOUT_MS = 20_000;
+const TIMED_OUT = "That took too long, so I stopped waiting. Send your answer again, or switch to the form.";
 
 const newId = () => crypto.randomUUID();
 
@@ -82,7 +88,9 @@ export function ChatIntake({
   const progress = intakeProgress(draft, asked);
   const pending = pendingTopics(draft, asked);
   const ready = pending.length === 0;
-  const busy = turn.pending || upload.pending || complete.pending;
+  // Tracked here rather than from the action, so a reply that times out frees the input at once.
+  const [replying, setReplying] = useState(false);
+  const busy = replying || upload.pending || complete.pending;
 
   // Resume a conversation interrupted by a reload (same tab only). Read after mount to keep hydration stable.
   useEffect(() => {
@@ -112,7 +120,7 @@ export function ChatIntake({
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length, turn.pending, ready]);
+  }, [messages.length, replying, ready]);
 
   const push = (...m: ChatMessage[]) => setState((s) => ({ ...s, messages: [...s.messages, ...m] }));
 
@@ -123,7 +131,14 @@ export function ChatIntake({
     setInput("");
     setState((s) => ({ ...s, messages: [...s.messages, userMsg] }));
     const history = messages.filter((m) => m.tone !== "error").map(({ role, text }) => ({ role, text }));
-    const res = await turn.execute({ draft, asked, history, message: text });
+    setReplying(true);
+    let timer = 0;
+    const res = await Promise.race([
+      turn.execute({ draft, asked, history, message: text, partialEducation: state.partialEducation ?? null }),
+      new Promise<{ ok: false; error: string; fieldErrors?: undefined }>((resolve) => (timer = window.setTimeout(() => resolve({ ok: false, error: TIMED_OUT }), REPLY_TIMEOUT_MS))),
+    ]);
+    window.clearTimeout(timer);
+    setReplying(false);
     if (!res.ok) {
       setInput(text);
       setState((s) => ({ ...s, messages: [...s.messages.filter((m) => m.id !== userMsg.id), { id: newId(), role: "assistant", tone: "error", text: res.fieldErrors?.message?.[0] ?? res.error }] }));
@@ -133,6 +148,7 @@ export function ChatIntake({
     setState((s) => ({
       draft: r.draft as ProfileDraft,
       asked: r.asked,
+      partialEducation: r.partialEducation ?? null,
       messages: [...s.messages.map((m) => (m.id === userMsg.id ? { ...m, saved: r.saved } : m)), { id: newId(), role: "assistant", text: r.reply }],
     }));
     inputRef.current?.focus();
@@ -202,7 +218,7 @@ export function ChatIntake({
 
   if (finishing) return <Finishing phase={finishing.phase} matches={finishing.matches} countries={draft.preferredCountries.length} />;
 
-  const thinking = turn.pending || upload.pending;
+  const thinking = replying || upload.pending;
   const canSend = !busy && input.trim().length > 0;
 
   return (
@@ -243,7 +259,7 @@ export function ChatIntake({
               <span className="block text-xs text-subtle">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.span key={thinking ? "t" : "o"} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.18 }} className="inline-block">
-                    {upload.pending ? "Reading your resume…" : turn.pending ? "Typing…" : "Profile assistant"}
+                    {upload.pending ? "Reading your resume…" : replying ? "Typing…" : "Profile assistant"}
                   </motion.span>
                 </AnimatePresence>
               </span>
@@ -273,7 +289,7 @@ export function ChatIntake({
               {thinking && <TypingBubble key="typing" />}
             </AnimatePresence>
           </motion.ul>
-          <AnimatePresence>{ready && !turn.pending && <Summary key="summary" draft={draft} onFinish={() => void finish()} onEdit={() => onSwitchToForm(draft)} finishing={complete.pending} />}</AnimatePresence>
+          <AnimatePresence>{ready && !replying && <Summary key="summary" draft={draft} onFinish={() => void finish()} onEdit={() => onSwitchToForm(draft)} finishing={complete.pending} />}</AnimatePresence>
         </div>
 
         <form
@@ -346,7 +362,7 @@ export function ChatIntake({
           </div>
         </form>
       </motion.div>
-      <p className="mt-3 px-1 text-xs text-subtle">Answers are read by Google Gemini to fill in your profile, and every value is checked before it&apos;s saved. Enter to send, Shift+Enter for a new line.</p>
+      <p className="mt-3 px-1 text-xs text-subtle">Skylark AI does the work for you. Just answer naturally and it fills in your profile, checking every detail as it goes.</p>
     </div>
   );
 }
