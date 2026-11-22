@@ -361,8 +361,9 @@ export function HeroScene() {
     const wctx = white.getContext("2d")!;
     wctx.fillStyle = "#fff";
     wctx.fillRect(0, 0, 2, 2);
-    // The scene's photographic set (local only, see public/art/hero/source/README) is preferred;
-    // without it, the rendered set that ships with the repository is used.
+    // The scene's photographic set (local only, see public/art/hero/source/README) is preferred
+    // in development; without it, and always in production builds (the set is git-ignored, so
+    // asking for it there only costs six 404s and delays the hero), the rendered set is used.
     const SOURCE_SET: Record<string, string> = {
       background: "/art/hero/source/background.jpg",
       middle: "/art/hero/source/peaks_MIDDLE.png",
@@ -379,8 +380,7 @@ export function HeroScene() {
       cloud: "/art/hero/cloud.webp",
     };
     const loadSet = (set: Record<string, string>) => Promise.all(Object.entries(set).map(([n, src]) => loadImage(src).then((img) => [n, img] as const)));
-    loadSet(SOURCE_SET)
-      .catch(() => loadSet(RENDERED_SET))
+    (process.env.NODE_ENV === "production" ? loadSet(RENDERED_SET) : loadSet(SOURCE_SET).catch(() => loadSet(RENDERED_SET)))
       .then((imgs) => {
         if (cancelled) return;
         tex = Object.fromEntries(imgs.map(([n, img]) => [n, texture(img)]));

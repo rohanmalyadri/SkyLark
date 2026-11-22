@@ -226,9 +226,19 @@ export class MemoryRepository implements Repository {
   async getJob(id: string) {
     return this.withCompany(id);
   }
+  async listJobLocations() {
+    return this.s.jobs.filter((j) => j.status === "active").map((j) => ({ companyId: j.companyId, locations: clone(j.locations) }));
+  }
+  async countJobs(opts: { status?: "active" | "closed"; source?: string }) {
+    return this.s.jobs.filter((j) => (!opts.status || j.status === opts.status) && (!opts.source || j.source === opts.source)).length;
+  }
   async findJobsByFingerprint(fingerprints: string[]) {
     const set = new Set(fingerprints);
     return this.s.jobs.filter((j) => set.has(j.fingerprint)).map((j) => j.fingerprint);
+  }
+  async findJobsByExternalId(source: string, externalIds: string[]) {
+    const set = new Set(externalIds);
+    return this.s.jobs.filter((j) => j.source === source && set.has(j.externalId)).map((j) => ({ externalId: j.externalId, fingerprint: j.fingerprint }));
   }
   async insertJobs(jobs: Parameters<Repository["insertJobs"]>[0]) {
     const rows = jobs.map((j) => ({ ...j, id: j.id ?? randomUUID(), createdAt: j.createdAt ?? nowIso() }));

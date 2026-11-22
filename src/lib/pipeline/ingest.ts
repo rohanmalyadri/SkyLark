@@ -55,11 +55,16 @@ export async function runIngestion(sourceId: string) {
     // Dedupe within the batch (cross-posted roles share a fingerprint), then against what's stored.
     const maxAge = new Date(Date.now() - serverEnv().JOB_MAX_AGE_DAYS * 86_400_000).toISOString();
     const current = normalized.filter((j) => j.postedAt >= maxAge);
-    const unique = [...new Map(current.map((j) => [j.fingerprint, j])).values()];
+    // Listings are unique both by fingerprint and by the source's own id, so dedupe on both: a board
+    // that renames a role keeps its id but changes the fingerprint, and inserting it again would
+    // violate (source, external_id) and fail the whole run.
+    const byFingerprint = [...new Map(current.map((j) => [j.fingerprint, j])).values()];
+    const unique = [...new Map(byFingerprint.map((j) => [j.externalId, j])).values()];
     const existing = new Set(await repo.findJobsByFingerprint(unique.map((j) => j.fingerprint)));
-    const fresh = unique.filter((j) => !existing.has(j.fingerprint));
+    const storedById = new Map((await repo.findJobsByExternalId(sourceId, unique.map((j) => j.externalId))).map((r) => [r.externalId, r.fingerprint]));
+    const fresh = unique.filter((j) => !existing.has(j.fingerprint) && !storedById.has(j.externalId));
     const inserted = await repo.insertJobs(fresh);
-    await repo.touchJobs([...existing], startedAt);
+    await repo.touchJobs([...new Set([...existing, ...storedById.values()])], startedAt);
 
     // Expiry: listings the source stopped showing (only knowable from a complete fetch) and anything past the maximum age.
     const closed = await repo.closeStaleJobs({ source: sourceId, seenBefore: complete ? startedAt : undefined, postedBefore: maxAge });

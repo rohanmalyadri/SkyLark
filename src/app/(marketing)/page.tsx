@@ -12,9 +12,10 @@ import { TrustWall } from "@/components/marketing/trust-wall";
 import { allPosts, readingMinutes } from "@/lib/content/posts";
 import { formatDate } from "@/lib/utils";
 import { countryName, DEFAULT_REVIEW_CHECKLIST, REVIEW_SLA_HOURS } from "@/lib/domain/constants";
-import { listCountries } from "@/lib/geo";
+import { cityCoords, listCountries } from "@/lib/geo";
 import { hasCountryArt } from "@/lib/country-art";
-import { CITY_COORDS, mapPosition } from "@/lib/geo-cities";
+import { CITY_COORDS, mapCities, mapPosition } from "@/lib/geo-cities";
+import { datasetCityName } from "@/lib/pipeline/normalize";
 import { FACTOR_WEIGHTS, MATCH_MODEL_VERSION } from "@/lib/services/matching/engine";
 import { exchangeRates } from "@/lib/services/fx";
 import { publicCatalogStats, publicDomains, publicPlans } from "@/lib/services/public";
@@ -333,8 +334,8 @@ async function International() {
   const codes = stats.countries.filter(hasCountryArt);
   const ring = codes.length ? Array.from({ length: Math.max(12, codes.length) }, (_, i) => codes[i % codes.length]!) : [];
   const step = 360 / Math.max(ring.length, 1);
-  const markers: MapLocation[] = stats.cities.flatMap((c) => {
-    const at = CITY_COORDS[`${c.city}|${c.country}`];
+  const markers: MapLocation[] = mapCities(stats.cities).flatMap((c) => {
+    const at = CITY_COORDS[`${c.city}|${c.country}`] ?? cityCoords(datasetCityName(c.city), c.country);
     return at ? [{ key: `${c.city}|${c.country}`, city: c.city, country: countryName(c.country), roles: c.roles, ...mapPosition(at[0], at[1]) }] : [];
   });
   return (

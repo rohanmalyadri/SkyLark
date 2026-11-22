@@ -127,7 +127,13 @@ export interface Repository {
   upsertCompany(company: NewRow<Company>): Promise<Company>;
   listJobs(opts?: { status?: Job["status"]; limit?: number; search?: string }): Promise<JobWithCompany[]>;
   getJob(id: string): Promise<JobWithCompany | null>;
+  /** Company and places of every active listing, light enough to read the whole catalog. */
+  listJobLocations(): Promise<{ companyId: string; locations: Job["locations"] }[]>;
+  /** Exact number of listings with this status, optionally only from one source. */
+  countJobs(opts: { status?: Job["status"]; source?: string }): Promise<number>;
   findJobsByFingerprint(fingerprints: string[]): Promise<string[]>;
+  /** Stored listings from one source by the source's own id, with the fingerprint they were saved under. */
+  findJobsByExternalId(source: string, externalIds: string[]): Promise<{ externalId: string; fingerprint: string }[]>;
   insertJobs(jobs: NewRow<Job>[]): Promise<Job[]>;
   updateJob(id: string, patch: Partial<Pick<Job, "status">>): Promise<void>;
   /** Marks listings as still live at the source (re-opening any that had been closed). */
