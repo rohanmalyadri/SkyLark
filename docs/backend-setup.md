@@ -50,6 +50,34 @@ and `GEMINI_API_KEY` (mark Sensitive) to turn on the chat-style onboarding. With
 step-by-step form only. A free-tier Gemini key is rate-limited to a handful of requests a minute, so turn on
 billing for the Google AI Studio project before real traffic.
 
+## Payments (Razorpay)
+
+Paid plans are auto-renewing subscriptions (monthly or yearly) on Razorpay Subscriptions. The app
+creates the matching Razorpay plans itself on first checkout, tagged `skylark:<plan>:<interval>:<currency>:<amount>`;
+changing a price in the `plans` table just creates a new Razorpay plan for new subscribers.
+
+1. Run `supabase/migrations/20261122000001_subscription_provider_ref.sql` in the Supabase SQL Editor
+   (adds `subscriptions.provider_ref`).
+2. In the Razorpay dashboard, switch to **Test Mode**, then Account & Settings → API Keys → Generate
+   Key. Set `RAZORPAY_KEY_ID` (`rzp_test_…`) and `RAZORPAY_KEY_SECRET` (mark Sensitive) on Vercel.
+3. Account & Settings → Webhooks → Add New Webhook: URL `https://www.skylarkgo.in/api/webhooks/razorpay`,
+   a secret you make up (set the same value as `RAZORPAY_WEBHOOK_SECRET`, Sensitive), and the events
+   `subscription.authenticated`, `.activated`, `.charged`, `.pending`, `.halted`, `.paused`,
+   `.resumed`, `.cancelled`, `.completed`, `.updated`. Renewals and cancellations only reach the app
+   through this webhook.
+4. Redeploy, subscribe from Settings → Subscription & billing with a
+   [test card or UPI ID](https://razorpay.com/docs/payments/payments/test-card-details/), and check the
+   payment shows under Receipts and in the Razorpay dashboard.
+5. Going live: complete Razorpay KYC and get Subscriptions enabled on the account, generate live keys
+   (`rzp_live_…`) and a live-mode webhook, and swap the three values. Plans are charged in
+   `plans.currency`; a currency other than INR needs international payments enabled on the account.
+
+Access follows payment: a renewal that fails keeps the plan for a 3-day grace period, then the user
+drops to Entry. Cancelling stops renewals at the end of the paid period. Switching plans starts a new
+subscription and cancels the old one once the new one is paid. Promo codes aren't applied to Razorpay
+subscriptions yet (they need Razorpay offers). Without keys, demo mode keeps an instant mock charge, and
+a Supabase deployment refuses to sell plans.
+
 ## Region
 
 The Supabase project lives in AWS ap-southeast-2 (Sydney), so `vercel.json` pins functions to `syd1`.
