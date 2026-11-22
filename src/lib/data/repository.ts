@@ -127,6 +127,8 @@ export interface Repository {
   upsertCompany(company: NewRow<Company>): Promise<Company>;
   listJobs(opts?: { status?: Job["status"]; limit?: number; search?: string }): Promise<JobWithCompany[]>;
   getJob(id: string): Promise<JobWithCompany | null>;
+  /** Company and places of every active listing, light enough to read the whole catalog. */
+  listJobLocations(): Promise<{ companyId: string; locations: Job["locations"] }[]>;
   /** Exact number of listings with this status, optionally only from one source. */
   countJobs(opts: { status?: Job["status"]; source?: string }): Promise<number>;
   findJobsByFingerprint(fingerprints: string[]): Promise<string[]>;

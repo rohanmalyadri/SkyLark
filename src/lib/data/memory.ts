@@ -226,6 +226,9 @@ export class MemoryRepository implements Repository {
   async getJob(id: string) {
     return this.withCompany(id);
   }
+  async listJobLocations() {
+    return this.s.jobs.filter((j) => j.status === "active").map((j) => ({ companyId: j.companyId, locations: clone(j.locations) }));
+  }
   async countJobs(opts: { status?: "active" | "closed"; source?: string }) {
     return this.s.jobs.filter((j) => (!opts.status || j.status === opts.status) && (!opts.source || j.source === opts.source)).length;
   }

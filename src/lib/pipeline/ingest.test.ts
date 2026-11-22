@@ -37,6 +37,24 @@ describe("job text normalization", () => {
     expect(parseLocation("Remote, worldwide", { remote: true })).toMatchObject({ workMode: "remote", global: true, remoteCountries: [] });
   });
 
+  it("places global board locations in the right country", () => {
+    const at = (t: string) => parseLocation(t).places;
+    expect(at("Remote - UK")).toEqual([{ city: "", country: "GB" }]);
+    expect(at("Remote - AZ; Remote - GA; Remote - TX")).toEqual([{ city: "", country: "US" }]);
+    expect(at("Arizona")).toEqual([{ city: "", country: "US" }]);
+    expect(at("Atlanta, Georgia")).toEqual([{ city: "Atlanta", country: "US" }]);
+    expect(at("Georgia")).toEqual([{ city: "", country: "GE" }]);
+    expect(at("Bellevue, Washington")).toEqual([{ city: "Bellevue", country: "US" }]);
+    expect(at("New York City")).toEqual([{ city: "New York", country: "US" }]);
+    expect(at("San Francisco Bay Area")).toEqual([{ city: "San Francisco", country: "US" }]);
+    expect(at("City of London Corporation, GBR")).toEqual([{ city: "London", country: "GB" }]);
+    expect(at("Remote - Canada: Select locations")).toEqual([{ city: "", country: "CA" }]);
+    expect(at("US-Remote")).toEqual([{ city: "", country: "US" }]);
+    expect(at("Sydney Or Melbourne")).toEqual([{ city: "Sydney", country: "AU" }, { city: "Melbourne", country: "AU" }]);
+    expect(at("Bengaluru, India")).toEqual([{ city: "Bengaluru", country: "IN" }]);
+    expect(at("Toronto, Canada")).toEqual([{ city: "Toronto", country: "CA" }]);
+  });
+
   it("doesn't mistake ordinary words for skills", () => {
     expect(extractSkills("Go to market with us and express yourself in a swift, agile team")).not.toEqual(expect.arrayContaining(["Go", "Express", "Swift"]));
     expect(extractSkills("Backend services in Golang, Node.js and React")).toEqual(expect.arrayContaining(["Go", "Node.js", "React"]));

@@ -43,6 +43,9 @@ import type { AdminStats, Repository, DeliveryRunQuery, LeadQuery} from "./repos
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Row = Record<string, any>;
 
+/** PostgREST's default max-rows: larger reads must be paged. */
+const PAGE_ROWS = 1000;
+
 function check(res: { data: any; error: { message: string; code?: string } | null }, ctx: string): any {
   if (res.error) throw new Error(`[db:${ctx}] ${res.error.message}`);
   return res.data;
@@ -534,10 +537,27 @@ export class SupabaseRepository implements Repository {
     return toCompany(check(await this.db.from("companies").upsert(fromCompany(company), { onConflict: "domain" }).select().single(), "upsertCompany"));
   }
   async listJobs(opts: { status?: "active" | "closed"; limit?: number; search?: string } = {}) {
-    let q = this.db.from("jobs").select(JOB_SELECT).order("posted_at", { ascending: false }).limit(opts.limit ?? 500);
-    if (opts.status) q = q.eq("status", opts.status);
-    if (opts.search) q = q.textSearch("search", opts.search, { type: "websearch" });
-    return check(await q, "listJobs").map(toJobWithCompany);
+    // PostgREST returns at most 1000 rows per request, so read larger limits a page at a time.
+    const limit = opts.limit ?? 500;
+    const rows: Row[] = [];
+    while (rows.length < limit) {
+      const size = Math.min(PAGE_ROWS, limit - rows.length);
+      let q = this.db.from("jobs").select(JOB_SELECT).order("posted_at", { ascending: false }).order("id").range(rows.length, rows.length + size - 1);
+      if (opts.status) q = q.eq("status", opts.status);
+      if (opts.search) q = q.textSearch("search", opts.search, { type: "websearch" });
+      const page: Row[] = check(await q, "listJobs");
+      rows.push(...page);
+      if (page.length < size) break;
+    }
+    return rows.map(toJobWithCompany);
+  }
+  async listJobLocations() {
+    const out: { companyId: string; locations: Job["locations"] }[] = [];
+    for (;;) {
+      const page: Row[] = check(await this.db.from("jobs").select("id, company_id, locations").eq("status", "active").order("id").range(out.length, out.length + PAGE_ROWS - 1), "listJobLocations");
+      out.push(...page.map((r) => ({ companyId: r.company_id as string, locations: (r.locations ?? []) as Job["locations"] })));
+      if (page.length < PAGE_ROWS) return out;
+    }
   }
   async getJob(id: string) {
     const r = check(await this.db.from("jobs").select(JOB_SELECT).eq("id", id).maybeSingle(), "getJob");
@@ -570,12 +590,16 @@ export class SupabaseRepository implements Repository {
     return found;
   }
   async insertJobs(jobs: Parameters<Repository["insertJobs"]>[0]) {
-    if (!jobs.length) return [];
-    const rows = check(
-      await this.db.from("jobs").upsert(jobs.map((j) => fromJob(j as Partial<Job>)), { onConflict: "fingerprint", ignoreDuplicates: true }).select(),
-      "insertJobs",
-    );
-    return rows.map(toJob);
+    // Batched: a first import of a large board is thousands of listings with full descriptions.
+    const out: Job[] = [];
+    for (let i = 0; i < jobs.length; i += 250) {
+      const rows = check(
+        await this.db.from("jobs").upsert(jobs.slice(i, i + 250).map((j) => fromJob(j as Partial<Job>)), { onConflict: "fingerprint", ignoreDuplicates: true }).select(),
+        "insertJobs",
+      );
+      out.push(...rows.map(toJob));
+    }
+    return out;
   }
   async updateJob(id: string, patch: { status?: "active" | "closed" }) {
     check(await this.db.from("jobs").update(patch).eq("id", id), "updateJob");
