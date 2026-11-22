@@ -6,11 +6,12 @@ import { scrollToId, smoothScrollTo } from "@/lib/smooth-scroll";
 
 export const SECTION_NAV_EVENT = "skylark:section-nav";
 
-function waitForElement(id: string, timeoutMs = 3000) {
+function waitForElement(id: string, pathname?: string, timeoutMs = 3000) {
   return new Promise<boolean>((resolve) => {
     const started = performance.now();
     const check = () => {
-      if (document.getElementById(id)) return resolve(true);
+      // After a navigation, the old page can still hold an element with the same id until the new one renders.
+      if ((!pathname || window.location.pathname === pathname) && document.getElementById(id)) return resolve(true);
       if (performance.now() - started > timeoutMs) return resolve(false);
       requestAnimationFrame(check);
     };
@@ -56,7 +57,7 @@ export function SmoothAnchors() {
 
       if (url.pathname !== window.location.pathname) {
         router.push(url.pathname, { scroll: true });
-        if (!(await waitForElement(id))) return;
+        if (!(await waitForElement(id, url.pathname))) return;
       }
       // Let the mobile menu close and the page unlock scrolling before animating.
       await nextFrame();

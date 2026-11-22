@@ -7,8 +7,8 @@ export interface LegalSection {
   body: React.ReactNode;
 }
 
-/** Shared layout for Privacy and Terms: centred heading, sticky contents list, numbered sections. */
-export function LegalPage({ label, title, updated, intro, sections }: { label: string; title: string; updated: string; intro: React.ReactNode; sections: LegalSection[] }) {
+/** Shared layout for Privacy, Terms and How it works: centred heading, sticky contents list, numbered sections. */
+export function LegalPage({ label, title, updated, intro, sections }: { label: string; title: string; updated?: string; intro: React.ReactNode; sections: LegalSection[] }) {
   return (
     <>
       <section className="component component--textblocklarge page-head legal-head" aria-labelledby="legal-title">
@@ -17,7 +17,7 @@ export function LegalPage({ label, title, updated, intro, sections }: { label: s
           <h1 id="legal-title" className="display --large">
             {title}
           </h1>
-          <p className="text --medium legal-updated">Last updated {updated}</p>
+          {updated ? <p className="text --medium legal-updated">Last updated {updated}</p> : null}
         </div>
       </section>
 
