@@ -2,7 +2,7 @@
 export const SITE_URL = "https://www.skylarkgo.in";
 export const SITE_HOST = "www.skylarkgo.in";
 
-/** Old production hostnames that now redirect to SITE_URL (preview deployments are left alone). */
+/** Old production hostnames (vercel.json redirects them to SITE_URL); links never use them. */
 export const LEGACY_HOSTS = new Set(["skylark-ten-mu.vercel.app", "skylarkgo.in"]);
 
 /**

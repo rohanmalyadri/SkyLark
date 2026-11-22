@@ -18,8 +18,8 @@ The script also records the migrations as applied, so later migrations can go th
 ## 2. Auth settings (Supabase dashboard → Authentication)
 
 - **URL Configuration** → Site URL: `https://www.skylarkgo.in`.
-  Redirect URLs: add `https://www.skylarkgo.in/**`, keep `https://skylark-ten-mu.vercel.app/**` (the old
-  address, which now redirects to the domain) and, for preview deployments,
+  Redirect URLs: add `https://www.skylarkgo.in/**` and `https://skylarkgo.in/**`. Keep
+  `https://skylark-ten-mu.vercel.app/**` and, for preview deployments,
   `https://*-rohans-projects-8d7addbc.vercel.app/**`.
 - **Sign In / Providers → Email** → turn **Confirm email** off, unless you add custom SMTP
   (Authentication → Emails → SMTP Settings, e.g. Resend). Supabase's built-in mailer only delivers
@@ -39,8 +39,10 @@ The script also records the migrations as applied, so later migrations can go th
 
 All three Supabase values must be present or the app stays in demo mode. `NEXT_PUBLIC_*` values are
 baked in at build time, so **redeploy** after setting them. `SESSION_SECRET`, `CRON_SECRET` and
-`NEXT_PUBLIC_APP_URL` are already set (`NEXT_PUBLIC_APP_URL` should be `https://www.skylarkgo.in`; the
-old `.vercel.app` value is treated as the domain anyway).
+`NEXT_PUBLIC_APP_URL` are already set. `NEXT_PUBLIC_APP_URL` must be the public domain,
+`https://www.skylarkgo.in`: Google sign-in and email links return there, and the sign-in cookie only
+exists on the domain the visitor started from, so a stale value breaks sign-in with "link is invalid
+or expired".
 
 Optional extras (see `.env.example`): `ANTHROPIC_API_KEY` for AI tailoring (otherwise a rules engine is
 used), `ADZUNA_APP_ID`/`ADZUNA_APP_KEY` for Indian and US listings, `GITHUB_TOKEN`, `STACKEXCHANGE_KEY`,
