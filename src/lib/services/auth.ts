@@ -56,7 +56,7 @@ export async function signUp(input: unknown, ip: string) {
   const { data: res, error } = await supabase.auth.signUp({
     email: data.email,
     password: data.password,
-    options: { data: { full_name: data.fullName }, emailRedirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=/onboarding` },
+    options: { data: { full_name: data.fullName }, emailRedirectTo: `${env.siteUrl}/auth/callback?next=/onboarding` },
   });
   if (error) {
     if (/already registered|already exists/i.test(error.message)) throw fieldErrors({ email: "An account with this email already exists — sign in instead" }, "An account with that email already exists. Try signing in.");
@@ -100,7 +100,7 @@ export async function googleSignInUrl(next = "/dashboard") {
   const supabase = await createSessionClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${env.NEXT_PUBLIC_APP_URL}/auth/callback?next=${encodeURIComponent(next)}` },
+    options: { redirectTo: `${env.siteUrl}/auth/callback?next=${encodeURIComponent(next)}` },
   });
   if (error || !data.url) throw new AppError("internal", "Couldn't start Google sign-in.");
   return data.url;

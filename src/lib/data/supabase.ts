@@ -137,7 +137,8 @@ const toAnswers = (r: Row): ApplicationAnswers => ({
   screening: r.screening ?? {},
   background: r.background ?? {},
   // Read separately, through the privileged repository, by getSelfIdentification.
-  selfIdentification: r.self_identification ?? emptySelfIdentification(),
+  // The column defaults to an empty object, so fill in any field a row is missing.
+  selfIdentification: { ...emptySelfIdentification(), ...(r.self_identification ?? {}) },
   delivery: r.delivery ?? {},
   updatedAt: r.updated_at,
 });
@@ -388,7 +389,7 @@ const toPlan = (r: Row): Plan => ({
   active: r.active,
 });
 
-const toSubscription = (r: Row): Subscription => ({ id: r.id, userId: r.user_id, planId: r.plan_id, status: r.status, interval: r.interval, currentPeriodEnd: r.current_period_end, cancelAtPeriodEnd: r.cancel_at_period_end, createdAt: r.created_at });
+const toSubscription = (r: Row): Subscription => ({ id: r.id, userId: r.user_id, planId: r.plan_id, status: r.status, interval: r.interval, currentPeriodEnd: r.current_period_end, cancelAtPeriodEnd: r.cancel_at_period_end, providerRef: r.provider_ref ?? null, createdAt: r.created_at });
 const toPayment = (r: Row): Payment => ({ id: r.id, userId: r.user_id, subscriptionId: r.subscription_id, amount: Number(r.amount), currency: r.currency, status: r.status, provider: r.provider, providerRef: r.provider_ref, description: r.description, createdAt: r.created_at });
 const toNotification = (r: Row): Notification => ({ id: r.id, userId: r.user_id, type: r.type, title: r.title, body: r.body, href: r.href, readAt: r.read_at, createdAt: r.created_at });
 const toSettings = (r: Row): UserSettings => ({ userId: r.user_id, emailDigest: r.email_digest, notifyNewMatches: r.notify_new_matches, notifyReviewComplete: r.notify_review_complete, notifyApplicationUpdates: r.notify_application_updates, minMatchScore: r.min_match_score, timezone: r.timezone });
@@ -811,7 +812,16 @@ export class SupabaseRepository implements Repository {
       await this.db
         .from("subscriptions")
         .upsert(
-          { user_id: sub.userId, plan_id: sub.planId, status: sub.status, interval: sub.interval, current_period_end: sub.currentPeriodEnd, cancel_at_period_end: sub.cancelAtPeriodEnd },
+          {
+            user_id: sub.userId,
+            plan_id: sub.planId,
+            status: sub.status,
+            interval: sub.interval,
+            current_period_end: sub.currentPeriodEnd,
+            cancel_at_period_end: sub.cancelAtPeriodEnd,
+            // Only sent when known, so databases without the column yet keep working for demo plans.
+            ...(sub.providerRef !== undefined ? { provider_ref: sub.providerRef } : {}),
+          },
           { onConflict: "user_id" },
         )
         .select()
@@ -833,6 +843,10 @@ export class SupabaseRepository implements Repository {
       "createPayment",
     );
     return toPayment(r);
+  }
+  async getPaymentByRef(providerRef: string) {
+    const r = check(await this.db.from("payments").select("*").eq("provider_ref", providerRef).maybeSingle(), "getPaymentByRef");
+    return r ? toPayment(r) : null;
   }
 
   /* notifications & settings */
@@ -947,7 +961,7 @@ export class SupabaseRepository implements Repository {
   async getSelfIdentification(userId: string) {
     // Only reachable with the service role; a session client is refused by the column grant.
     const r = check(await this.db.from("application_answers").select("self_identification").eq("user_id", userId).maybeSingle(), "getSelfIdentification");
-    return r ? (r.self_identification ?? emptySelfIdentification()) : null;
+    return r ? { ...emptySelfIdentification(), ...(r.self_identification ?? {}) } : null;
   }
   async upsertAnswers(answers: Omit<ApplicationAnswers, "updatedAt">) {
     const row = {

@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { DEV_SESSION_SECRET } from "@/lib/auth/demo-session";
+import { siteUrl } from "@/lib/site";
 
 const optionalKey = z.string().min(4).optional();
 const csv = z
@@ -18,12 +19,21 @@ const ServerEnvSchema = z.object({
   SESSION_SECRET: z.string().min(32).optional(),
   ANTHROPIC_API_KEY: z.string().min(10).optional(),
   AI_MODEL: z.string().default("claude-opus-5-5"),
+  /** Google Gemini key for the chat-style onboarding. Without it, onboarding shows only the form. */
+  GEMINI_API_KEY: z.string().min(10).optional(),
+  GEMINI_MODEL: z.string().default("gemini-2.5-flash"),
   CRON_SECRET: z.string().min(16).optional(),
   ADMIN_EMAILS: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().endsWith(".apps.googleusercontent.com").optional(),
   GOOGLE_CLIENT_SECRET: z.string().min(10).optional(),
   /** "on" once the Google provider is enabled on the Supabase project (Auth → Providers). */
   SUPABASE_GOOGLE_AUTH: z.enum(["on", "off"]).default("off"),
+
+  /* Payments (Razorpay). Without the key pair, paid checkout is off outside demo mode. */
+  // Kept loose on purpose: a mistyped payment key must switch checkout off, not take the whole site down.
+  RAZORPAY_KEY_ID: z.string().trim().optional(),
+  RAZORPAY_KEY_SECRET: z.string().trim().optional(),
+  RAZORPAY_WEBHOOK_SECRET: z.string().trim().optional(),
 
   /* Reference data & enrichment */
   STACKEXCHANGE_KEY: optionalKey,
@@ -49,7 +59,7 @@ const ServerEnvSchema = z.object({
   LEVER_COMPANIES: csv,
 });
 
-export type ServerEnv = z.infer<typeof ServerEnvSchema> & { dataMode: "supabase" | "demo"; sessionSecret: string };
+export type ServerEnv = z.infer<typeof ServerEnvSchema> & { dataMode: "supabase" | "demo"; sessionSecret: string; siteUrl: string };
 
 let cached: ServerEnv | null = null;
 
@@ -67,9 +77,13 @@ export function serverEnv(): ServerEnv {
 
   // Empty in production without SESSION_SECRET: sessions can't be signed or verified, so demo sign-in fails closed.
   const sessionSecret = env.SESSION_SECRET ?? (env.NODE_ENV === "production" ? "" : DEV_SESSION_SECRET);
-  cached = { ...env, dataMode, sessionSecret };
+  // Absolute links (auth redirects, share links) always use the public domain in production.
+  cached = { ...env, dataMode, sessionSecret, siteUrl: siteUrl(raw.NEXT_PUBLIC_APP_URL, env.NODE_ENV === "production") };
   return cached;
 }
+
+/** Whether the chat-style onboarding can run (needs a Gemini key). */
+export const chatIntakeAvailable = () => !!serverEnv().GEMINI_API_KEY;
 
 export const isDemoMode = () => serverEnv().dataMode === "demo";
 
@@ -81,3 +95,6 @@ export const nativeGoogleEnabled = () => {
 
 /** Whether the "Continue with Google" button should be offered at all. */
 export const googleSignInAvailable = () => (serverEnv().dataMode === "supabase" ? serverEnv().SUPABASE_GOOGLE_AUTH === "on" : nativeGoogleEnabled());
+
+/** Razorpay checkout is live (test or live keys) once both halves of the key pair are set. */
+export const razorpayEnabled = () => /^rzp_(test|live)_[A-Za-z0-9]+$/.test(serverEnv().RAZORPAY_KEY_ID ?? "") && (serverEnv().RAZORPAY_KEY_SECRET ?? "").length >= 10;

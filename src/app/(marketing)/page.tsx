@@ -163,9 +163,10 @@ export default function LandingPage() {
             </nav>
             {STEPS.map((s) => (
               <article key={s.id} id={s.id} className="content" aria-labelledby={`${s.id}-title`}>
-                <div className="image --cover" data-cursor="View">
+                {/* The whole stage picture is a link: the cursor disc says "View" and a click opens the stage's explainer. */}
+                <Link href={`/how-it-works#${s.id.replace("step-", "")}`} className="image --cover" data-cursor="View" aria-label={`How the ${s.nav.toLowerCase()} stage works`}>
                   <Image src={s.art} alt="" fill sizes="100vw" />
-                </div>
+                </Link>
                 <div className="info">
                   <h3 id={`${s.id}-title`} className="title display --3xlarge floating-center">
                     <span className="line">{s.title[0]}</span>

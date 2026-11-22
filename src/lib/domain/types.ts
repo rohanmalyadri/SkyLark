@@ -547,6 +547,8 @@ export interface Subscription {
   interval: "month" | "year";
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
+  /** The payment provider's subscription id (Razorpay `sub_…`); null for demo/mock plans. */
+  providerRef?: string | null;
   createdAt: string;
 }
 
