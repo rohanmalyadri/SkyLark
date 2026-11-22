@@ -140,7 +140,8 @@ const toAnswers = (r: Row): ApplicationAnswers => ({
   screening: r.screening ?? {},
   background: r.background ?? {},
   // Read separately, through the privileged repository, by getSelfIdentification.
-  selfIdentification: r.self_identification ?? emptySelfIdentification(),
+  // The column defaults to an empty object, so fill in any field a row is missing.
+  selfIdentification: { ...emptySelfIdentification(), ...(r.self_identification ?? {}) },
   delivery: r.delivery ?? {},
   updatedAt: r.updated_at,
 });
@@ -1001,7 +1002,7 @@ export class SupabaseRepository implements Repository {
   async getSelfIdentification(userId: string) {
     // Only reachable with the service role; a session client is refused by the column grant.
     const r = check(await this.db.from("application_answers").select("self_identification").eq("user_id", userId).maybeSingle(), "getSelfIdentification");
-    return r ? (r.self_identification ?? emptySelfIdentification()) : null;
+    return r ? { ...emptySelfIdentification(), ...(r.self_identification ?? {}) } : null;
   }
   async upsertAnswers(answers: Omit<ApplicationAnswers, "updatedAt">) {
     const row = {
