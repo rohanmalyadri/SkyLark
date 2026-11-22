@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { DEMO_SESSION_COOKIE, demoSessionSecret, verifyDemoToken } from "@/lib/auth/demo-session";
 import { POSTS } from "@/lib/content/posts";
 
-const PROTECTED = ["/dashboard", "/jobs", "/applications", "/profile", "/settings", "/onboarding", "/obscuron-nexus-92vX7q"];
+const PROTECTED = ["/dashboard", "/jobs", "/applications", "/messages", "/profile", "/settings", "/onboarding", "/obscuron-nexus-92vX7q"];
 const AUTH_PAGES = ["/login", "/signup"];
 
 /** The blog is compiled in, so the full set of valid slugs is known here too. */
