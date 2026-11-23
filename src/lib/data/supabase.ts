@@ -611,12 +611,15 @@ export class SupabaseRepository implements Repository {
     return rows.map(toJobWithCompany);
   }
   async listJobLocations() {
-    const out: { companyId: string; locations: Job["locations"] }[] = [];
-    for (;;) {
-      const page: Row[] = check(await this.db.from("jobs").select("id, company_id, locations").eq("status", "active").order("id").range(out.length, out.length + PAGE_ROWS - 1), "listJobLocations");
-      out.push(...page.map((r) => ({ companyId: r.company_id as string, locations: (r.locations ?? []) as Job["locations"] })));
-      if (page.length < PAGE_ROWS) return out;
-    }
+    // Fetch every page at once: one page after another (12+ round trips to the database) made the
+    // home page's prerender pass Next's "use cache" time limit and fail the build.
+    const total = await this.countJobs({ status: "active" });
+    const fetchPage = async (from: number) =>
+      check(await this.db.from("jobs").select("id, company_id, locations").eq("status", "active").order("id").range(from, from + PAGE_ROWS - 1), "listJobLocations") as Row[];
+    const pages = await Promise.all(Array.from({ length: Math.ceil(total / PAGE_ROWS) + 1 }, (_, i) => fetchPage(i * PAGE_ROWS)));
+    // Listings added between the count and the pages land past the last one: keep reading.
+    while (pages.at(-1)!.length === PAGE_ROWS) pages.push(await fetchPage(pages.length * PAGE_ROWS));
+    return pages.flat().map((r) => ({ companyId: r.company_id as string, locations: (r.locations ?? []) as Job["locations"] }));
   }
   async getJob(id: string) {
     const r = check(await this.db.from("jobs").select(JOB_SELECT).eq("id", id).maybeSingle(), "getJob");
