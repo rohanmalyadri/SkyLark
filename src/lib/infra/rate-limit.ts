@@ -10,6 +10,9 @@ export interface RateLimitRule {
 
 export const RATE_LIMITS = {
   auth: { limit: 10, windowSec: 300 },
+  // Failed sign-ins that check whether an email has an account (and how it signs in). Keyed by IP,
+  // so nobody can test a list of emails; past the limit sign-in still works, with the generic error.
+  accountLookup: { limit: 20, windowSec: 3600 },
   tailor: { limit: 12, windowSec: 3600 },
   upload: { limit: 20, windowSec: 3600 },
   mutation: { limit: 120, windowSec: 60 },

@@ -15,6 +15,8 @@ export interface User {
   avatarUrl: string | null;
   onboardedAt: string | null;
   createdAt: string;
+  /** How the account was created: "password", "google", or another provider's name. Null for accounts made before this was recorded. */
+  signupMethod?: string | null;
 }
 
 export interface Place {

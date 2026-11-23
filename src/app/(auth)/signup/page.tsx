@@ -17,5 +17,8 @@ export default function SignUpPage({ searchParams }: PageProps<"/signup">) {
 async function SignUp({ searchParams }: { searchParams: PageProps<"/signup">["searchParams"] }) {
   const sp = await searchParams;
   const plan = typeof sp.plan === "string" && ["entry", "professional", "executive"].includes(sp.plan) ? sp.plan : undefined;
-  return <SignUpForm demo={isDemoMode()} google={googleSignInAvailable()} plan={plan} />;
+  // Sent here from sign-in when no account uses the email they typed: keep it filled in.
+  const raw = typeof sp.email === "string" ? sp.email.trim().toLowerCase() : "";
+  const email = raw.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(raw) ? raw : undefined;
+  return <SignUpForm demo={isDemoMode()} google={googleSignInAvailable()} plan={plan} email={email} fromLogin={sp.from === "login"} />;
 }

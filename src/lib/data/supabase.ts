@@ -56,7 +56,7 @@ function check(res: { data: any; error: { message: string; code?: string } | nul
 
 /* ---------- mappers ---------- */
 
-const toUser = (r: Row): User => ({ id: r.id, email: r.email, fullName: r.full_name, role: r.role, avatarUrl: r.avatar_url, onboardedAt: r.onboarded_at, createdAt: r.created_at });
+const toUser = (r: Row): User => ({ id: r.id, email: r.email, fullName: r.full_name, role: r.role, avatarUrl: r.avatar_url, onboardedAt: r.onboarded_at, createdAt: r.created_at, signupMethod: r.signup_method ?? null });
 
 const toProfile = (r: Row): CandidateProfile => ({
   userId: r.user_id,
@@ -485,7 +485,7 @@ export class SupabaseRepository implements Repository {
   }
   async createUser(user: Parameters<Repository["createUser"]>[0]) {
     const r = check(
-      await this.db.from("users").insert({ id: user.id, email: user.email, full_name: user.fullName, role: user.role, avatar_url: user.avatarUrl, onboarded_at: user.onboardedAt }).select().single(),
+      await this.db.from("users").insert({ id: user.id, email: user.email, full_name: user.fullName, role: user.role, avatar_url: user.avatarUrl, onboarded_at: user.onboardedAt, ...(user.signupMethod ? { signup_method: user.signupMethod } : {}) }).select().single(),
       "createUser",
     );
     return toUser(r);
