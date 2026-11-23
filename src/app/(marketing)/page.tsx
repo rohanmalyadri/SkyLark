@@ -326,13 +326,13 @@ async function Numbers() {
   );
 }
 
-const RING_SIZE = 12;
+const RING_SIZE = 20;
 const NOT_A_CITY = /^(jobs?|remote|hybrid|on-?site|various|multiple|anywhere|worldwide|n\/a|tbd|flexible)$/i;
 
 async function International() {
   const stats = await publicCatalogStats();
   const names = stats.countries.map(countryName);
-  // The arc always holds 12 tiles, spaced with gaps as on the reference: the 12 biggest markets,
+  // The arc always holds 20 tiles, spaced with gaps as on the reference: the 20 biggest markets,
   // repeated if the catalog has fewer. Only markets with a stippled map tile
   // (public/art/countries/<iso>.jpg) go on it, so none renders broken.
   const codes = stats.countries.filter(hasCountryArt).slice(0, RING_SIZE);
