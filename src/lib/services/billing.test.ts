@@ -16,9 +16,10 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-async function candidate() {
+async function candidate(verified = true) {
   const { systemRepo } = await import("@/lib/data");
-  return systemRepo().createUser({ email: `b${Math.random()}@example.org`, fullName: "Billing Candidate", role: "candidate", avatarUrl: null, onboardedAt: new Date().toISOString() });
+  const now = new Date().toISOString();
+  return systemRepo().createUser({ email: `b${Math.random()}@example.org`, fullName: "Billing Candidate", role: "candidate", avatarUrl: null, onboardedAt: now, emailVerifiedAt: verified ? now : null });
 }
 
 const now = () => Math.floor(Date.now() / 1000);
@@ -84,6 +85,12 @@ describe("checkout without Razorpay (demo mode)", () => {
     const { plan, subscription } = await currentPlan(user.id);
     expect(plan.id).toBe("professional");
     expect(subscription?.cancelAtPeriodEnd).toBe(false);
+  });
+
+  it("refuses to sell a plan until the buyer's email is verified", async () => {
+    const user = await candidate(false);
+    const { startCheckout } = await import("./billing");
+    await expect(startCheckout(user, "professional", "month")).rejects.toMatchObject({ code: "forbidden", details: { reason: "email_unverified" } });
   });
 
   it("drops back to Entry once a subscription lapses past the grace period", async () => {

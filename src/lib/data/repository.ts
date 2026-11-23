@@ -110,7 +110,7 @@ export interface Repository {
   getUserByEmail(email: string): Promise<User | null>;
   listUsers(opts?: { role?: Role; search?: string; limit?: number }): Promise<User[]>;
   createUser(user: NewRow<User>): Promise<User>;
-  updateUser(id: string, patch: Partial<Pick<User, "fullName" | "avatarUrl" | "onboardedAt" | "role">>): Promise<User>;
+  updateUser(id: string, patch: Partial<Pick<User, "fullName" | "avatarUrl" | "onboardedAt" | "role" | "emailVerifiedAt">>): Promise<User>;
   /** Erases an account and everything owned by it; audit entries are kept but stripped of the IP address. */
   deleteUserData(id: string): Promise<void>;
 
