@@ -25,6 +25,8 @@ export const RATE_LIMITS = {
   // The marketing contact form, keyed by IP: generous enough for a shared office,
   // tight enough that nobody fills the lead table from a script.
   lead: { limit: 5, windowSec: 3600 },
+  // Email verification codes sent to one account (each send also waits a minute after the last).
+  emailCode: { limit: 6, windowSec: 3600 },
 } satisfies Record<string, RateLimitRule>;
 
 type Bucket = { count: number; resetAt: number };

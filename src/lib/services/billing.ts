@@ -8,6 +8,7 @@ import { logger } from "@/lib/infra/logger";
 import { audit } from "./audit";
 import { quoteDiscount, recordConversion } from "./partners";
 import { notify } from "./notifications";
+import { assertCanPurchase } from "./email-verification";
 import {
   cancelRazorpaySubscription,
   createSubscription,
@@ -111,6 +112,7 @@ export type CheckoutStart =
 
 /** Step 1: price the plan on the server and open a subscription for it. */
 export async function startCheckout(user: User, planId: PlanId, interval: "month" | "year", promoCode?: string): Promise<CheckoutStart> {
+  assertCanPurchase(user);
   const { plan, gross, amount, quote } = await priceFor(planId, interval, promoCode);
   if (gross <= 0) throw new AppError("validation", "This plan is free, so there's nothing to pay.");
   const current = await systemRepo().getSubscription(user.id);

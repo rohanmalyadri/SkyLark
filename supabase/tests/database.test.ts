@@ -45,6 +45,31 @@ beforeAll(async () => {
   `);
 }, 60_000);
 
+describe("email verification", () => {
+  it("marks Google accounts verified, keeps codes service-only, and stops users verifying themselves", async () => {
+    const G = "00000000-0000-4000-8000-0000000000e1";
+    const L = "00000000-0000-4000-8000-0000000000e2";
+    await db.exec(`
+      insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data) values
+        ('${G}', 'g.verify@example.com', '{}', '{"provider":"google"}'),
+        ('${L}', 'later.google@example.com', '{}', '{"provider":"email"}');
+    `);
+    const verified = async (id: string) => (await db.query<{ v: boolean }>(`select email_verified_at is not null as v from public.users where id = $1`, [id])).rows[0]!.v;
+    expect(await verified(G)).toBe(true);
+    expect(await verified(L)).toBe(false);
+    // A password account that later links Google becomes verified.
+    await db.exec(`insert into auth.identities (user_id, provider) values ('${L}', 'google')`);
+    expect(await verified(L)).toBe(true);
+
+    await asUser(A, async () => {
+      await expect(db.query(`update public.users set email_verified_at = now() where id = '${A}'`)).rejects.toThrow(/permission denied/i);
+      await expect(db.query(`select * from public.email_verification_codes`)).rejects.toThrow(/permission denied/i);
+    });
+    expect(await verified(A)).toBe(false);
+    await db.exec(`delete from auth.users where id in ('${G}', '${L}')`);
+  });
+});
+
 describe("schema & auth trigger", () => {
   it("provisions users and settings from auth.users", async () => {
     const users = await db.query<{ full_name: string }>(`select full_name from public.users order by email`);

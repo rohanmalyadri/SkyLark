@@ -44,6 +44,16 @@ const ServerEnvSchema = z.object({
   RAZORPAY_KEY_SECRET: z.string().trim().optional(),
   RAZORPAY_WEBHOOK_SECRET: z.string().trim().optional(),
 
+  /* Outgoing email (verification codes). Gmail: SMTP_USER is the Gmail address, SMTP_PASSWORD a
+     16-character app password. Without both, codes are only written to the server log in demo mode. */
+  SMTP_HOST: z.string().trim().default("smtp.gmail.com"),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(465),
+  SMTP_USER: z.string().trim().optional(),
+  // Gmail shows app passwords in groups of four; the spaces aren't part of it.
+  SMTP_PASSWORD: z.string().transform((v) => v.replace(/\s+/g, "")).optional(),
+  /** Display name and address on outgoing mail. Defaults to "Skylark <SMTP_USER>". Gmail requires the address to be SMTP_USER or one of its aliases. */
+  EMAIL_FROM: z.string().trim().optional(),
+
   /* Reference data & enrichment */
   STACKEXCHANGE_KEY: optionalKey,
   LIGHTCAST_CLIENT_ID: optionalKey,
@@ -107,3 +117,6 @@ export const googleSignInAvailable = () => (serverEnv().dataMode === "supabase" 
 
 /** Razorpay checkout is live (test or live keys) once both halves of the key pair are set. */
 export const razorpayEnabled = () => /^rzp_(test|live)_[A-Za-z0-9]+$/.test(serverEnv().RAZORPAY_KEY_ID ?? "") && (serverEnv().RAZORPAY_KEY_SECRET ?? "").length >= 10;
+
+/** Whether the app can send email itself (SMTP user and password set). */
+export const mailerConfigured = () => !!serverEnv().SMTP_USER && (serverEnv().SMTP_PASSWORD ?? "").length >= 8;
