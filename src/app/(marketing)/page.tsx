@@ -359,7 +359,7 @@ async function International() {
     <section className="component component--map" aria-labelledby="intl-title">
       <div className="wrap --full">
         <div className="waves" aria-hidden>
-          <Image src="/art/waves.png" alt="" fill sizes="100vw" style={{ objectFit: "cover" }} />
+          <Image src="/art/waves.png" alt="" fill unoptimized style={{ objectFit: "cover" }} />
         </div>
         <div className="text-block-center">
           <p className="label">International by design</p>
@@ -367,6 +367,8 @@ async function International() {
             Your next role may be <strong>in another country</strong>. Start where you can work
           </h2>
         </div>
+        {/* The ring, map and waves skip the image optimizer and load straight from /art: on the
+            Hobby plan an exhausted optimizer quota left them as broken-image boxes. */}
         {ring.length > 0 && (
           <div className="circle-container" aria-hidden>
             <div className="circle">
@@ -374,7 +376,7 @@ async function International() {
                 <div key={i} className="circle-item" style={{ transform: `rotate(${i * step - 96}deg) translate(var(--r)) rotate(96deg)` }}>
                   <div className="group">
                     <div className="image">
-                      <Image src={`/art/countries/${code.toLowerCase()}.jpg`} alt="" fill sizes="(min-width: 1101px) 10vw, 25vw" />
+                      <Image src={`/art/countries/${code.toLowerCase()}.jpg`} alt="" fill unoptimized />
                     </div>
                     <div className="name">
                       <p className="text --xlarge --bold">{countryName(code)}</p>
@@ -390,7 +392,7 @@ async function International() {
           </div>
         )}
         <div className="map">
-          <Image src="/art/world-dots.png" alt="" fill sizes="100vw" />
+          <Image src="/art/world-dots.png" alt="" fill unoptimized />
           <MapLocations locations={markers} />
         </div>
         <p className="sr-only">Roles in the current catalog are located in {names.join(", ")}.</p>
