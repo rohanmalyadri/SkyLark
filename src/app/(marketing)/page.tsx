@@ -326,15 +326,17 @@ async function Numbers() {
   );
 }
 
+const RING_SIZE = 12;
 const NOT_A_CITY = /^(jobs?|remote|hybrid|on-?site|various|multiple|anywhere|worldwide|n\/a|tbd|flexible)$/i;
 
 async function International() {
   const stats = await publicCatalogStats();
   const names = stats.countries.map(countryName);
-  // The arc needs a full ring; repeat the catalog's markets until it has one. Only markets
-  // with a stippled map tile (public/art/countries/<iso>.jpg) go on it, so none renders broken.
-  const codes = stats.countries.filter(hasCountryArt);
-  const ring = codes.length ? Array.from({ length: Math.max(12, codes.length) }, (_, i) => codes[i % codes.length]!) : [];
+  // The arc always holds 12 tiles, spaced with gaps as on the reference: the 12 biggest markets,
+  // repeated if the catalog has fewer. Only markets with a stippled map tile
+  // (public/art/countries/<iso>.jpg) go on it, so none renders broken.
+  const codes = stats.countries.filter(hasCountryArt).slice(0, RING_SIZE);
+  const ring = codes.length ? Array.from({ length: RING_SIZE }, (_, i) => codes[i % codes.length]!) : [];
   const step = 360 / Math.max(ring.length, 1);
   // Older listings carry parse leftovers as cities ("UK" became a town in Russia, "job" a French
   // village): skip names that are countries or filler words, and merge spellings of one place
