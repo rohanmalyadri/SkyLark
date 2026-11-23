@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { ClientFormDialog } from "@/components/admin/clients/client-form";
 import { ClientInbox } from "@/components/admin/clients/client-inbox";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/panel";
@@ -37,7 +36,6 @@ async function Inbox() {
             ) : (
               <Badge tone="success">All caught up</Badge>
             )}
-            <ClientFormDialog />
           </>
         }
       />

@@ -54,7 +54,6 @@ async function Dashboard() {
                 {s.unread > 0 && <span className="rounded-full bg-accent px-1.5 text-[11px] font-semibold text-white">{s.unread}</span>}
               </Link>
             </Button>
-            <ClientFormDialog />
           </>
         }
       />

@@ -47,19 +47,17 @@ export function ClientFormDialog({ client, trigger }: { client?: Client; trigger
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger ?? (
-          <Button size="sm" variant={client ? "secondary" : "primary"}>
-            {client ? (
-              <>
-                <Pencil /> Edit details
-              </>
-            ) : (
-              <>
-                <Plus /> New client
-              </>
-            )}
-          </Button>
-        )}
+        {trigger ??
+          (client ? (
+            <Button size="sm" variant="secondary">
+              <Pencil /> Edit details
+            </Button>
+          ) : (
+            // Deliberately quiet: adding clients is occasional, so it shouldn't compete with the page.
+            <button type="button" className="inline-flex items-center gap-1 text-xs text-subtle transition-colors hover:text-fg hover:underline hover:underline-offset-4">
+              <Plus className="size-3" /> Add client
+            </button>
+          ))}
       </DialogTrigger>
       <DialogContent
         title={client ? `Edit ${client.name}` : "Add a client"}
