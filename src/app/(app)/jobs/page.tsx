@@ -17,6 +17,9 @@ import Link from "next/link";
 
 export const metadata: Metadata = { title: "Job intelligence" };
 
+const PAGE_SIZE = 50;
+const MAX_SHOWN = 2000;
+
 export default function JobsPage({ searchParams }: PageProps<"/jobs">) {
   return (
     <>
@@ -30,7 +33,16 @@ export default function JobsPage({ searchParams }: PageProps<"/jobs">) {
 
 async function Jobs({ searchParams }: { searchParams: PageProps<"/jobs">["searchParams"] }) {
   const user = await requireCandidate();
-  const filters = parseJobFilters(await searchParams);
+  const sp = await searchParams;
+  const filters = parseJobFilters(sp);
+  // Rows render a page at a time; "Show more" raises the count. Changing a filter drops it.
+  const shown = Math.min(MAX_SHOWN, Math.max(PAGE_SIZE, Math.ceil((Number(Array.isArray(sp.show) ? sp.show[0] : sp.show) || PAGE_SIZE) / PAGE_SIZE) * PAGE_SIZE));
+  const moreHref = (() => {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(sp)) if (k !== "show" && typeof v === "string" && v) q.set(k, v);
+    q.set("show", String(shown + PAGE_SIZE));
+    return `/jobs?${q}`;
+  })();
   await ensureFreshCatalog();
   const [feed, catalog] = await Promise.all([jobFeed(user, filters), catalogStatus()]);
 
@@ -41,7 +53,7 @@ async function Jobs({ searchParams }: { searchParams: PageProps<"/jobs">["search
         <Panel>
           <div className="flex items-center justify-between border-b border-line px-5 py-3 text-[13px] text-muted">
             <span>
-              <span className="font-medium tabular text-fg">{feed.items.length}</span> of {feed.total} roles
+              <span className="font-medium tabular text-fg">{Math.min(shown, feed.items.length)}</span> of {feed.items.length === feed.total ? feed.total : `${feed.items.length} filtered`} roles
             </span>
             <span className="hidden text-xs text-subtle sm:inline">Sorted by {filters.sort === "fit" ? "best fit" : filters.sort === "recent" ? "most recent" : "highest salary"}</span>
           </div>
@@ -59,11 +71,22 @@ async function Jobs({ searchParams }: { searchParams: PageProps<"/jobs">["search
               <EmptyState icon={<SearchX />} title="No roles match these filters" description="Try widening the country, eligibility or minimum fit filters." />
             )
           ) : (
-            <ul className="divide-y divide-line">
-              {feed.items.map((item) => (
-                <JobRow key={item.id} item={item} />
-              ))}
-            </ul>
+            <>
+              <ul className="divide-y divide-line">
+                {feed.items.slice(0, shown).map((item) => (
+                  <JobRow key={item.id} item={item} />
+                ))}
+              </ul>
+              {feed.items.length > shown && (
+                <div className="flex justify-center border-t border-line px-5 py-4">
+                  <Button asChild variant="secondary" size="sm">
+                    <Link href={moreHref} scroll={false}>
+                      Show {Math.min(PAGE_SIZE, feed.items.length - shown)} more
+                    </Link>
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </Panel>
         <Insights items={feed.items} />

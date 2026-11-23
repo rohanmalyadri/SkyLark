@@ -33,6 +33,7 @@ async function Content({ searchParams }: { searchParams: PageProps<"/obscuron-ne
   const sp = await searchParams;
   const tab = sp.tab === "applications" ? "applications" : "jobs";
   const q = typeof sp.q === "string" ? sp.q : undefined;
+  const shown = Math.min(1000, Math.max(JOBS_PAGE, Math.ceil((Number(sp.show) || JOBS_PAGE) / JOBS_PAGE) * JOBS_PAGE));
 
   return (
     <>
@@ -46,18 +47,22 @@ async function Content({ searchParams }: { searchParams: PageProps<"/obscuron-ne
         </nav>
         {tab === "jobs" && <SearchBox placeholder="Search job titles" />}
       </div>
-      {tab === "jobs" ? <Jobs q={q} /> : <Applications />}
+      {tab === "jobs" ? <Jobs q={q} shown={shown} /> : <Applications />}
     </>
   );
 }
 
-async function Jobs({ q }: { q?: string }) {
-  const jobs = await jobsCatalog(q);
+const JOBS_PAGE = 50;
+
+async function Jobs({ q, shown }: { q?: string; shown: number }) {
+  const { jobs, more } = await jobsCatalog(q, shown);
+  const moreHref = `/obscuron-nexus-92vX7q/jobs?${new URLSearchParams({ ...(q ? { q } : {}), show: String(shown + JOBS_PAGE) })}`;
   return (
     <Panel>
       {jobs.length === 0 ? (
         <EmptyState icon={<Briefcase />} title="No jobs found" description="Run an ingestion from the Pipeline page to pull in fresh postings." />
       ) : (
+        <>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px] text-left text-[13px]">
             <caption className="sr-only">Jobs</caption>
@@ -100,6 +105,14 @@ async function Jobs({ q }: { q?: string }) {
             </tbody>
           </table>
         </div>
+          {more && (
+            <div className="flex justify-center border-t border-line px-5 py-4">
+              <Link href={moreHref} scroll={false} className="rounded-md border border-line-strong px-3 py-1.5 text-[13px] text-fg hover:bg-surface">
+                Show {JOBS_PAGE} more
+              </Link>
+            </div>
+          )}
+        </>
       )}
     </Panel>
   );

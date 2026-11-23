@@ -22,18 +22,32 @@ function scoreAll(profile: CandidateProfile, jobs: JobWithCompany[], ctx: MatchC
     .filter((m) => m.score >= STORE_THRESHOLD);
 }
 
+/** Jobs are scored a page at a time so a large catalog never has to sit in memory at once. */
+const JOB_PAGE = 1000;
+/** Profiles are read a page at a time when new jobs are scored against every candidate. */
+const PROFILE_PAGE = 500;
+
 /** Re-score one candidate against every active job (after onboarding or a profile edit). */
 export async function matchCandidate(userId: string) {
   const repo = systemRepo();
   const [profile, verification] = await Promise.all([repo.getProfile(userId), repo.getVerification(userId)]);
   if (!profile || !matchable(verification)) return { scored: 0, highFit: 0 };
 
-  const [jobs, existing] = await Promise.all([repo.listJobs({ status: "active", limit: 5000 }), repo.listMatches(userId)]);
+  const existing = await repo.listMatches(userId, { limit: 5000 });
   const known = new Set(existing.map((m) => m.jobId));
-  const results = scoreAll(profile, jobs, contextFor(verification));
-  await repo.upsertMatches(results.map((r) => ({ userId, jobId: r.job.id, score: r.score, breakdown: r.breakdown, status: "new" })));
+  const ctx = contextFor(verification);
+  const fresh: ReturnType<typeof scoreAll> = [];
+  let scored = 0;
+  // Every active job, not just the newest few thousand: the catalog holds well over 10k listings.
+  for (let offset = 0; ; offset += JOB_PAGE) {
+    const jobs = await repo.listJobs({ status: "active", limit: JOB_PAGE, offset });
+    const results = scoreAll(profile, jobs, ctx);
+    if (results.length) await repo.upsertMatches(results.map((r) => ({ userId, jobId: r.job.id, score: r.score, breakdown: r.breakdown, status: "new" })));
+    scored += results.length;
+    fresh.push(...results.filter((r) => !known.has(r.job.id) && r.score >= HIGH_FIT));
+    if (jobs.length < JOB_PAGE) break;
+  }
 
-  const fresh = results.filter((r) => !known.has(r.job.id) && r.score >= HIGH_FIT);
   if (fresh.length) {
     await notify(userId, {
       type: "match",
@@ -42,8 +56,8 @@ export async function matchCandidate(userId: string) {
       href: "/jobs",
     });
   }
-  logger.info("matching.candidate.done", { userId, scored: results.length, highFit: fresh.length });
-  return { scored: results.length, highFit: fresh.length };
+  logger.info("matching.candidate.done", { userId, scored, highFit: fresh.length });
+  return { scored, highFit: fresh.length };
 }
 
 /** Score newly ingested jobs against every candidate profile. */
@@ -51,14 +65,18 @@ export async function matchJobs(jobIds: string[]) {
   const repo = systemRepo();
   const jobs = (await Promise.all(jobIds.map((id) => repo.getJob(id)))).filter((j): j is JobWithCompany => !!j && j.status === "active");
   if (jobs.length === 0) return { scored: 0 };
-  const [profiles, verifications] = await Promise.all([repo.listProfiles(), repo.listVerifications()]);
-  const byUser = new Map(verifications.map((v) => [v.userId, v]));
   let scored = 0;
-  for (const p of profiles) {
-    const v = byUser.get(p.userId);
-    if (!matchable(v)) continue;
-    const rows = scoreAll(p, jobs, contextFor(v)).map((r) => ({ userId: p.userId, jobId: r.job.id, score: r.score, breakdown: r.breakdown, status: "new" as const }));
-    if (rows.length) scored += await repo.upsertMatches(rows);
+  // Every candidate, a page at a time.
+  for (let offset = 0; ; offset += PROFILE_PAGE) {
+    const profiles = await repo.listProfiles(PROFILE_PAGE, offset);
+    const byUser = profiles.length ? new Map((await repo.listVerifications({ userIds: profiles.map((p) => p.userId), limit: PROFILE_PAGE })).map((v) => [v.userId, v])) : new Map();
+    for (const p of profiles) {
+      const v = byUser.get(p.userId);
+      if (!matchable(v)) continue;
+      const rows = scoreAll(p, jobs, contextFor(v)).map((r) => ({ userId: p.userId, jobId: r.job.id, score: r.score, breakdown: r.breakdown, status: "new" as const }));
+      if (rows.length) scored += await repo.upsertMatches(rows);
+    }
+    if (profiles.length < PROFILE_PAGE) break;
   }
   return { scored };
 }
