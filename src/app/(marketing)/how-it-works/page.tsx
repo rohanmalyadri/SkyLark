@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { LegalPage } from "@/components/marketing/legal-page";
 import { DEFAULT_REVIEW_CHECKLIST, REVIEW_SLA_HOURS } from "@/lib/domain/constants";
 import { FACTOR_WEIGHTS, MATCH_MODEL_VERSION } from "@/lib/services/matching/engine";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/how-it-works",
   title: "How it works",
   description: "The four stages of Skylark: your profile, ranked matches, tailored applications, and specialist-reviewed submissions you can track.",
-};
+});
 
 const FACTOR_LABEL: Record<keyof typeof FACTOR_WEIGHTS, string> = {
   skills: "Skills",

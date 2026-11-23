@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
+import { NO_INDEX } from "@/lib/seo";
 import Image from "next/image";
 import Link from "next/link";
 import { Logo } from "@/components/ui/marks";
+
+/** Sign-in and app pages stay out of search results. */
+export const metadata: Metadata = { robots: NO_INDEX };
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (

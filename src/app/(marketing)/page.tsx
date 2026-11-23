@@ -1,8 +1,10 @@
 import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
+import { pageMetadata, SITE_DESCRIPTION } from "@/lib/seo";
 import Image from "next/image";
 import Link from "next/link";
 import { FaqList } from "@/components/marketing/faq";
+import { JsonLd, organizationJsonLd } from "@/components/marketing/json-ld";
 import { HeroScene } from "@/components/marketing/hero-scene";
 import { MapLocations, type MapLocation } from "@/components/marketing/map-locations";
 import { Draggable, HomeMotion } from "@/components/marketing/motion";
@@ -20,9 +22,7 @@ import { FACTOR_WEIGHTS, MATCH_MODEL_VERSION } from "@/lib/services/matching/eng
 import { exchangeRates } from "@/lib/services/fx";
 import { publicCatalogStats, publicDomains, publicPlans } from "@/lib/services/public";
 
-export const metadata: Metadata = {
-  title: { absolute: "Skylark — Your next move, already in motion" },
-};
+export const metadata: Metadata = pageMetadata({ path: "/", title: "Skylark — Your next move, already in motion", description: SITE_DESCRIPTION, absoluteTitle: true });
 
 function TextLink({ href, children, small }: { href: string; children: React.ReactNode; small?: boolean }) {
   return (
@@ -100,6 +100,7 @@ const STEPS = [
 export default function LandingPage() {
   return (
     <>
+      <JsonLd data={organizationJsonLd} />
       {/* Sea of clouds behind the hero and introduction (WebGL, fixed to the viewport) */}
       <div className="canvas" aria-hidden>
         <HeroScene />

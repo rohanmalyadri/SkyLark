@@ -1,4 +1,5 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { JsonLd } from "@/components/marketing/json-ld";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -31,6 +32,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     authors: [{ name: post.author }],
     openGraph: {
       type: "article",
+      siteName: "Skylark",
+      url: `/blog/${post.slug}`,
       title: post.title,
       description: post.description,
       publishedTime: post.publishedAt,
@@ -38,6 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       authors: [post.author],
     },
     alternates: { canonical: `/blog/${post.slug}` },
+    twitter: { card: "summary_large_image", title: post.title, description: post.description },
   };
 }
 
@@ -61,7 +65,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <JsonLd data={jsonLd} />
 
       <article className="component component--post">
         <header className="post-head">

@@ -1,13 +1,19 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import { Suspense } from "react";
 import { FaqList } from "@/components/marketing/faq";
+import { JsonLd, plansJsonLd } from "@/components/marketing/json-ld";
 import { PageMotion } from "@/components/marketing/motion";
 import { PricingTable } from "@/components/marketing/pricing-table";
 import type { Plan } from "@/lib/domain/types";
 import { exchangeRates } from "@/lib/services/fx";
 import { publicPlans } from "@/lib/services/public";
 
-export const metadata: Metadata = { title: "Pricing", description: "Skylark plans: self-serve matching and tailoring, specialist-submitted applications, or a dedicated application specialist." };
+export const metadata: Metadata = pageMetadata({
+  path: "/pricing",
+  title: "Pricing",
+  description: "Skylark plans: self-serve matching and tailoring, specialist-submitted applications, or a dedicated application specialist.",
+});
 
 const ROWS: { label: string; get: (p: Plan) => string }[] = [
   { label: "Ranked matches", get: (p) => (p.limits.matchesPerWeek === null ? "Unlimited" : `${p.limits.matchesPerWeek} / week`) },
@@ -31,7 +37,10 @@ export default function PricingPage({ searchParams }: { searchParams: Promise<{ 
           </h1>
         </div>
       </section>
-      <section className="component component--pricing" aria-label="Plans">
+      <section className="component component--pricing" aria-labelledby="plans-title">
+        <h2 id="plans-title" className="sr-only">
+          Plans
+        </h2>
         {/* A partner's ?promo= code makes this subtree dynamic; the rest of the page still prerenders. */}
         <Suspense fallback={<PlansAndComparison searchParams={Promise.resolve({})} />}>
           <PlansAndComparison searchParams={searchParams} />
@@ -46,9 +55,16 @@ export default function PricingPage({ searchParams }: { searchParams: Promise<{ 
         </div>
         <FaqList />
       </section>
+      <Suspense fallback={null}>
+        <PlansJsonLd />
+      </Suspense>
       <PageMotion />
     </>
   );
+}
+
+async function PlansJsonLd() {
+  return <JsonLd data={plansJsonLd(await publicPlans())} />;
 }
 
 async function PlansAndComparison({ searchParams }: { searchParams: Promise<{ promo?: string }> }) {

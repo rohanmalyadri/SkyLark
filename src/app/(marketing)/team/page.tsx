@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Image from "next/image";
 import Link from "next/link";
 import { PageMotion } from "@/components/marketing/motion";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/team",
   title: "Team",
   description: "Synapse X, the team behind Skylark.",
-};
+});
 
 const MEMBERS = [
   {

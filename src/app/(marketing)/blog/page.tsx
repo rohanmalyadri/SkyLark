@@ -1,14 +1,16 @@
 import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 import { PageMotion } from "@/components/marketing/motion";
 import { allPosts, readingMinutes } from "@/lib/content/posts";
 import { formatDate } from "@/lib/utils";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
+  path: "/blog",
   title: "Writing",
   description: "Practical notes on job hunting across borders: sponsorship research, application forms, realistic volume, and how our match scores work.",
-};
+});
 
 export default function BlogIndexPage() {
   const posts = allPosts();
