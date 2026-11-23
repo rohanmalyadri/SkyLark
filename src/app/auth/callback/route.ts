@@ -1,13 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { logger } from "@/lib/infra/logger";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { exchangeOAuthCode } from "@/lib/services/auth";
 
 /** OAuth / email-confirmation landing: trade the one-time code for a session cookie. */
 export async function GET(request: NextRequest) {
   const url = request.nextUrl;
   const code = url.searchParams.get("code");
-  const nextParam = url.searchParams.get("next") ?? "/dashboard";
-  const next = nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/dashboard";
+  const next = safeRedirectPath(url.searchParams.get("next"), "/dashboard");
 
   if (!code) return NextResponse.redirect(new URL("/login?error=missing_code", url.origin));
   try {

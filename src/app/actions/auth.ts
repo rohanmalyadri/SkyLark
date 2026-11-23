@@ -3,15 +3,13 @@
 import { redirect } from "next/navigation";
 import { requestIp } from "@/lib/auth/dal";
 import { AppError, toActionError, type ActionResult } from "@/lib/infra/errors";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { demoSignIn, googleSignInUrl, signIn, signOut, signUp, type SignInFailure } from "@/lib/services/auth";
 
 export type AuthState = (ActionResult<{ needsConfirmation?: boolean }> & { values?: { email?: string; fullName?: string }; reason?: SignInFailure }) | null;
 
 /** Only allow same-site relative redirects after sign-in. */
-function safeNext(next: FormDataEntryValue | null, fallback: string) {
-  const v = typeof next === "string" ? next : "";
-  return v.startsWith("/") && !v.startsWith("//") && !v.startsWith("/\\") ? v : fallback;
-}
+const safeNext = (next: FormDataEntryValue | null, fallback: string) => safeRedirectPath(next, fallback);
 
 export async function signInAction(_: AuthState, form: FormData): Promise<AuthState> {
   const email = String(form.get("email") ?? "");

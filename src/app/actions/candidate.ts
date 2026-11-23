@@ -13,6 +13,7 @@ import { deleteMyAccount } from "@/lib/services/privacy";
 import { redirect } from "next/navigation";
 import * as tailoring from "@/lib/services/tailoring";
 import { audit } from "@/lib/services/audit";
+import { rateLimit } from "@/lib/infra/rate-limit";
 import { AppError } from "@/lib/infra/errors";
 import {
   BackgroundAnswersSchema,
@@ -170,7 +171,8 @@ export async function resumeDeliveryAction() {
 /* ---------- promo codes ---------- */
 
 export async function applyPromoCodeAction(code: string, planId: string, interval: string) {
-  return run("promo.apply", async () => {
+  return run("promo.apply", async (u) => {
+    await rateLimit("promo", u.id);
     const plans = await listPlans();
     const plan = plans.find((p) => p.id === z.enum(["entry", "professional", "executive"]).parse(planId));
     if (!plan) throw new AppError("not_found", "That plan isn't available.");

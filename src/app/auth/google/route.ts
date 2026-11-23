@@ -2,8 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { GOOGLE_STATE_COOKIE, GOOGLE_STATE_TTL_SECONDS, startGoogleSignIn } from "@/lib/auth/google";
 import { nativeGoogleEnabled } from "@/lib/env";
 import { logger } from "@/lib/infra/logger";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 
-const safeNext = (v: string | null) => (v && v.startsWith("/") && !v.startsWith("//") && !v.startsWith("/\\") ? v : "/dashboard");
+const safeNext = (v: string | null) => safeRedirectPath(v, "/dashboard");
 
 /** Starts Google sign-in: sets the signed state cookie and sends the browser to Google's consent screen. */
 export async function GET(request: NextRequest) {

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requestIp } from "@/lib/auth/dal";
 import { LeadSchema, PromoCodeInputSchema } from "@/lib/domain/schemas";
 import { toActionError, type ActionResult } from "@/lib/infra/errors";
+import { rateLimit } from "@/lib/infra/rate-limit";
 import { captureLead } from "@/lib/services/leads";
 import { tryQuoteDiscount } from "@/lib/services/partners";
 import { publicPlans } from "@/lib/services/public";
@@ -39,6 +40,7 @@ export async function submitLeadAction(input: unknown) {
  */
 export async function quotePromoCodeAction(code: string, planId: string, interval: string) {
   return runPublic("promo.quote", async () => {
+    await rateLimit("promo", (await requestIp()) ?? "anonymous");
     const parsedCode = PromoCodeInputSchema.parse(code);
     const plan = z.enum(["entry", "professional", "executive"]).parse(planId);
     const every = z.enum(["month", "year"]).parse(interval);

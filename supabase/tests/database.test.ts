@@ -322,21 +322,34 @@ describe("the managed service", () => {
     await db.exec(`delete from public.clients where name = 'Linked Client'`);
   });
 
-  it("publishes live promo codes but lets nobody redeem one from the browser", async () => {
+  it("keeps promo codes server-only: no listing or redeeming from the browser", async () => {
     await db.exec(`insert into public.promo_codes (code, kind, value, description) values
       ('LIVE20', 'percent', 20, 'Live'),
       ('DEAD20', 'percent', 20, 'Expired');
       update public.promo_codes set expires_at = now() - interval '1 day' where code = 'DEAD20';`);
 
     await asUser(A, async () => {
-      // The pricing page quotes a code before sign-in, so live codes are public...
+      // Codes are quoted by the server; a candidate's session can't list them...
       const rows = await db.query<{ code: string }>(`select code from public.promo_codes`);
-      expect(rows.rows.map((r) => r.code)).toEqual(["LIVE20"]);
-      // ...but counting a redemption is a server-only act.
+      expect(rows.rows).toEqual([]);
+      // ...and counting a redemption is a server-only act.
       await expect(db.query(`update public.promo_codes set redemptions = redemptions + 1 where code = 'LIVE20'`)).rejects.toThrow(/permission denied/i);
       await expect(db.query(`select public.redeem_promo_code('LIVE20')`)).rejects.toThrow(/permission denied/i);
     });
+
+    await db.exec(`set role anon`);
+    try {
+      await expect(db.query(`select code from public.promo_codes`)).rejects.toThrow(/permission denied/i);
+    } finally {
+      await db.exec(`reset role`);
+    }
+
+    await asUser(STAFF, async () => {
+      const rows = await db.query<{ code: string }>(`select code from public.promo_codes order by code`);
+      expect(rows.rows.map((r) => r.code)).toEqual(["DEAD20", "LIVE20"]);
+    });
   });
+
 
   it("counts a redemption exactly up to the cap", async () => {
     await db.exec(`insert into public.promo_codes (code, kind, value, max_redemptions) values ('CAPPED', 'amount', 25, 2)`);

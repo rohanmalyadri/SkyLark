@@ -25,6 +25,9 @@ export const RATE_LIMITS = {
   // The marketing contact form, keyed by IP: generous enough for a shared office,
   // tight enough that nobody fills the lead table from a script.
   lead: { limit: 5, windowSec: 3600 },
+  // Promo-code checks, keyed by IP (pricing page) or user (settings). Someone holding a real code
+  // needs a handful of tries; a script guessing partner codes needs thousands.
+  promo: { limit: 20, windowSec: 3600 },
 } satisfies Record<string, RateLimitRule>;
 
 type Bucket = { count: number; resetAt: number };

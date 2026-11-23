@@ -3,6 +3,7 @@ import { completeGoogleExchange, GOOGLE_STATE_COOKIE, readGoogleState } from "@/
 import { nativeGoogleEnabled } from "@/lib/env";
 import { AppError } from "@/lib/infra/errors";
 import { logger } from "@/lib/infra/logger";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { completeGoogleSignIn } from "@/lib/services/auth";
 
 /** Google redirects here with ?code&state. Verify, exchange, sign in, then route to onboarding or the app. */
@@ -26,7 +27,8 @@ export async function GET(request: NextRequest) {
     const profile = await completeGoogleExchange(code, state);
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const user = await completeGoogleSignIn(profile, ip);
-    const destination = user.role !== "candidate" ? (state.next.startsWith("/obscuron-nexus-92vX7q") ? state.next : "/obscuron-nexus-92vX7q") : user.onboardedAt ? state.next : "/onboarding";
+    const next = safeRedirectPath(state.next, "/dashboard");
+    const destination = user.role !== "candidate" ? (next.startsWith("/obscuron-nexus-92vX7q") ? next : "/obscuron-nexus-92vX7q") : user.onboardedAt ? next : "/onboarding";
     const res = NextResponse.redirect(new URL(destination, origin));
     res.cookies.delete({ name: GOOGLE_STATE_COOKIE, path: "/auth/google" });
     return res;
