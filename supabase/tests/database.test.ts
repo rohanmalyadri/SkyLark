@@ -53,6 +53,33 @@ describe("schema & auth trigger", () => {
     expect(settings.rows).toHaveLength(3);
   });
 
+  it("records how each account signed up and reports its sign-in methods", async () => {
+    const G = "00000000-0000-4000-8000-0000000000aa";
+    const P = "00000000-0000-4000-8000-0000000000bb";
+    await db.exec(`
+      insert into auth.users (id, email, raw_user_meta_data, raw_app_meta_data) values
+        ('${G}', 'google.user@example.com', '{"name":"Gee User"}', '{"provider":"google","providers":["google"]}'),
+        ('${P}', 'pass.user@example.com', '{"full_name":"Pass User"}', '{"provider":"email","providers":["email"]}');
+      insert into auth.identities (user_id, provider) values ('${G}', 'google'), ('${P}', 'email');
+    `);
+    const rows = await db.query<{ email: string; signup_method: string }>(`select email, signup_method from public.users where id in ('${G}', '${P}') order by email`);
+    expect(rows.rows).toEqual([
+      { email: "google.user@example.com", signup_method: "google" },
+      { email: "pass.user@example.com", signup_method: "password" },
+    ]);
+
+    const methods = async (email: string) => (await db.query<{ m: string[] | null }>(`select public.account_sign_in_methods($1) as m`, [email])).rows[0]!.m;
+    expect(await methods("Google.User@example.com")).toEqual(["google"]);
+    expect(await methods("pass.user@example.com")).toEqual(["email"]);
+    expect(await methods("nobody@example.com")).toBeNull();
+
+    // Only the service role may ask whether an account exists.
+    await asUser(A, async () => {
+      await expect(db.query(`select public.account_sign_in_methods('pass.user@example.com')`)).rejects.toThrow(/permission denied/i);
+    });
+    await db.exec(`delete from auth.users where id in ('${G}', '${P}')`);
+  });
+
   it("seeds configurable pricing", async () => {
     const plans = await db.query<{ id: string }>(`select id from public.plans order by sort_order`);
     expect(plans.rows.map((r) => r.id)).toEqual(["entry", "professional", "executive"]);

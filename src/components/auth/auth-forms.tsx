@@ -34,10 +34,11 @@ function PasswordInput({ id, invalid, autoComplete }: { id: string; invalid?: bo
 
 const fieldError = (state: AuthState, key: string) => (state && !state.ok ? state.fieldErrors?.[key]?.[0] : undefined);
 
-function GoogleButton({ next }: { next?: string }) {
+function GoogleButton({ next, loginHint }: { next?: string; loginHint?: string }) {
   return (
     <form action={googleAction}>
       <input type="hidden" name="next" value={next ?? ""} />
+      {loginHint && <input type="hidden" name="loginHint" value={loginHint} />}
       <GoogleSubmit />
     </form>
   );
@@ -120,6 +121,7 @@ function DemoButton({ icon, label }: { icon: React.ReactNode; label: string }) {
 export function SignInForm({ next, demo, google, error }: { next?: string; demo: boolean; google: boolean; error?: string }) {
   const authError = error ? GOOGLE_ERRORS[error] : undefined;
   const [state, action] = useActionState(signInAction, null);
+  const useGoogle = state && !state.ok && state.reason === "use_google";
   return (
     <div>
       <h1 className="headline text-[40px]">Welcome back</h1>
@@ -131,11 +133,16 @@ export function SignInForm({ next, demo, google, error }: { next?: string; demo:
             <InlineError title={authError.title} message={authError.message} />
           </div>
         )}
-        {google && <GoogleButton next={next} />}
+        {useGoogle && (
+          <div className="mb-4">
+            <InlineError title="Use Google for this account" message={google ? state.error : "This email was registered with Google sign-in, which isn't available right now. Please try again later."} />
+          </div>
+        )}
+        {google && <GoogleButton next={next} loginHint={useGoogle ? state.values?.email : undefined} />}
         {google && <Divider />}
         <form action={action} className="space-y-4" noValidate>
           <input type="hidden" name="next" value={next ?? ""} />
-          {state && !state.ok && !state.fieldErrors && <InlineError title="Couldn't sign you in" message={state.error} />}
+          {state && !state.ok && !state.fieldErrors && !useGoogle && <InlineError title="Couldn't sign you in" message={state.error} />}
           <Field label="Email" htmlFor="email" error={fieldError(state, "email")}>
             <Input id="email" name="email" type="email" autoComplete="email" required defaultValue={state?.values?.email} aria-invalid={!!fieldError(state, "email") || undefined} className="h-10" />
           </Field>
@@ -162,7 +169,7 @@ export function SignInForm({ next, demo, google, error }: { next?: string; demo:
 
 const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-export function SignUpForm({ demo, google, plan }: { demo: boolean; google: boolean; plan?: string }) {
+export function SignUpForm({ demo, google, plan, email, fromLogin }: { demo: boolean; google: boolean; plan?: string; email?: string; fromLogin?: boolean }) {
   const [state, action] = useActionState(signUpAction, null);
   // Instant feedback on blur; the server re-validates everything (and checks the email domain).
   const [local, setLocal] = useState<{ fullName?: string; email?: string; password?: string }>({});
@@ -195,7 +202,18 @@ export function SignUpForm({ demo, google, plan }: { demo: boolean; google: bool
         {plan ? `You picked ${plan[0]!.toUpperCase()}${plan.slice(1)}. ` : ""}Five minutes to your first ranked matches.
       </p>
       <div className="mt-8">
-        {google && <GoogleButton next="/onboarding" />}
+        {fromLogin && email && !state && (
+          <div role="status" className="mb-6 rounded-lg border border-line bg-surface px-4 py-3 text-[13px] text-muted">
+            <p className="font-medium text-fg">No account for that email yet</p>
+            <p className="mt-0.5">
+              Create one for <span className="text-fg">{email}</span> below. Wrong email?{" "}
+              <Link href="/login" className="font-medium text-fg underline-offset-4 hover:underline">
+                Go back to sign in
+              </Link>
+            </p>
+          </div>
+        )}
+        {google && <GoogleButton next="/onboarding" loginHint={email} />}
         {google && <Divider />}
         <form action={action} className="space-y-4" noValidate>
           {state && !state.ok && !state.fieldErrors && <InlineError title="Couldn't create your account" message={state.error} />}
@@ -203,7 +221,7 @@ export function SignUpForm({ demo, google, plan }: { demo: boolean; google: bool
             <Input id="fullName" name="fullName" autoComplete="name" required maxLength={80} defaultValue={state?.values?.fullName} onBlur={(e) => e.target.value && setLocal((l) => ({ ...l, fullName: nameProblem(e.target.value) ?? undefined }))} onChange={() => clear("fullName")} aria-invalid={!!err("fullName") || undefined} className="h-10" />
           </Field>
           <Field label="Email" htmlFor="email" error={err("email")}>
-            <Input id="email" name="email" type="email" autoComplete="email" required maxLength={254} defaultValue={state?.values?.email} onBlur={(e) => e.target.value && setLocal((l) => ({ ...l, email: EMAIL_SHAPE.test(e.target.value.trim()) ? undefined : "Enter a valid email address" }))} onChange={() => clear("email")} aria-invalid={!!err("email") || undefined} className="h-10" />
+            <Input id="email" name="email" type="email" autoComplete="email" required maxLength={254} defaultValue={state?.values?.email ?? email} onBlur={(e) => e.target.value && setLocal((l) => ({ ...l, email: EMAIL_SHAPE.test(e.target.value.trim()) ? undefined : "Enter a valid email address" }))} onChange={() => clear("email")} aria-invalid={!!err("email") || undefined} className="h-10" />
           </Field>
           <Field label="Password" htmlFor="password" hint="At least 10 characters, with a letter and a number." error={err("password")}>
             <PasswordInput id="password" autoComplete="new-password" invalid={!!err("password")} />

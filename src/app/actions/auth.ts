@@ -2,10 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { requestIp } from "@/lib/auth/dal";
-import { toActionError, type ActionResult } from "@/lib/infra/errors";
-import { demoSignIn, googleSignInUrl, signIn, signOut, signUp } from "@/lib/services/auth";
+import { AppError, toActionError, type ActionResult } from "@/lib/infra/errors";
+import { demoSignIn, googleSignInUrl, signIn, signOut, signUp, type SignInFailure } from "@/lib/services/auth";
 
-export type AuthState = (ActionResult<{ needsConfirmation?: boolean }> & { values?: { email?: string; fullName?: string } }) | null;
+export type AuthState = (ActionResult<{ needsConfirmation?: boolean }> & { values?: { email?: string; fullName?: string }; reason?: SignInFailure }) | null;
 
 /** Only allow same-site relative redirects after sign-in. */
 function safeNext(next: FormDataEntryValue | null, fallback: string) {
@@ -20,7 +20,10 @@ export async function signInAction(_: AuthState, form: FormData): Promise<AuthSt
     const user = await signIn({ email, password: form.get("password") }, (await requestIp()) ?? "unknown");
     destination = safeNext(form.get("next"), user.role === "candidate" ? (user.onboardedAt ? "/dashboard" : "/onboarding") : "/obscuron-nexus-92vX7q");
   } catch (err) {
-    return { ...toActionError(err, "auth.signIn"), values: { email } };
+    const reason = err instanceof AppError ? (err.details?.reason as SignInFailure | undefined) : undefined;
+    // No account uses this email: go straight to sign-up with the email already filled in.
+    if (reason !== "no_account") return { ...toActionError(err, "auth.signIn"), values: { email }, ...(reason ? { reason } : {}) };
+    destination = `/signup?${new URLSearchParams({ email: email.trim().toLowerCase(), from: "login" })}`;
   }
   redirect(destination);
 }
@@ -40,7 +43,8 @@ export async function signUpAction(_: AuthState, form: FormData): Promise<AuthSt
 export async function googleAction(form: FormData): Promise<void> {
   let url: string;
   try {
-    url = await googleSignInUrl(safeNext(form.get("next"), "/dashboard"));
+    const hint = String(form.get("loginHint") ?? "").trim();
+    url = await googleSignInUrl(safeNext(form.get("next"), "/dashboard"), hint.length <= 254 && hint.includes("@") ? hint : undefined);
   } catch {
     redirect("/login?error=google_unavailable");
   }
