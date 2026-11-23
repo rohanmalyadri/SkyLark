@@ -50,6 +50,24 @@ and `GEMINI_API_KEY` (mark Sensitive) to turn on the chat-style onboarding. With
 step-by-step form only. A free-tier Gemini key is rate-limited to a handful of requests a minute, so turn on
 billing for the Google AI Studio project before real traffic.
 
+## Email verification (one-time codes)
+
+Settings shows a **Verify email** button, and anyone who hasn't verified gets a popup asking for a
+6-digit code before they can buy a plan. The app sends the codes itself over SMTP (Gmail by default);
+Supabase's own "Confirm email" stays off. Google accounts count as verified.
+
+1. Run `supabase/migrations/20261123000001_email_verification.sql` in the Supabase SQL Editor
+   (adds `users.email_verified_at` and the service-role-only `email_verification_codes` table, and
+   marks existing Google accounts verified).
+2. Sign in to the sending Gmail account, turn on 2-Step Verification, then create an app password at
+   <https://myaccount.google.com/apppasswords>.
+3. On Vercel set `SMTP_USER` (the Gmail address) and `SMTP_PASSWORD` (the app password, Sensitive),
+   then redeploy. Optional: `EMAIL_FROM` for the display name, `SMTP_HOST`/`SMTP_PORT` for another provider.
+
+Until both SMTP variables are set, checkout isn't gated, so payments never get stuck behind a code nobody
+can receive. In demo mode the code is written to the server log. Codes expire after 10 minutes, allow 5
+tries, and can be re-sent once a minute (6 an hour). Gmail sends at most about 500 emails a day.
+
 ## Payments (Razorpay)
 
 Paid plans are auto-renewing subscriptions (monthly or yearly) on Razorpay Subscriptions. The app

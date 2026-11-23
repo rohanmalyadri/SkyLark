@@ -20,7 +20,7 @@ export async function signInAction(_: AuthState, form: FormData): Promise<AuthSt
   } catch (err) {
     const reason = err instanceof AppError ? (err.details?.reason as SignInFailure | undefined) : undefined;
     // No account uses this email: go straight to sign-up with the email already filled in.
-    if (reason !== "no_account") return { ...toActionError(err, "auth.signIn"), values: { email }, ...(reason ? { reason } : {}) };
+    if (reason !== "no_account") return { ...toActionError(err, "auth.signIn"), values: { email }, reason };
     destination = `/signup?${new URLSearchParams({ email: email.trim().toLowerCase(), from: "login" })}`;
   }
   redirect(destination);
@@ -33,7 +33,7 @@ export async function signUpAction(_: AuthState, form: FormData): Promise<AuthSt
     const res = await signUp({ email, fullName, password: form.get("password") }, (await requestIp()) ?? "unknown");
     if (res.needsConfirmation) return { ok: true, data: { needsConfirmation: true }, values: { email } };
   } catch (err) {
-    return { ...toActionError(err, "auth.signUp"), values: { email, fullName } };
+    return { ...toActionError(err, "auth.signUp"), values: { email, fullName }, reason: undefined };
   }
   redirect("/onboarding");
 }

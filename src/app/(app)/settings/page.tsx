@@ -7,8 +7,9 @@ import { PageHeader, Panel, PanelHeader } from "@/components/ui/panel";
 import { PageSkeleton } from "@/components/ui/skeleton";
 import { requireUser } from "@/lib/auth/dal";
 import { userRepo } from "@/lib/data";
-import { googleSignInAvailable, isDemoMode } from "@/lib/env";
+import { googleSignInAvailable, isDemoMode, mailerConfigured, serverEnv } from "@/lib/env";
 import { billingOverview, listPlans } from "@/lib/services/billing";
+import { emailVerificationRequired, isEmailVerified } from "@/lib/services/email-verification";
 import { formatDate, formatMoney } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -36,6 +37,12 @@ async function Settings() {
   const user = await requireUser();
   const [settings, billing, plans] = await Promise.all([(await userRepo()).getSettings(user.id), billingOverview(user), listPlans()]);
   const demo = isDemoMode();
+  const verification = {
+    email: user.email,
+    verified: isEmailVerified(user),
+    required: emailVerificationRequired(),
+    sender: mailerConfigured() ? serverEnv().SMTP_USER ?? null : null,
+  };
 
   return (
     <div className="grid gap-8 lg:grid-cols-[180px_minmax(0,1fr)]">
@@ -51,11 +58,11 @@ async function Settings() {
         </ul>
       </nav>
       <div className="min-w-0 space-y-6">
-        <AccountForm name={user.fullName} email={user.email} />
+        <AccountForm name={user.fullName} email={user.email} verification={verification} />
         <PreferencesForm settings={settings} />
         <PrivacyPanel canDelete={user.role === "candidate"} />
         <SecurityPanel method={demo ? "Signed session" : "Supabase session"} demo={demo} google={googleSignInAvailable()} />
-        <BillingPanel plans={plans} subscription={billing.subscription} current={billing.plan} usage={{ tailored: billing.tailored, reviews: billing.reviews }} />
+        <BillingPanel plans={plans} subscription={billing.subscription} current={billing.plan} usage={{ tailored: billing.tailored, reviews: billing.reviews }} verification={verification} />
         <Panel>
           <PanelHeader title="Payment history" />
           {billing.payments.length === 0 ? (

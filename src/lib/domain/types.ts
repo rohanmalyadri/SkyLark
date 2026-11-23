@@ -17,6 +17,8 @@ export interface User {
   createdAt: string;
   /** How the account was created: "password", "google", or another provider's name. Null for accounts made before this was recorded. */
   signupMethod?: string | null;
+  /** When the person proved they own their email (a one-time code, or Google sign-in). Null until then. */
+  emailVerifiedAt?: string | null;
 }
 
 export interface Place {

@@ -41,12 +41,14 @@ export const forbidden = (msg = "You don't have access to this resource") => new
 /** Result shape every Server Action returns, so the client can render success and failure states uniformly. */
 export type ActionResult<T = undefined> =
   | { ok: true; data: T; message?: string }
-  | { ok: false; error: string; code: ErrorCode; fieldErrors?: Record<string, string[]> };
+  | { ok: false; error: string; code: ErrorCode; fieldErrors?: Record<string, string[]>; reason?: string };
 
 export function toActionError(err: unknown, context: string): Extract<ActionResult, { ok: false }> {
   if (err instanceof AppError) {
     const fieldErrors = err.details?.fieldErrors as Record<string, string[]> | undefined;
-    return { ok: false, error: err.message, code: err.code, ...(fieldErrors ? { fieldErrors } : {}) };
+    // A machine-readable reason lets the browser react (e.g. open the email verification popup).
+    const reason = typeof err.details?.reason === "string" ? err.details.reason : undefined;
+    return { ok: false, error: err.message, code: err.code, ...(fieldErrors ? { fieldErrors } : {}), ...(reason ? { reason } : {}) };
   }
   if (err instanceof z.ZodError) {
     const fieldErrors: Record<string, string[]> = {};

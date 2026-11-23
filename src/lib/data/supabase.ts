@@ -56,7 +56,7 @@ function check(res: { data: any; error: { message: string; code?: string } | nul
 
 /* ---------- mappers ---------- */
 
-const toUser = (r: Row): User => ({ id: r.id, email: r.email, fullName: r.full_name, role: r.role, avatarUrl: r.avatar_url, onboardedAt: r.onboarded_at, createdAt: r.created_at, signupMethod: r.signup_method ?? null });
+const toUser = (r: Row): User => ({ id: r.id, email: r.email, fullName: r.full_name, role: r.role, avatarUrl: r.avatar_url, onboardedAt: r.onboarded_at, createdAt: r.created_at, signupMethod: r.signup_method ?? null, emailVerifiedAt: r.email_verified_at ?? null });
 
 const toProfile = (r: Row): CandidateProfile => ({
   userId: r.user_id,
@@ -496,6 +496,8 @@ export class SupabaseRepository implements Repository {
     if (patch.avatarUrl !== undefined) row.avatar_url = patch.avatarUrl;
     if (patch.onboardedAt !== undefined) row.onboarded_at = patch.onboardedAt;
     if (patch.role !== undefined) row.role = patch.role;
+    // Only the service-role client may write this column (see the email verification migration).
+    if (patch.emailVerifiedAt !== undefined) row.email_verified_at = patch.emailVerifiedAt;
     return toUser(check(await this.db.from("users").update(row).eq("id", id).select().single(), "updateUser"));
   }
 

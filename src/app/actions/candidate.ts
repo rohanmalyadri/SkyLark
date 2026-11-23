@@ -5,6 +5,7 @@ import { userRepo } from "@/lib/data";
 import { AccountNameSchema, ApplicationStatusSchema, SettingsSchema } from "@/lib/domain/schemas";
 import * as apps from "@/lib/services/applications";
 import { cancelSubscription, confirmCheckout, startCheckout } from "@/lib/services/billing";
+import { sendVerificationCode, verifyEmailCode } from "@/lib/services/email-verification";
 import { setMatchVisibility } from "@/lib/services/jobs";
 import * as profile from "@/lib/services/profile";
 import { intakeTurn } from "@/lib/services/intake";
@@ -208,6 +209,18 @@ export async function startCheckoutAction(planId: string, interval: string, acce
     await audit(u, "billing.terms_accepted", "user", u.id, { planId, termsVersion: "2026-11-22" });
     return result;
   }, { refresh: false });
+}
+
+/* ---------- email verification ---------- */
+
+/** Emails a 6-digit code to the signed-in person. */
+export async function sendEmailCodeAction() {
+  return run("email.sendCode", (u) => sendVerificationCode(u), { refresh: false });
+}
+
+/** Checks the code; on success the account is verified and pages refresh. */
+export async function verifyEmailCodeAction(code: string) {
+  return run("email.verify", (u) => verifyEmailCode(u, z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit code from the email.").parse(code)), { message: "Email verified" });
 }
 
 const RazorpayResultSchema = z.object({

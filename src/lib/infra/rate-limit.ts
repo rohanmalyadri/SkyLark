@@ -28,6 +28,8 @@ export const RATE_LIMITS = {
   // Promo-code checks, keyed by IP (pricing page) or user (settings). Someone holding a real code
   // needs a handful of tries; a script guessing partner codes needs thousands.
   promo: { limit: 20, windowSec: 3600 },
+  // Email verification codes sent to one account (each send also waits a minute after the last).
+  emailCode: { limit: 6, windowSec: 3600 },
 } satisfies Record<string, RateLimitRule>;
 
 type Bucket = { count: number; resetAt: number };

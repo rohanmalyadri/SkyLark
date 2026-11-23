@@ -17,9 +17,20 @@ import type { Plan, Subscription, UserSettings } from "@/lib/domain/types";
 import { useAction } from "@/lib/hooks/use-action";
 import { openRazorpayCheckout } from "@/lib/razorpay-checkout";
 import { cn, formatDate, formatMoney } from "@/lib/utils";
+import { VerifyEmailDialog } from "./verify-email";
 
-export function AccountForm({ name, email }: { name: string; email: string }) {
+/** Email verification state the settings page passes down. `required` is false until the server can send codes. */
+export interface EmailVerification {
+  email: string;
+  verified: boolean;
+  required: boolean;
+  sender: string | null;
+}
+
+export function AccountForm({ name, email, verification }: { name: string; email: string; verification: EmailVerification }) {
   const [value, setValue] = useState(name);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const router = useRouter();
   const save = useAction(updateAccountAction);
   return (
     <Panel id="account" className="scroll-mt-20">
@@ -32,6 +43,22 @@ export function AccountForm({ name, email }: { name: string; email: string }) {
           <Input id="acc-email" value={email} readOnly disabled />
         </Field>
       </div>
+      <div id="verify-email" className="flex flex-wrap items-center justify-between gap-3 border-t border-line px-5 py-3.5">
+        <div className="min-w-0">
+          <span className="flex items-center gap-2 text-[13px] font-medium">
+            Email verification {verification.verified ? <Badge tone="success">Verified</Badge> : <Badge tone="warning">Not verified</Badge>}
+          </span>
+          <span className="block text-xs text-muted">
+            {verification.verified ? "Your email is confirmed." : verification.required ? "We'll email you a 6-digit code. You need a verified email to buy a plan." : "Email verification isn't available yet."}
+          </span>
+        </div>
+        {!verification.verified && verification.required && (
+          <Button size="sm" variant="secondary" onClick={() => setVerifyOpen(true)}>
+            Verify email
+          </Button>
+        )}
+      </div>
+      <VerifyEmailDialog open={verifyOpen} onOpenChange={setVerifyOpen} email={verification.email} sender={verification.sender} onVerified={() => router.refresh()} />
       <div className="flex justify-end border-t border-line px-5 py-3">
         <Button size="sm" disabled={value.trim() === name || value.trim().length < 2} loading={save.pending} onClick={() => void save.execute(value)}>
           Save
@@ -140,7 +167,19 @@ export function SecurityPanel({ method, demo, google }: { method: string; demo: 
   );
 }
 
-export function BillingPanel({ plans, subscription, current, usage }: { plans: Plan[]; subscription: Subscription | null; current: Plan; usage: { tailored: number; reviews: number } }) {
+export function BillingPanel({
+  plans,
+  subscription,
+  current,
+  usage,
+  verification,
+}: {
+  plans: Plan[];
+  subscription: Subscription | null;
+  current: Plan;
+  usage: { tailored: number; reviews: number };
+  verification: EmailVerification;
+}) {
   const [interval, setBillingInterval] = useState<"month" | "year">(subscription?.interval ?? "month");
   const [target, setTarget] = useState<Plan | null>(null);
   const [agreed, setAgreed] = useState(false);
@@ -148,12 +187,20 @@ export function BillingPanel({ plans, subscription, current, usage }: { plans: P
   const router = useRouter();
   const [paying, startPaying] = useTransition();
   const closeDialog = () => (setTarget(null), setAgreed(false));
+  // An unverified buyer always sees the verification popup first; the plan they picked is kept for after.
+  const [verified, setVerified] = useState(verification.verified);
+  const [verifyFor, setVerifyFor] = useState<Plan | null>(null);
+  const choosePlan = (p: Plan) => (verification.required && !verified ? setVerifyFor(p) : setTarget(p));
 
   const pay = (plan: Plan) =>
     startPaying(async () => {
       try {
         const started = await startCheckoutAction(plan.id, interval, agreed);
-        if (!started.ok) return void toast.error(started.error);
+        if (!started.ok) {
+          // The server is the source of truth: if it says the email isn't verified, open the popup.
+          if (started.reason === "email_unverified") return closeDialog(), setVerified(false), setVerifyFor(plan);
+          return void toast.error(started.error);
+        }
         if (started.data.kind === "activated") {
           toast.success(`You're on ${started.data.planName}`);
           return closeDialog(), router.refresh();
@@ -238,7 +285,7 @@ export function BillingPanel({ plans, subscription, current, usage }: { plans: P
                     </li>
                   ))}
                 </ul>
-                <Button size="sm" variant={isCurrent ? "secondary" : "outline"} disabled={isCurrent || p.priceMonthly <= 0} className="mt-4" onClick={() => setTarget(p)}>
+                <Button size="sm" variant={isCurrent ? "secondary" : "outline"} disabled={isCurrent || p.priceMonthly <= 0} className="mt-4" onClick={() => choosePlan(p)}>
                   {isCurrent ? "Current plan" : p.sortOrder > current.sortOrder ? "Upgrade" : "Switch"}
                 </Button>
               </div>
@@ -276,6 +323,19 @@ export function BillingPanel({ plans, subscription, current, usage }: { plans: P
           </div>
         </DialogContent>
       </Dialog>
+      <VerifyEmailDialog
+        open={!!verifyFor}
+        onOpenChange={(o) => !o && setVerifyFor(null)}
+        email={verification.email}
+        sender={verification.sender}
+        reason="Please verify your email before buying a plan. It only takes a minute."
+        onVerified={() => {
+          const plan = verifyFor;
+          setVerified(true);
+          setVerifyFor(null);
+          if (plan) setTarget(plan);
+        }}
+      />
       <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
         <DialogContent title="Cancel your plan?" description="You'll keep access until the end of the current period. Your profile, matches and applications stay intact.">
           <div className="flex justify-end gap-2">
