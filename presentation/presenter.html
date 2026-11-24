@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Skylark — Presenter view</title>
+<link rel="icon" href="assets/brand/skylark-mark.svg" type="image/svg+xml" />
+<style>
+  @font-face { font-family: "Inter Tight"; font-weight: 400; src: url("assets/fonts/inter-tight-latin-400-normal.woff2") format("woff2"); }
+  @font-face { font-family: "Inter Tight"; font-weight: 500; src: url("assets/fonts/inter-tight-latin-500-normal.woff2") format("woff2"); }
+  @font-face { font-family: "JetBrains Mono"; font-weight: 400; src: url("assets/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2"); }
+  :root { --ember: #f95135; --paper: #f4f1ec; --mist: #a7adb7; --dim: #666d78; --line: rgba(244,241,236,.12); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #07080b; color: var(--paper); font-family: "Inter Tight", system-ui, sans-serif; }
+  body { display: grid; grid-template-columns: 1.35fr 1fr; grid-template-rows: auto 1fr auto; gap: 18px; padding: 20px 24px; }
+  header { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; font: 400 13px/1 "JetBrains Mono", monospace; letter-spacing: .14em; text-transform: uppercase; color: var(--mist); }
+  header b { color: var(--ember); font-weight: 400; }
+  .clock { display: flex; gap: 28px; align-items: center; }
+  .clock .t { font-size: 30px; color: var(--paper); letter-spacing: .06em; }
+  .clock button { background: none; border: 1px solid var(--line); color: var(--mist); font: inherit; padding: 8px 12px; cursor: pointer; }
+  .left { display: grid; grid-template-rows: auto auto 1fr; gap: 14px; min-height: 0; }
+  .lbl { font: 400 11px/1 "JetBrains Mono", monospace; letter-spacing: .2em; text-transform: uppercase; color: var(--dim); margin-bottom: 8px; }
+  .now .th, .next .th { aspect-ratio: 16/9; background: #0b0d11 center/cover no-repeat; outline: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font: 500 28px/1.1 "Inter Tight"; color: var(--mist); padding: 20px; text-align: center; }
+  .now .th { outline-color: var(--ember); }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .title { font: 500 34px/1.1 "Inter Tight"; letter-spacing: -.02em; }
+  .meta { font: 400 13px/1.6 "JetBrains Mono", monospace; color: var(--mist); margin-top: 6px; letter-spacing: .06em; }
+  .meta .steps { color: var(--ember); }
+  .notes { overflow: auto; padding: 22px 26px; border: 1px solid var(--line); background: #0b0d11; font: 400 19px/1.55 "Inter Tight"; color: #ddd9d2; min-height: 0; }
+  .notes h4 { font: 400 11px/1 "JetBrains Mono", monospace; letter-spacing: .2em; text-transform: uppercase; color: var(--ember); margin: 18px 0 8px; }
+  .notes h4:first-child { margin-top: 0; }
+  .notes p { margin-bottom: 8px; } .notes ul, .notes ol { margin: 0 0 8px 22px; } .notes li { margin-bottom: 4px; }
+  .notes code { font: 400 .85em "JetBrains Mono", monospace; color: #ffb98a; }
+  footer { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; font: 400 12px/1 "JetBrains Mono", monospace; color: var(--dim); }
+  footer button { background: #10131a; border: 1px solid var(--line); color: var(--paper); font: inherit; padding: 12px 18px; cursor: pointer; letter-spacing: .1em; text-transform: uppercase; }
+  footer button:hover { border-color: var(--ember); }
+  .list { display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+  .list span { width: 26px; height: 6px; background: #1a1e25; cursor: pointer; }
+  .list span.on { background: var(--ember); }
+  .list span.done { background: #5a2a20; }
+  .warn { color: #ffb98a; }
+</style>
+</head>
+<body>
+<header><span><b>Skylark</b> · Presenter view</span><span class="status">Waiting for the presentation window…</span>
+  <div class="clock"><span>Elapsed</span><span class="t" id="elapsed">00:00</span><button id="reset">Reset</button><span id="wall"></span></div></header>
+<div class="left">
+  <div><div class="lbl">Now</div><div class="title" id="title">—</div><div class="meta" id="meta"></div></div>
+  <div class="row">
+    <div class="now"><div class="lbl">Current slide</div><div class="th" id="th-now"></div></div>
+    <div class="next"><div class="lbl">Up next</div><div class="th" id="th-next"></div></div>
+  </div>
+  <div></div>
+</div>
+<div class="notes" id="notes"><p>Open this from the presentation with <b>P</b>. Both windows must come from the same folder or server.</p></div>
+<footer><button id="prev">← Back</button><button id="next">Next →</button><button id="replay">Replay</button><span>Keys work here too: → ← Space R</span><div class="list" id="list"></div></footer>
+<script>
+  const ch = "BroadcastChannel" in window ? new BroadcastChannel("skylark-deck") : null;
+  const $ = (id) => document.getElementById(id);
+  const pad = (n) => String(n).padStart(2, "0");
+  let t0 = Date.now(), state = null;
+  function thumb(el, i, title) {
+    const src = `assets/thumbs/${pad(i + 1)}.webp`;
+    el.textContent = title || "";
+    el.style.backgroundImage = "";
+    const im = new Image(); im.onload = () => { el.style.backgroundImage = `url(${src})`; el.textContent = ""; }; im.src = src;
+  }
+  function render(s) {
+    state = s;
+    document.querySelector(".status").textContent = "Connected";
+    $("title").textContent = `${pad(s.idx + 1)} · ${s.title}`;
+    const steps = s.steps ? ` · step <span class="steps">${s.step} / ${s.steps}</span>` : "";
+    $("meta").innerHTML = `Slide ${s.idx + 1} of ${s.total}${steps}${s.duration ? " · ≈ " + s.duration : ""}${s.nextTitle ? " · next: " + s.nextTitle : ""}`;
+    $("notes").innerHTML = s.notes;
+    thumb($("th-now"), s.idx, s.title);
+    thumb($("th-next"), s.idx + 1 < s.total ? s.idx + 1 : s.idx, s.idx + 1 < s.total ? s.nextTitle : "End");
+    $("list").innerHTML = s.titles.map((t, i) => `<span title="${pad(i + 1)} ${t}" class="${i === s.idx ? "on" : i < s.idx ? "done" : ""}" data-i="${i}"></span>`).join("");
+  }
+  if (ch) { ch.onmessage = (e) => e.data && e.data.type === "state" && render(e.data); ch.postMessage({ type: "cmd", cmd: "hello" }); }
+  else document.querySelector(".status").innerHTML = '<span class="warn">This browser has no BroadcastChannel; use the N key in the main window instead.</span>';
+  const cmd = (c, extra) => ch && ch.postMessage({ type: "cmd", cmd: c, ...extra });
+  $("next").onclick = () => cmd("next"); $("prev").onclick = () => cmd("prev"); $("replay").onclick = () => cmd("replay");
+  $("list").onclick = (e) => { const i = e.target.dataset.i; if (i !== undefined) cmd("goto", { idx: +i }); };
+  $("reset").onclick = () => (t0 = Date.now());
+  addEventListener("keydown", (e) => {
+    if (["ArrowRight", "Space", "PageDown"].includes(e.code)) { e.preventDefault(); cmd("next"); }
+    if (["ArrowLeft", "PageUp"].includes(e.code)) { e.preventDefault(); cmd("prev"); }
+    if (e.code === "KeyR") cmd("replay");
+  });
+  setInterval(() => {
+    const s = Math.floor((Date.now() - t0) / 1000);
+    $("elapsed").textContent = `${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
+    $("wall").textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }, 500);
+</script>
+</body>
+</html>

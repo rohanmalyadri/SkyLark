@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Skylark — Product Presentation</title>
+<meta name="description" content="Skylark: a human-assisted job application service for people applying across borders. Cinematic product presentation." />
+<link rel="icon" href="assets/brand/skylark-mark.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="css/deck.css" />
+<link rel="stylesheet" href="css/slides.css" />
+</head>
+<body>
+<div id="viewport">
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <div class="vignette"></div>
+  <div id="fx"><div class="grain"></div></div>
+
+  <!-- ============================================================ 01 · COLD OPEN -->
+  <section class="slide" data-id="intro" data-title="Skylark" data-skip="yes">
+    <svg class="intro-guides" viewBox="0 0 1920 1080" aria-hidden="true">
+      <line class="g g-h" x1="0" y1="540" x2="1920" y2="540" />
+      <line class="g g-v" x1="960" y1="0" x2="960" y2="1080" />
+      <circle class="g g-c1" cx="960" cy="540" r="330" />
+      <circle class="g g-c2" cx="960" cy="540" r="470" />
+      <g class="g-shards"></g>
+      <g class="g-ticks"></g>
+    </svg>
+    <div class="intro-logo"><div class="logo-svg" data-logo="intro"></div></div>
+    <div class="intro-copy">
+      <h1 class="h-l intro-tag">Your next move, <span class="it">already in motion.</span></h1>
+      <p class="intro-pos mono">Explainable matches · Tailored with your approval · Reviewed by a human</p>
+    </div>
+    <div class="intro-meta mono"><span>skylarkgo.in</span><span>Team Synapse X</span><span>Capstone 2026</span></div>
+    <aside class="notes" data-duration="0:45">
+      <h4>Say</h4>
+      <p>Let the opening play without talking. When the tagline lands: “This is Skylark. It helps people who are applying for jobs in another country apply to fewer roles, and only to roles they can actually take.”</p>
+      <h4>Key points</h4>
+      <ul><li>Skylark is live at skylarkgo.in, built by Team Synapse X (Rohan Malyadri and Meda Abhiram).</li>
+      <li>The tagline names the three promises you will come back to: explainable matches, tailoring you approve, and a human review.</li></ul>
+      <h4>Presenter</h4>
+      <p>Any key skips the opening. The mark is assembled from the exact polygons of the official logo.</p>
+      <h4>Transition</h4>
+      <p>“To see why this matters, start with what job hunting across borders actually looks like.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 02 · THE PROBLEM -->
+  <section class="slide" data-id="problem" data-title="The problem" data-steps="2">
+    <div class="scrim scrim-bottom"></div>
+    <div class="frame"><i class="reg tl"></i><i class="reg tr"></i><i class="reg bl"></i><i class="reg br"></i></div>
+    <div class="problem-copy">
+      <div class="eyebrow">01 · The problem</div>
+      <h2 class="h-l pr-head">For someone applying across borders, <span class="it">volume</span> is the problem.</h2>
+      <ol class="pr-list">
+        <li data-step="1"><span class="mono">a</span>Roles they cannot legally take.</li>
+        <li data-step="1"><span class="mono">b</span>Companies that will never sponsor them.</li>
+        <li data-step="2"><span class="mono">c</span>Mass-applying that burns their name with recruiters.</li>
+      </ol>
+    </div>
+    <div class="pr-legend mono" data-step="1"><i></i>Each mark is a listing. Lit ones are roles this candidate can take. <span class="dim">Illustrative.</span></div>
+    <div class="chrome-meta"><span>Skylark</span><span><b>02</b> / The problem</span></div>
+    <aside class="notes" data-duration="1:15">
+      <h4>Say</h4>
+      <p>“Most job boards optimise for volume. For someone looking for work in another country, volume is the problem.”</p>
+      <p>Step 1: “Most of what they see are roles they cannot legally take, at companies that will never sponsor them.” The wall dims; only a few listings stay lit.</p>
+      <p>Step 2: “So they mass-apply, and that burns their name with recruiters.”</p>
+      <h4>Key points</h4>
+      <ul><li>The wall is illustrative, not a statistic. Say so if asked.</li>
+      <li>The audience: candidates applying across borders, for example from India to Germany, the UK, the US, Canada or Australia.</li></ul>
+      <h4>If asked</h4>
+      <p><b>Is there data on how many listings are ineligible?</b> We don’t claim a number. The point is structural: job boards do not treat work authorization or sponsorship as part of the match.</p>
+      <h4>Transition</h4>
+      <p>“The tools people use today don’t help, and here is exactly where they fall short.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 03 · WHERE TODAY FALLS SHORT -->
+  <section class="slide" data-id="shortfall" data-title="Where job boards fall short" data-steps="3">
+    <div class="frame"><i class="reg tl"></i><i class="reg tr"></i><i class="reg bl"></i><i class="reg br"></i></div>
+    <div class="sf-head">
+      <div class="eyebrow">02 · Why existing approaches fall short</div>
+      <h2 class="h-m sf-title">Job boards optimise for volume.<br />Skylark is built <span class="it">the other way round.</span></h2>
+    </div>
+    <div class="sf-table">
+      <div class="sf-cols mono"><span></span><span class="c-old">A typical job board</span><span class="c-new">Skylark</span></div>
+      <svg class="sf-wire" viewBox="0 0 1776 600" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <div class="sf-row" data-row="0"><span class="mono k">Eligibility</span><span class="old">Your problem</span><span class="new">A factor in every score. A role you can’t take is capped at 35.</span></div>
+      <div class="sf-row" data-row="1"><span class="mono k">Match score</span><span class="old">One opaque percentage</span><span class="new">Seven weighted factors, each with a written reason.</span></div>
+      <div class="sf-row" data-row="2"><span class="mono k">Applications</span><span class="old">The same resume everywhere</span><span class="new">Tailored per role. Nothing changes until you accept it.</span></div>
+      <div class="sf-row" data-row="3"><span class="mono k">Quality control</span><span class="old">None</span><span class="new">A specialist checks five points within a 24-hour SLA.</span></div>
+      <div class="sf-row" data-row="4"><span class="mono k">Employer forms</span><span class="old">Retyped for every portal</span><span class="new">Answered once, in the answer vault.</span></div>
+      <div class="sf-row" data-row="5"><span class="mono k">Proof</span><span class="old">Take our word for it</span><span class="new">Portal and confirmation reference on every submission.</span></div>
+    </div>
+    <div class="chrome-meta"><span>Skylark</span><span><b>03</b> / Where job boards fall short</span></div>
+    <aside class="notes" data-duration="1:30">
+      <h4>Say</h4>
+      <p>“Here is the same job search, two ways.” Walk the rows two at a time; each click strikes the old way and brings in Skylark’s.</p>
+      <ul><li>Eligibility and the match score: on a job board eligibility is your problem and the score is a black box. In Skylark eligibility is a factor in every score, and every factor has a sentence you can read.</li>
+      <li>Applications and quality control: tailored per role with your approval, then a specialist checks it.</li>
+      <li>Forms and proof: answer the common questions once; every submission records the portal and the employer’s confirmation reference.</li></ul>
+      <h4>If asked</h4>
+      <p><b>Why cap at 35?</b> So a role you can’t legally take can never outrank one you can, whatever your skills say. You’ll see it happen in the match engine slide.</p>
+      <h4>Transition</h4>
+      <p>“So what does a product built the other way round look like?”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 04 · INTRODUCING SKYLARK -->
+  <section class="slide" data-id="reveal" data-title="Introducing Skylark" data-steps="1">
+    <div class="rv-top">
+      <div class="eyebrow plain mono rv-eyebrow">Introducing</div>
+      <div class="rv-logo"><div class="logo-svg" data-logo="reveal"></div></div>
+      <p class="lede rv-line">A human-assisted job application service for people applying across borders.</p>
+    </div>
+    <div class="rv-scene">
+      <div class="rv-tilt">
+        <div class="shot has-bar rv-shot"><div class="bar"><i></i><i></i><i></i><span>skylarkgo.in</span></div><img src="assets/shots/landing.webp" alt="Skylark landing page" /></div>
+        <div class="rv-sweep"></div>
+      </div>
+      <div class="rv-floor"></div>
+    </div>
+    <div class="rv-three mono" data-step="1"><span><b>01</b> Explainable matches</span><span><b>02</b> Tailored by AI, approved by you</span><span><b>03</b> Reviewed by a human</span></div>
+    <aside class="notes" data-duration="1:00">
+      <h4>Say</h4>
+      <p>“This is Skylark.” Pause on the landing page as it rises. “A human-assisted job application service for people applying across borders.”</p>
+      <p>Step 1: “It ranks the roles you can actually take, explains every score, tailors each application with your approval, and has a specialist review and submit it, with a receipt for every one.”</p>
+      <h4>Key points</h4>
+      <ul><li>This is the real landing page, captured from the running app.</li>
+      <li>The three promises (explained, approved, reviewed) return on the closing statement.</li></ul>
+      <h4>Transition</h4>
+      <p>“Behind that sits one simple idea.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 05 · VISION -->
+  <section class="slide" data-id="vision" data-title="The vision" data-steps="1">
+    <div class="frame"><i class="reg tl"></i><i class="reg tr"></i><i class="reg bl"></i><i class="reg br"></i></div>
+    <div class="vi-copy">
+      <div class="eyebrow">03 · The vision</div>
+      <h2 class="h-l vi-head">Apply only where you can <span class="it">actually work.</span></h2>
+      <p class="lede vi-lede">One validated profile. Every live role ranked on whether you can legally take it, explained, approved by you, and checked by a human before it is sent.</p>
+      <div class="vi-sources" data-step="1">
+        <div class="mono k">Live listings from</div>
+        <div class="vi-src"><span>Arbeitnow</span><span>16 Greenhouse boards</span><span>Adzuna</span><span>The Muse</span><span>Lever</span></div>
+        <div class="mono note">Adzuna, The Muse and Lever when configured · routes are illustrative</div>
+      </div>
+    </div>
+    <div class="vi-origin mono" data-step="1"><i></i>Bengaluru → Berlin · London · Dubai · Singapore · Sydney · Toronto · New York</div>
+    <div class="chrome-meta"><span>Skylark</span><span><b>05</b> / The vision</span></div>
+    <aside class="notes" data-duration="1:00">
+      <h4>Say</h4>
+      <p>“Skylark’s goal is simple: apply only where you can actually work.” Explain the sentence on screen: one validated profile, every live role ranked on eligibility first, explained, approved by you, checked by a human.</p>
+      <p>Step 1: routes light up from one candidate’s home market. “Listings come from public job APIs: Arbeitnow by default, sixteen public Greenhouse boards, and Adzuna, The Muse and Lever when they’re configured.”</p>
+      <h4>Key points</h4>
+      <ul><li>The globe is drawn from the same stippled world map the website uses.</li>
+      <li>Routes are illustrative, not traffic data.</li>
+      <li>Every source is a documented public API; nothing is scraped.</li></ul>
+      <h4>If asked</h4>
+      <p><b>Why India first?</b> The founding market; plans are charged in INR through Razorpay. The job catalogue itself is global.</p>
+      <h4>Transition</h4>
+      <p>“Here is the product that does it.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 06 · PRODUCT OVERVIEW -->
+  <section class="slide" data-id="overview" data-title="Product overview" data-steps="4">
+    <div class="ov-copy">
+      <div class="eyebrow">04 · The product</div>
+      <h2 class="h-m ov-head">One product, <span class="it">end to end.</span></h2>
+    </div>
+    <div class="ov-scene"><div class="ov-world">
+      <div class="shot ov-s" data-i="0"><img src="assets/shots/tracker.webp" alt="Application tracker" /></div>
+      <div class="shot ov-s" data-i="1"><img src="assets/shots/jobs.webp" alt="Ranked jobs" /></div>
+      <div class="shot ov-s" data-i="2"><img src="assets/shots/dashboard.webp" alt="Candidate dashboard" /></div>
+      <div class="shot ov-s" data-i="3"><img src="assets/shots/job-detail.webp" alt="Why a role matches" /></div>
+      <div class="shot ov-s" data-i="4"><img src="assets/shots/tailoring.webp" alt="Tailoring workspace" /></div>
+      <div class="shot ov-s" data-i="5"><img src="assets/shots/ops-review-detail.webp" alt="Specialist review" /></div>
+    </div></div>
+    <div class="ov-cap">
+      <div class="ov-c" data-c="0"><span class="mono idx">Six surfaces</span><b>Candidate app and operations console</b><span>Dashboard, ranked jobs, fit analysis, tailoring, tracker and the specialist’s review screen.</span></div>
+      <div class="ov-c" data-c="1"><span class="mono idx">01 · Dashboard</span><b>Today, at a glance</b><span>New matches, active applications, interviews and today’s delivery progress.</span></div>
+      <div class="ov-c" data-c="2"><span class="mono idx">02 · Why it matches</span><b>Every factor, with its reason</b><span>Weight, rating and a sentence for each of the seven factors, plus eligibility and sponsorship.</span></div>
+      <div class="ov-c" data-c="3"><span class="mono idx">03 · Tailoring</span><b>Original against suggested</b><span>Accept or keep the original, one suggestion at a time.</span></div>
+      <div class="ov-c" data-c="4"><span class="mono idx">04 · Specialist review</span><b>A human, with a checklist</b><span>Eligibility, AI reasoning and the review checklist side by side.</span></div>
+    </div>
+    <div class="ov-sample mono">Captured from the running app in demo mode · companies, jobs and people are fictional sample data</div>
+    <aside class="notes" data-duration="1:45">
+      <h4>Say</h4>
+      <p>“These are real screens, captured from the running app in demo mode.” Let the gallery drift for a beat, then step through four of them.</p>
+      <ul><li>Dashboard: new matches, active applications and today’s application quota.</li>
+      <li>Why it matches: a score of 90 broken into seven factors, each with weight, rating and reason.</li>
+      <li>Tailoring: original against suggested; nothing changes until the candidate accepts.</li>
+      <li>Specialist review: the operations console, where a human checks the application before it’s sent.</li></ul>
+      <h4>If asked</h4>
+      <p><b>Is this real data?</b> Demo mode uses clearly labelled fictional sample data. Production runs on Supabase with live listings.</p>
+      <h4>Transition</h4>
+      <p>“Six capabilities make this work.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 07 · CORE CAPABILITIES -->
+  <section class="slide" data-id="capabilities" data-title="Core capabilities" data-steps="5">
+    <div class="frame"><i class="reg tl"></i><i class="reg tr"></i><i class="reg bl"></i><i class="reg br"></i></div>
+    <div class="cp-left">
+      <div class="eyebrow">05 · Core capabilities</div>
+      <ol class="cp-list">
+        <li data-k="0"><span class="n serif">01</span><span class="t">Explainable matching</span></li>
+        <li data-k="1"><span class="n serif">02</span><span class="t">Eligibility first</span></li>
+        <li data-k="2"><span class="n serif">03</span><span class="t">Tailoring you approve</span></li>
+        <li data-k="3"><span class="n serif">04</span><span class="t">Human review</span></li>
+        <li data-k="4"><span class="n serif">05</span><span class="t">Answer the forms once</span></li>
+        <li data-k="5"><span class="n serif">06</span><span class="t">Delivery with receipts</span></li>
+      </ol>
+    </div>
+    <div class="cp-stage">
+      <div class="cp-v" data-k="0"><img src="assets/features/matching.svg" alt="" /><p>Skills, experience, education, eligibility, location, sponsorship and preferences, each scored 0 to 100 with a sentence you can read.</p></div>
+      <div class="cp-v" data-k="1"><img src="assets/features/eligibility.svg" alt="" /><p>Where you can work, whether you need sponsorship and where you’d relocate are first-class fields. A role that won’t sponsor someone who needs it is capped at 35.</p></div>
+      <div class="cp-v" data-k="2"><img src="assets/features/tailoring.svg" alt="" /><p>A role-specific summary, rewritten bullets, a cover letter and a skill-gap table, each with its reason. Nothing is applied until you accept it.</p></div>
+      <div class="cp-v" data-k="3"><img src="assets/features/review.svg" alt="" /><p>A specialist confirms work authorization, accuracy, the cover letter, hard requirements and portal details within a 24-hour SLA.</p></div>
+      <div class="cp-v" data-k="4"><img src="assets/features/answer-vault.svg" alt="" /><p>The questions every portal asks live in one vault. Unanswered stays unanswered, and EEO answers are unreadable from any browser session.</p></div>
+      <div class="cp-v" data-k="5"><img src="assets/features/delivery.svg" alt="" /><p>Plans carry a daily quota of 10, 25 or 40 applications. Only a recorded submission, with portal and confirmation reference, moves the counter.</p></div>
+    </div>
+    <div class="chrome-meta"><span>Skylark</span><span><b>07</b> / Core capabilities</span></div>
+    <aside class="notes" data-duration="2:00">
+      <h4>Say</h4>
+      <p>One sentence per capability; each click brings the next one forward with its own animation.</p>
+      <ul><li><b>Explainable matching:</b> seven factors, each 0 to 100 with a readable reason.</li>
+      <li><b>Eligibility first:</b> work authorization and sponsorship are profile fields; a role that won’t sponsor someone who needs it is capped at 35.</li>
+      <li><b>Tailoring you approve:</b> every change carries its reason; nothing is applied until accepted.</li>
+      <li><b>Human review:</b> five checks, 24-hour SLA, approve or send back with a note.</li>
+      <li><b>Answer vault:</b> answer the common employer questions once; EEO answers can’t be read from the browser.</li>
+      <li><b>Delivery with receipts:</b> plans carry a daily quota (10, 25 or 40); only a recorded submission moves the counter.</li></ul>
+      <h4>If asked</h4>
+      <p><b>Who are the specialists?</b> Staff using the operations console. They can only move an application to “applied” after recording the portal and confirmation reference.</p>
+      <h4>Transition</h4>
+      <p>“Here’s how those pieces connect, from the candidate’s first click to a submitted application.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 08 · HOW IT WORKS -->
+  <section class="slide" data-id="how" data-title="How Skylark works" data-steps="6">
+    <div class="frame"><i class="reg tl"></i><i class="reg tr"></i><i class="reg bl"></i><i class="reg br"></i></div>
+    <div class="hw-head">
+      <div class="eyebrow">06 · How it works</div>
+      <h2 class="h-m">Who does what, <span class="it">at every step.</span></h2>
+    </div>
+    <svg class="hw-svg" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+    <div class="hw-detail"></div>
+    <div class="chrome-meta"><span>Skylark</span><span><b>08</b> / How it works</span></div>
+    <aside class="notes" data-duration="2:00">
+      <h4>Say</h4>
+      <p>“Three lanes: the candidate, Skylark, and a specialist. Watch one application move through them.” Each click advances the glowing application one station.</p>
+      <ol><li><b>Build a profile</b> (you): upload a resume; every field is validated on the server, including skills against a curated taxonomy, Stack Overflow tags and ESCO.</li>
+      <li><b>Verification</b> (specialist): new and edited profiles go to a review queue with automatic flags.</li>
+      <li><b>Match</b> (Skylark): live listings are scored; 85 or more sends a notification.</li>
+      <li><b>Tailor and approve</b> (Skylark drafts, you decide): accept or reject each suggestion. The status becomes “preparing”.</li>
+      <li><b>Review and submit</b> (specialist): checklist, submission, and the employer’s confirmation reference. “Human review” then “applied”.</li>
+      <li><b>Track</b> (you): screening, interview, offer, with notes and a full history.</li></ol>
+      <h4>If asked</h4>
+      <p><b>Can a candidate skip review?</b> No. Entering human review needs an approved tailored document, and only a specialist can move an application to applied.</p>
+      <h4>Transition</h4>
+      <p>“Under the hood, this runs on four layers.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 09 · ARCHITECTURE -->
+  <section class="slide" data-id="architecture" data-title="System architecture" data-steps="5">
+    <div class="arch-labels"></div>
+    <img class="arch-fallback" src="assets/features/architecture.svg" alt="Architecture diagram" />
+    <div class="ar-copy">
+      <div class="eyebrow">07 · System architecture</div>
+      <h2 class="h-m ar-head">Four layers.<br /><span class="it">One repository interface.</span></h2>
+      <div class="ar-panels">
+        <div class="ar-p" data-p="0"><span class="mono idx">Overview</span><p>Every service talks to one <code>Repository</code>. Supabase behind it in production; an in-memory seeded store in demo mode.</p></div>
+        <div class="ar-p" data-p="1"><span class="mono idx">01 · Experience</span><p>Next.js 16 App Router serves the marketing site, the candidate app, the operations console and messages.</p></div>
+        <div class="ar-p" data-p="2"><span class="mono idx">02 · Server</span><p><code>proxy.ts</code> is an optimistic gate, not the lock. Authorization is re-checked in a data access layer on every page, action and route handler.</p></div>
+        <div class="ar-p" data-p="3"><span class="mono idx">03 · Domain services</span><p>Matching, tailoring, reviews and the job pipeline. They never know which store they are using.</p></div>
+        <div class="ar-p" data-p="4"><span class="mono idx">04 · Data</span><p>Postgres with row level security on every table, Supabase Auth (email and Google) and private Storage.</p></div>
+        <div class="ar-p" data-p="5"><span class="mono idx">External services</span><p>Vercel Cron, job boards, Claude, Gemini, Razorpay, Google sign-in and SMTP, each behind its own interface. Functions run in Sydney, next to the database.</p></div>
+      </div>
+    </div>
+    <div class="chrome-meta"><span>Skylark</span><span><b>09</b> / System architecture</span></div>
+    <aside class="notes" data-duration="2:30">
+      <h4>Say</h4>
+      <p>“Four layers, assembled.” Click through each layer; it lifts and lights while the rest dims.</p>
+      <ul><li><b>Experience:</b> one Next.js 16 app: marketing site, candidate app, operations console and messages.</li>
+      <li><b>Server:</b> proxy.ts refreshes the session and routes people early, but it isn’t the lock. Every page, Server Action and route handler re-checks authorization.</li>
+      <li><b>Domain services:</b> matching, tailoring, reviews and the pipeline, written against one Repository interface.</li>
+      <li><b>Data:</b> Supabase Postgres with RLS, Auth and Storage. Without Supabase variables, the same interface is backed by an in-memory seeded store, which is why the whole product runs locally with zero setup.</li>
+      <li><b>External:</b> the blue packets. Each provider sits behind an interface: AI behind AIProvider, jobs behind JobSource.</li></ul>
+      <h4>If asked</h4>
+      <p><b>Why Sydney?</b> The Supabase project is hosted there, so Vercel functions are pinned to the same region (syd1).</p>
+      <p><b>Two trust levels?</b> Reads and writes made for a person use their session, so RLS applies. System rows (matches, queue jobs, audit entries) are written server-side with the service role, and browsers have no write path to them.</p>
+      <h4>Transition</h4>
+      <p>“Let’s zoom into the pipeline layer: how a job listing gets in.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 10 · PIPELINE -->
+  <section class="slide" data-id="pipeline" data-title="The job pipeline" data-steps="6">
+    <div class="pl-head">
+      <div class="eyebrow">08 · Deep technical workflow</div>
+      <h2 class="h-m">One posting, <span class="it">through the pipeline.</span></h2>
+    </div>
+    <div class="pl-rail"><div class="pl-track"></div></div>
+    <div class="pl-trigger mono"><i></i>Vercel Cron → <code>/api/cron/worker</code> · bearer secret · daily 09:00 UTC</div>
+    <div class="pl-sample mono">Sample listing from demo data (fictional)</div>
+    <aside class="notes" data-duration="2:30">
+      <h4>Say</h4>
+      <p>“Follow one posting through the pipeline.” Each click moves the camera to the next stage and the posting changes shape.</p>
+      <ol><li><b>Fetch:</b> one JobSource interface. Arbeitnow (keyless) and sixteen Greenhouse boards by default; Adzuna, The Muse and Lever when configured. Three retries with backoff.</li>
+      <li><b>Normalize:</b> HTML becomes title, seniority, location, salary, sponsorship and skills.</li>
+      <li><b>Deduplicate:</b> a sha256 fingerprint of company, normalised title and country collapses cross-posts; (source, external_id) catches a board renaming a role.</li>
+      <li><b>Store:</b> listings a source stops showing, or older than 45 days, are closed. If nothing refreshed in 24 hours, candidates are told live data is unavailable.</li>
+      <li><b>Queue:</b> match jobs in batches of 100, each with an idempotency key; workers claim with FOR UPDATE SKIP LOCKED; failures back off with jitter, then dead-letter.</li>
+      <li><b>Score and notify:</b> seven factors; 85 or more notifies the candidate.</li></ol>
+      <h4>If asked</h4>
+      <p><b>Why daily?</b> Vercel’s Hobby plan allows a daily cron. The worker is idempotent, so a retried cron can’t double-schedule.</p>
+      <h4>Transition</h4>
+      <p>“The heart of that last step is the match engine.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 11 · MATCH ENGINE -->
+  <section class="slide" data-id="engine" data-title="The match engine" data-steps="3">
+    <div class="frame"><i class="reg tl"></i><i class="reg tr"></i><i class="reg bl"></i><i class="reg br"></i></div>
+    <div class="en-head">
+      <div class="eyebrow">09 · Core algorithm · <span class="ember">match-v2.0</span></div>
+      <h2 class="h-m">Seven published weights.<br /><span class="it">Every score shows its working.</span></h2>
+    </div>
+    <div class="en-formula">
+      <div class="f1 serif">score = <span class="ember">Σ</span> w<sub>i</sub> · s<sub>i</sub></div>
+      <div class="f2 serif" data-step="2">if ineligible: <span class="ember">min</span>(score, 35)</div>
+      <div class="mono src">src/lib/services/matching/engine.ts</div>
+    </div>
+    <svg class="en-ring" viewBox="0 0 560 560" aria-hidden="true"></svg>
+    <div class="en-bars"></div>
+    <div class="en-total">
+      <div class="mono k en-k">Weighted sum</div>
+      <div class="serif en-num">0</div>
+      <div class="en-cap mono"></div>
+      <div class="en-stack"><div class="en-fill"></div><div class="en-capline"><span class="mono">cap 35</span></div></div>
+    </div>
+    <div class="en-scn mono"><span class="s1">Example · candidate in India targeting Germany · Berlin listing <b>offers sponsorship</b></span><span class="s2">Same listing · employer states it <b>will not sponsor</b></span></div>
+    <div class="en-rule" data-step="3"><span class="mono idx">And one more rule</span><p>Skills seen only in a candidate’s public GitHub repositories are shown as evidence, <span class="it">never added to the score.</span></p></div>
+    <div class="chrome-meta"><span>Skylark</span><span><b>11</b> / The match engine</span></div>
+    <aside class="notes" data-duration="2:30">
+      <h4>Say</h4>
+      <p>“This is the core algorithm. Seven factors with published weights: skills 30, eligibility 20, experience 18, location 12, sponsorship 8, preferences 7, education 5. The score is their weighted sum.”</p>
+      <p>Step 1: “An example candidate in India targeting Germany, on a Berlin listing that offers sponsorship. Each factor fills with its own score; the weighted sum is 86.”</p>
+      <p>Step 2: “Now the same listing says it won’t sponsor. Eligibility and sponsorship drop to zero. The sum falls to 64, but 64 would still outrank roles this person can take, so ineligible roles are capped at 35.”</p>
+      <p>Step 3: “And skills seen only on GitHub are shown as evidence, never added to the score.”</p>
+      <h4>Key points</h4>
+      <ul><li>The engine is a pure function, scoreMatch(profile, job, company), with a versioned model id (match-v2.0). It runs identically in the worker, the UI and tests.</li>
+      <li>The example values are the engine’s own rules applied to sample inputs; the factor scores come from the README’s worked example.</li></ul>
+      <h4>If asked</h4>
+      <p><b>Partial skill credit?</b> Half credit for a close sibling: Vue for React, GCP for AWS.</p>
+      <p><b>Why not machine learning?</b> Explainability. A candidate and a specialist can read exactly why, and the weights are a public constant.</p>
+      <h4>Transition</h4>
+      <p>“Once a role fits, Skylark helps write the application. That’s where AI comes in, carefully.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 12 · FEATURE DEEP DIVE: TAILORING -->
+  <section class="slide" data-id="tailoring" data-title="Deep dive: tailoring" data-steps="3">
+    <div class="tl-copy">
+      <div class="eyebrow">10 · Feature deep dive</div>
+      <h2 class="h-m tl-head">Tailoring <span class="it">you approve.</span></h2>
+      <div class="tl-points">
+        <div class="tl-pt" data-p="0"><span class="mono idx">The workspace</span><p>A tailored summary, rewritten bullets, a cover letter and a skill-gap table, for one specific role.</p></div>
+        <div class="tl-pt" data-p="1"><span class="mono idx">01</span><p>Every suggestion shows the original, the rewrite, and <span class="ember">the reason for the change.</span></p></div>
+        <div class="tl-pt" data-p="2"><span class="mono idx">02</span><p>Nothing is applied until you accept it. You approve the version, <span class="ember">then a specialist reviews it.</span></p></div>
+        <div class="tl-pt" data-p="3"><span class="mono idx">03</span><p>The prompt forbids invented employers, titles or numbers. Output is checked against a Zod schema, and a deterministic rules provider takes over when no key is set or a call fails.</p></div>
+      </div>
+    </div>
+    <div class="tl-view">
+      <div class="tl-win"><img class="tl-img" src="assets/shots/tailoring-full.webp" alt="Tailoring workspace" /></div>
+      <div class="tl-focus"></div>
+    </div>
+    <div class="tl-sample mono">Real tailoring workspace · demo mode, fictional sample data</div>
+    <aside class="notes" data-duration="2:00">
+      <h4>Say</h4>
+      <p>“Of everything Skylark does, this is where trust matters most, because AI touches the candidate’s own story.”</p>
+      <p>Step 1: zoom to a suggestion. “Original on the left, suggested on the right, and the reason underneath: this version surfaces TypeScript, which the role requires.”</p>
+      <p>Step 2: the control panel. “Nothing is applied until the candidate accepts. They approve the version, and only then can it go to a specialist.”</p>
+      <p>Step 3: “The prompt forbids inventing employers, titles or numbers. Claude’s output is validated against a Zod schema, and if the call fails or there’s no key, a deterministic rules provider produces the result. An outage never blocks a candidate.”</p>
+      <h4>If asked</h4>
+      <p><b>Which model?</b> Claude through the Anthropic SDK for tailoring and resume extraction; Gemini for chat-style onboarding. Both optional.</p>
+      <h4>Transition</h4>
+      <p>“Let’s put it all together as a candidate experiences it.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 13 · USER JOURNEY -->
+  <section class="slide" data-id="journey" data-title="User journey" data-steps="6">
+    <div class="jr-head">
+      <div class="eyebrow">11 · User journey</div>
+      <h2 class="h-m">From sign-in to <span class="it">submitted.</span></h2>
+    </div>
+    <div class="jr-scene">
+      <div class="jr-device">
+        <div class="shot has-bar jr-win"><div class="bar"><i></i><i></i><i></i><span class="jr-url">skylarkgo.in</span></div>
+          <div class="jr-screens">
+            <img data-s="0" src="assets/shots/landing.webp" alt="" />
+            <img data-s="1" src="assets/shots/login.webp" alt="" />
+            <img data-s="2" src="assets/shots/dashboard.webp" alt="" />
+            <img data-s="3" src="assets/shots/jobs.webp" alt="" />
+            <img data-s="4" src="assets/shots/job-detail.webp" alt="" />
+            <img data-s="5" src="assets/shots/tailoring.webp" alt="" />
+            <img data-s="6" src="assets/shots/tracker.webp" alt="" />
+          </div>
+          <svg class="jr-cursor" viewBox="0 0 24 24"><path d="M3 2l7.5 19 2.6-7.4L20.5 11z" fill="#111" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>
+          <div class="jr-ripple"></div>
+        </div>
+      </div>
+    </div>
+    <ol class="jr-steps mono">
+      <li data-s="0">Arrive</li><li data-s="1">Sign in</li><li data-s="2">Today’s matches</li><li data-s="3">Ranked roles</li><li data-s="4">Why it fits</li><li data-s="5">Approve changes</li><li data-s="6">Track it</li>
+    </ol>
+    <div class="jr-sample mono">Real screens · demo mode · fictional sample data</div>
+    <aside class="notes" data-duration="2:00">
+      <h4>Say</h4>
+      <p>Narrate as the cursor moves; each click is one moment in the journey.</p>
+      <ol><li><b>Sign in</b> with email (verification codes over SMTP) or Google.</li>
+      <li><b>Dashboard:</b> today’s matches and the day’s application progress.</li>
+      <li><b>Ranked roles:</b> every role scored, filterable by country, eligibility and minimum fit.</li>
+      <li><b>Why it fits:</b> the seven-factor breakdown with eligibility and sponsorship.</li>
+      <li><b>Approve changes:</b> accept or keep the original, then approve the version.</li>
+      <li><b>Track it:</b> saved, preparing, human review, applied, then screening, interview and offer.</li></ol>
+      <h4>If asked</h4>
+      <p><b>Mobile?</b> Yes: a bottom tab bar, one tracker column at a time. The end-to-end suite runs phone-width layouts.</p>
+      <h4>Transition</h4>
+      <p>“A few engineering decisions make that experience trustworthy.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 14 · ENGINEERING HIGHLIGHTS -->
+  <section class="slide" data-id="engineering" data-title="Engineering highlights" data-steps="4">
+    <div class="frame"><i class="reg tl"></i><i class="reg tr"></i><i class="reg bl"></i><i class="reg br"></i></div>
+    <div class="eg-head">
+      <div class="eyebrow">12 · Engineering highlights</div>
+    </div>
+    <div class="eg-spine"><i class="eg-dot"></i></div>
+    <ol class="eg-list">
+      <li data-k="0"><span class="serif n">i</span>Tested against real Postgres</li>
+      <li data-k="1"><span class="serif n">ii</span>One interface, two stores</li>
+      <li data-k="2"><span class="serif n">iii</span>AI with a deterministic fallback</li>
+      <li data-k="3"><span class="serif n">iv</span>Fail closed, never invent</li>
+      <li data-k="4"><span class="serif n">v</span>Idempotent by design</li>
+    </ol>
+    <div class="eg-stage">
+      <div class="eg-d" data-k="0"><h3 class="h-m">Security claims are <span class="it">tested,</span> not asserted.</h3><p class="lede">Every migration runs in an in-process Postgres (PGlite). The suite proves candidates can’t read each other’s rows, promote themselves or forge AI-authored events.</p><div class="eg-why mono"><b>Why it matters</b> It caught a column REVOKE that did nothing while a table-wide grant existed.</div></div>
+      <div class="eg-d" data-k="1"><h3 class="h-m">One repository interface, <span class="it">two stores.</span></h3><p class="lede">Supabase Postgres in production. An in-memory seeded store when the variables are absent.</p><div class="eg-why mono"><b>Why it matters</b> The whole product runs locally with zero setup, and services never know which store they use.</div></div>
+      <div class="eg-d" data-k="2"><h3 class="h-m">AI behind an interface, <span class="it">never in charge.</span></h3><p class="lede">Product code calls AIProvider, never a model SDK. Output is validated against a Zod schema.</p><div class="eg-why mono"><b>Why it matters</b> If a call fails or no key is set, the rules provider answers. An outage never blocks a candidate.</div></div>
+      <div class="eg-d" data-k="3"><h3 class="h-m">Fail closed. <span class="it">Never invent.</span></h3><p class="lede">If skill vocabularies are down, verification says so. If exchange rates can’t be fetched, prices stay in INR. If job data is stale, candidates are told.</p><div class="eg-why mono"><b>Why it matters</b> A candidate never sees a confident answer the system doesn’t have.</div></div>
+      <div class="eg-d" data-k="4"><h3 class="h-m">Idempotent <span class="it">by design.</span></h3><p class="lede">Every enqueue carries a key. Workers claim with <code>FOR UPDATE SKIP LOCKED</code>. Saving a job sends an Idempotency-Key.</p><div class="eg-why mono"><b>Why it matters</b> A retried cron or a double click can’t schedule or save anything twice.</div></div>
+    </div>
+    <div class="chrome-meta"><span>Skylark</span><span><b>14</b> / Engineering highlights</span></div>
+    <aside class="notes" data-duration="2:30">
+      <h4>Say</h4>
+      <p>“Five decisions, and why each one matters.” One click per decision.</p>
+      <ul><li><b>Tested against real Postgres:</b> the policy suite applies every migration to PGlite and proves the RLS rules. It caught a column REVOKE that did nothing, and a REVOKE EXECUTE that left the default PUBLIC grant in place.</li>
+      <li><b>One interface, two stores:</b> zero-setup local runs; services are store-agnostic.</li>
+      <li><b>AI with a fallback:</b> Zod-validated output; rules provider on failure.</li>
+      <li><b>Fail closed:</b> say “unavailable” rather than guess.</li>
+      <li><b>Idempotent:</b> keys on every enqueue and on mutating API calls; SKIP LOCKED so many workers can drain the queue without double-processing.</li></ul>
+      <h4>If asked</h4>
+      <p><b>Why PGlite?</b> It runs the real Postgres engine in-process, so policy tests run in CI-like conditions without Docker.</p>
+      <h4>Transition</h4>
+      <p>“Here are the technologies that carry those decisions.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 15 · TECHNOLOGY -->
+  <section class="slide" data-id="stack" data-title="Technology" data-steps="3">
+    <div class="st-head">
+      <div class="eyebrow">13 · Technology</div>
+      <h2 class="h-m">Every tool has <span class="it">a job.</span></h2>
+    </div>
+    <svg class="st-svg" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+    <div class="st-legend mono"><span data-step="1"><i class="a"></i>Interface</span><span data-step="2"><i class="b"></i>Data &amp; services</span><span data-step="3"><i class="c"></i>Delivery &amp; quality</span></div>
+    <div class="chrome-meta"><span>Skylark</span><span><b>15</b> / Technology</span></div>
+    <aside class="notes" data-duration="1:45">
+      <h4>Say</h4>
+      <p>“Rather than a wall of logos, here is what each tool does.” At the centre: Next.js 16 with React 19.</p>
+      <ul><li><b>Interface:</b> Tailwind v4 and Radix for accessible app UI; Framer Motion in the app; GSAP, Lenis and WebGL for the marketing site; Zod 4 validates on the server and drives inline feedback.</li>
+      <li><b>Data and services:</b> Supabase (Postgres with RLS, Auth with email and Google, Storage); Claude for tailoring and resume extraction; Gemini for chat onboarding; Razorpay subscriptions in INR; Nodemailer over SMTP for verification codes.</li>
+      <li><b>Delivery and quality:</b> Vercel in Sydney with Vercel Cron; Vitest, PGlite and Playwright.</li></ul>
+      <h4>If asked</h4>
+      <p><b>Why Razorpay?</b> The business is Indian; Razorpay subscriptions charge in INR with signature-verified webhooks.</p>
+      <h4>Transition</h4>
+      <p>“Because this handles people’s identities and documents, security is built in layers.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 16 · SECURITY -->
+  <section class="slide" data-id="security" data-title="Security and privacy" data-steps="3">
+    <div class="frame"><i class="reg tl"></i><i class="reg tr"></i><i class="reg bl"></i><i class="reg br"></i></div>
+    <div class="sc-copy">
+      <div class="eyebrow">14 · Security, reliability &amp; privacy</div>
+      <h2 class="h-m">Enforced by the database, <span class="it">not only by code.</span></h2>
+      <ul class="sc-list">
+        <li data-step="3"><b>Storage</b> Private bucket, per-user folders, magic-byte checks, short-lived signed URLs.</li>
+        <li data-step="3"><b>Abuse</b> Postgres-backed rate limits, safe-redirect validation, idempotency keys.</li>
+        <li data-step="3"><b>Observability</b> Structured logs with secret redaction, append-only audit trail.</li>
+        <li data-step="3"><b>Privacy</b> Export everything held about you, or delete your account, from Settings.</li>
+        <li data-step="3"><b>Evidence</b> GitHub data is shown as evidence, never as a verified credential.</li>
+      </ul>
+    </div>
+    <svg class="sc-svg" viewBox="0 0 1920 1080" aria-hidden="true"></svg>
+    <div class="chrome-meta"><span>Skylark</span><span><b>16</b> / Security and privacy</span></div>
+    <aside class="notes" data-duration="2:00">
+      <h4>Say</h4>
+      <p>“Each ring is a real layer in the code.” Outside in: proxy.ts as an early gate; a data access layer that re-checks authorization everywhere; row level security on every table; column privileges so nobody can change their own role or email; and EEO answers whose SELECT is revoked from every browser role.</p>
+      <p>Step 2: “A request for another candidate’s rows gets through the app, and the database still says no.”</p>
+      <p>Step 3: storage, abuse controls, observability, privacy export and deletion, and the rule that GitHub data is evidence only.</p>
+      <h4>If asked</h4>
+      <p><b>Who can read EEO answers?</b> No browser session, including the owner. A specialist must name the form that needs it, and each unlock is audited.</p>
+      <p><b>Promo codes?</b> Not readable from the browser; quoted server-side with per-IP rate limits and redeemed only on a successful payment.</p>
+      <h4>Transition</h4>
+      <p>“Enough diagrams. Let’s see it running.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 17 · LIVE DEMO -->
+  <section class="slide" data-id="demo" data-title="Product demonstration">
+    <div class="dm-head">
+      <div class="eyebrow">15 · Product demonstration</div>
+      <h2 class="h-m">See it <span class="it">running.</span></h2>
+    </div>
+    <div class="dm-scene">
+      <div class="shot has-bar dm-win interactive"><div class="bar"><i></i><i></i><i></i><span>Recorded from the running app · demo mode</span></div>
+        <video class="dm-video" src="assets/media/demo-recording.mp4" poster="assets/media/demo-poster.webp" muted loop playsinline preload="auto"></video>
+      </div>
+    </div>
+    <div class="dm-keys mono">
+      <span><b>L</b> Open the live product</span><span><b>V</b> Play / pause recording</span><span><b>←→</b> continue</span>
+    </div>
+    <div class="dm-sample mono">Recording: demo mode, fictional sample data · Live: <span class="dm-live-url">skylarkgo.in</span></div>
+    <aside class="notes" data-duration="3:00">
+      <h4>Say</h4>
+      <p>“This is a recording from the running app, so the talk doesn’t depend on the venue’s Wi-Fi. If the connection is good, press L to open the live site.”</p>
+      <h4>Demo script (live)</h4>
+      <ol><li>Open skylarkgo.in. Show the landing page and pricing (INR plans).</li>
+      <li>Sign in (Google or email code). Show the dashboard.</li>
+      <li>Open Job intelligence, pick a role, open “Why it matches”.</li>
+      <li>Open the tailoring workspace, accept one suggestion.</li>
+      <li>Show the tracker.</li></ol>
+      <p>For a local run: <code>npm run dev</code>, then open the deck with <code>?live=http://localhost:3000</code> and press L. Demo mode has a one-click Candidate sign-in.</p>
+      <h4>Fallback</h4>
+      <p>The site sends X-Frame-Options DENY, so it opens in its own window rather than inside the slide. If anything fails, stay on the recording (V pauses it).</p>
+      <h4>Transition</h4>
+      <p>“So where does the project stand today?”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 18 · RESULTS -->
+  <section class="slide" data-id="results" data-title="Results and validation" data-steps="1">
+    <div class="frame"><i class="reg tl"></i><i class="reg tr"></i><i class="reg bl"></i><i class="reg br"></i></div>
+    <div class="rs-head">
+      <div class="eyebrow">16 · Results &amp; validation</div>
+      <h2 class="h-m">Live, tested, <span class="it">and shipping.</span></h2>
+    </div>
+    <div class="rs-nums">
+      <div class="rs-n"><div class="serif v" data-to="264">0</div><div class="mono l">automated tests passing<br /><span class="dim">unit + database policy · 24 files</span></div></div>
+      <div class="rs-n"><div class="serif v" data-to="15">0</div><div class="mono l">database migrations<br /><span class="dim">every one applied in the policy suite</span></div></div>
+      <div class="rs-n"><div class="serif v" data-to="22">0</div><div class="mono l">pull requests merged<br /><span class="dim">8 Oct – 24 Nov 2026</span></div></div>
+      <div class="rs-n"><div class="serif v" data-to="16">0</div><div class="mono l">Greenhouse boards by default<br /><span class="dim">plus Arbeitnow, keyless</span></div></div>
+    </div>
+    <div class="rs-time" data-step="1">
+      <div class="rs-line"></div>
+      <div class="rs-m" style="--x:0"><b class="mono">08 Oct</b><span>First build</span></div>
+      <div class="rs-m" style="--x:1"><b class="mono">20 Oct</b><span>Live on Supabase and Vercel, Google sign-in</span></div>
+      <div class="rs-m" style="--x:2"><b class="mono">21 Nov</b><span>skylarkgo.in</span></div>
+      <div class="rs-m" style="--x:3"><b class="mono">22 Nov</b><span>Razorpay subscriptions, chat onboarding, support inbox</span></div>
+      <div class="rs-m" style="--x:4"><b class="mono">23 Nov</b><span>Global job boards, email verification codes</span></div>
+      <div class="rs-m" style="--x:5"><b class="mono">24 Nov</b><span>Security patch from a full-site audit</span></div>
+    </div>
+    <div class="rs-src mono">Sources: <code>npm test</code> run on 24 Nov 2026 · <code>supabase/migrations</code> · git history · <code>src/lib/env.ts</code></div>
+    <div class="chrome-meta"><span>Skylark</span><span><b>18</b> / Results and validation</span></div>
+    <aside class="notes" data-duration="1:30">
+      <h4>Say</h4>
+      <p>“Everything on this slide is verifiable from the repository.”</p>
+      <ul><li>264 automated tests across 24 files pass, including the database-policy suite.</li>
+      <li>15 migrations, every one applied in that suite.</li>
+      <li>22 pull requests merged between 8 October and 24 November 2026.</li>
+      <li>16 Greenhouse boards by default, plus Arbeitnow.</li></ul>
+      <p>Step 1: the milestones, from first build to a production product with payments, sign-in and a security audit.</p>
+      <h4>If asked</h4>
+      <p><b>Users or revenue?</b> We are not presenting user or revenue numbers. The product is live and taking subscriptions; usage figures would come from the production database.</p>
+      <h4>Transition</h4>
+      <p>“And here’s what comes next.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 19 · ROADMAP -->
+  <section class="slide" data-id="roadmap" data-title="Roadmap" data-steps="1">
+    <div class="rm-head">
+      <div class="eyebrow">17 · Roadmap</div>
+      <h2 class="h-m">Built. <span class="it">Next.</span></h2>
+    </div>
+    <div class="rm-now">
+      <div class="mono k"><i></i>Implemented</div>
+      <ul><li>Seven-factor explainable matching</li><li>AI tailoring with per-change approval</li><li>Specialist review and managed delivery</li><li>Answer vault with locked EEO answers</li><li>Razorpay subscriptions in INR</li><li>Google sign-in and email codes</li><li>Privacy export and account deletion</li></ul>
+    </div>
+    <div class="rm-next" data-step="1">
+      <div class="mono k"><i></i>Planned</div>
+      <ul><li>Match every candidate against the whole catalogue</li><li>Paginate the operations console</li><li>SEO groundwork: robots, sitemap, share image</li><li>Performance, mobile call to action, accessibility</li><li>Continuous integration on every pull request</li><li>Password reset on the new SMTP mailer</li><li>Re-normalise edited listings; more India sources</li></ul>
+    </div>
+    <div class="rm-axis mono"><span>Today</span></div>
+    <div class="chrome-meta"><span>Skylark</span><span><b>19</b> / Roadmap</span></div>
+    <aside class="notes" data-duration="1:15">
+      <h4>Say</h4>
+      <p>“Left of the line is shipped and live. Right of it is planned.” Click to reveal the plan.</p>
+      <ul><li>Matching currently reads the newest 5,000 listings; next it covers the whole catalogue.</li>
+      <li>The site-review items: SEO basics, performance and accessibility, and CI on every PR.</li>
+      <li>A password reset flow on top of the SMTP mailer; re-normalising edited listings; more sources for India via Adzuna.</li></ul>
+      <h4>If asked</h4>
+      <p><b>Timeline?</b> These come from the project’s open work and a full-site audit; several are already in review.</p>
+      <h4>Transition</h4>
+      <p>“Which brings it back to three promises.”</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 20 · STATEMENT -->
+  <section class="slide" data-id="statement" data-title="Closing statement" data-steps="2">
+    <div class="sm-mark"><svg viewBox="20.67 282.5 294.66 241.5"><polygon class="sh sh0" points="44.67,306.5 210.83,400.33 98.33,411"/><polygon class="sh sh1" points="233.5,408.17 108.67,500 151.83,416"/><polygon class="sh sh2" points="291.33,315.33 219.33,392.5 187.33,374.67 215.83,338.17"/></svg></div>
+    <div class="sm-lines">
+      <p class="sm-l" data-k="0"><span class="mono">01</span><span class="txt">Every score, <span class="it">explained.</span></span></p>
+      <p class="sm-l" data-k="1"><span class="mono">02</span><span class="txt">Every change, <span class="it">approved by you.</span></span></p>
+      <p class="sm-l" data-k="2"><span class="mono">03</span><span class="txt">Every application, <span class="it">checked by a human.</span></span></p>
+    </div>
+    <aside class="notes" data-duration="0:45">
+      <h4>Say</h4>
+      <p>Slowly, one line per click. “Every score, explained. Every change, approved by you. Every application, checked by a human.”</p>
+      <p>“That’s Skylark: fewer applications, each one you can actually take.”</p>
+      <h4>Transition</h4>
+      <p>Click once more for the close.</p>
+    </aside>
+  </section>
+
+  <!-- ============================================================ 21 · CLOSE -->
+  <section class="slide" data-id="closing" data-title="Thank you">
+    <div class="cl-logo"><div class="logo-svg" data-logo="closing"></div></div>
+    <div class="cl-q serif">Thank you. <span class="it">Questions?</span></div>
+    <div class="cl-links mono">
+      <span><b>Live</b> www.skylarkgo.in</span>
+      <span><b>Code</b> github.com/rohanmalyadri/SkyLark</span>
+    </div>
+    <div class="cl-team mono"><span>Team Synapse X · Rohan Malyadri · Meda Abhiram</span><span>An Obscuron X Labs product</span></div>
+    <aside class="notes" data-duration="open">
+      <h4>Say</h4>
+      <p>“Thank you. Skylark is live at skylarkgo.in and the code is on GitHub. Happy to take questions.”</p>
+      <h4>Likely questions</h4>
+      <ul><li><b>How is this different from LinkedIn Easy Apply?</b> Eligibility is part of the score, every score is explained, every AI change needs approval, and a human reviews before anything is sent.</li>
+      <li><b>What if the AI is down?</b> A deterministic rules provider produces the result; tailoring keeps working.</li>
+      <li><b>How do you stop data leaks between candidates?</b> Row level security on every table, proven by tests against real Postgres.</li>
+      <li><b>How do you make money?</b> Subscriptions in INR through Razorpay (Entry, Professional, Executive), with a daily application quota per plan.</li>
+      <li><b>Where are the jobs from?</b> Public APIs only: Arbeitnow, Greenhouse boards, and Adzuna, The Muse and Lever when configured.</li></ul>
+      <p>Press R to replay the logo. Home returns to the start.</p>
+    </aside>
+  </section>
+</div>
+</div>
+
+<div id="blackout"></div>
+<div id="progress"></div>
+<div id="counter"></div>
+<div id="help">→ next · ← back · F fullscreen · M overview · N notes · P presenter</div>
+<div id="skip">Press any key to skip</div>
+<div id="notes-panel"></div>
+<div id="overview"><div class="ov-head"><span>Skylark · Slide overview</span><span>Esc to close · click a slide to jump</span></div><div class="grid"></div></div>
+<div id="goto"></div>
+<div id="gate"><div class="bar"><i></i></div><div class="msg">Loading</div><div class="keys">→ / Space next · ← back · F fullscreen · R replay · M overview · N notes · P presenter view · type a number + Enter to jump</div></div>
+
+<script src="assets/vendor/gsap.min.js"></script>
+<script src="assets/vendor/three.min.js"></script>
+<script src="js/data/land.js"></script>
+<script src="js/data/brand.js"></script>
+<script src="js/world.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/slides.js"></script>
+</body>
+</html>
