@@ -1,0 +1,7 @@
+node_modules
+dist
+out
+renders
+.DS_Store
+.env
+*.mp4
