@@ -175,258 +175,262 @@ from saved, to applied, to interview.
 Under the surface, Skylark is a pipeline.
 
 45
-00:02:04,045 --> 00:02:06,388
+00:02:04,045 --> 00:02:06,558
 Listings arrive from public job APIs:
 
 46
-00:02:06,418 --> 00:02:09,638
+00:02:06,588 --> 00:02:09,660
 Arbeitnow, sixteen Greenhouse company boards,
 
 47
-00:02:09,668 --> 00:02:12,662
+00:02:09,690 --> 00:02:12,685
 and others when they're configured.
 
 48
-00:02:13,082 --> 00:02:15,914
+00:02:13,105 --> 00:02:15,938
 Each posting is cleaned from raw HTML into a
 
 49
-00:02:15,944 --> 00:02:18,971
+00:02:15,968 --> 00:02:18,995
 title, seniority, location, salary,
 
 50
-00:02:19,001 --> 00:02:20,697
+00:02:19,025 --> 00:02:20,721
 sponsorship and skills.
 
 51
-00:02:21,117 --> 00:02:23,326
-A SHA-256 fingerprint collapses duplicates.
+00:02:21,141 --> 00:02:22,844
+An SHA-256 fingerprint collapses duplicates.
 
 52
-00:02:23,356 --> 00:02:27,412
+00:02:22,874 --> 00:02:28,192
 Stale listings are closed, and if nothing has
 
 53
-00:02:27,442 --> 00:02:29,753
+00:02:28,222 --> 00:02:29,908
 refreshed in twenty-four hours,
 
 54
-00:02:29,783 --> 00:02:31,236
+00:02:29,938 --> 00:02:32,018
 candidates are told.
 
 55
-00:02:32,006 --> 00:02:34,244
+00:02:32,788 --> 00:02:35,026
 Then the match engine scores every role
 
 56
-00:02:34,274 --> 00:02:35,676
+00:02:35,056 --> 00:02:36,458
 against your profile.
 
 57
-00:02:36,096 --> 00:02:38,344
+00:02:36,878 --> 00:02:39,126
 Skills carry thirty percent.
 
 58
-00:02:38,374 --> 00:02:40,378
+00:02:39,156 --> 00:02:41,160
 Eligibility, twenty.
 
 59
-00:02:40,408 --> 00:02:42,537
+00:02:41,190 --> 00:02:43,319
 Experience, eighteen.
 
 60
-00:02:42,567 --> 00:02:44,355
+00:02:43,349 --> 00:02:45,137
 Location, twelve.
 
 61
-00:02:44,385 --> 00:02:46,389
+00:02:45,167 --> 00:02:47,171
 Sponsorship, eight.
 
 62
-00:02:46,419 --> 00:02:48,355
+00:02:47,201 --> 00:02:49,137
 Preferences, seven.
 
 63
-00:02:48,385 --> 00:02:50,101
+00:02:49,167 --> 00:02:50,883
 And education, five.
 
 64
-00:02:50,441 --> 00:02:52,889
+00:02:51,223 --> 00:02:53,671
 The score is simply their weighted sum.
 
 65
-00:02:53,569 --> 00:02:56,819
+00:02:54,351 --> 00:02:57,601
 Now, here's the rule that matters most.
 
 66
-00:02:56,849 --> 00:02:59,808
+00:02:57,631 --> 00:03:00,590
 If a role won't sponsor someone who needs it,
 
 67
-00:02:59,838 --> 00:03:02,069
+00:03:00,620 --> 00:03:02,851
 the score is capped at thirty-five.
 
 68
-00:03:02,489 --> 00:03:04,379
+00:03:03,271 --> 00:03:05,161
 However strong your skills look,
 
 69
-00:03:04,409 --> 00:03:06,550
+00:03:05,191 --> 00:03:07,331
 a job you can't legally take will never
 
 70
-00:03:06,580 --> 00:03:08,012
+00:03:07,361 --> 00:03:08,794
 outrank one you can.
 
 71
-00:03:08,952 --> 00:03:11,436
+00:03:09,734 --> 00:03:12,218
 The product itself is one Next.js application:
 
 72
-00:03:11,466 --> 00:03:14,886
+00:03:12,248 --> 00:03:15,668
 the public website, the candidate app,
 
 73
-00:03:14,916 --> 00:03:18,451
+00:03:15,698 --> 00:03:19,233
 an operations console and a shared inbox.
 
 74
-00:03:18,871 --> 00:03:21,149
+00:03:19,653 --> 00:03:21,931
 Every service talks to a single repository
 
 75
-00:03:21,179 --> 00:03:23,895
+00:03:21,961 --> 00:03:24,665
 interface. In production, that's Supabase
 
 76
-00:03:23,925 --> 00:03:28,159
+00:03:24,695 --> 00:03:29,029
 Postgres, with row level security on every table.
 
 77
-00:03:28,579 --> 00:03:31,382
+00:03:29,449 --> 00:03:32,253
 Without credentials, the same interface runs
 
 78
-00:03:31,412 --> 00:03:33,753
+00:03:32,283 --> 00:03:34,623
 on a seeded in-memory store.
 
 79
-00:03:33,783 --> 00:03:36,366
+00:03:34,653 --> 00:03:37,237
 So the whole product works on a laptop,
 
 80
-00:03:36,396 --> 00:03:37,596
+00:03:37,267 --> 00:03:38,467
 with zero setup.
 
 81
-00:03:38,186 --> 00:03:40,474
+00:03:39,057 --> 00:03:41,345
 Security isn't assumed.
 
 82
-00:03:40,504 --> 00:03:43,974
-It's tested. The suite applies every migration
+00:03:41,375 --> 00:03:44,618
+It's tested. The test suite applies every
 
 83
-00:03:44,004 --> 00:03:47,088
-to a real Postgres engine, and proves that one
+00:03:44,648 --> 00:03:47,220
+migration to a real Postgres engine,
 
 84
-00:03:47,118 --> 00:03:49,827
-candidate can never read another's data.
+00:03:47,250 --> 00:03:49,925
+and proves that one candidate can never read
 
 85
-00:03:50,417 --> 00:03:53,381
-AI sits behind an interface too.
+00:03:49,955 --> 00:03:51,085
+another's data.
 
 86
-00:03:53,411 --> 00:03:56,086
-Claude drafts the tailoring, and its output is
+00:03:51,675 --> 00:03:54,638
+AI sits behind an interface too.
 
 87
-00:03:56,116 --> 00:03:58,495
-validated against a schema.
+00:03:54,668 --> 00:03:57,343
+Claude drafts the tailoring, and its output is
 
 88
-00:03:58,525 --> 00:04:01,177
-If the model is unavailable, a deterministic
+00:03:57,373 --> 00:03:59,752
+validated against a schema.
 
 89
-00:04:01,207 --> 00:04:03,001
-rules engine takes over.
+00:03:59,782 --> 00:04:02,434
+If the model is unavailable, a deterministic
 
 90
-00:04:03,511 --> 00:04:06,353
-Background work runs through a queue.
+00:04:02,464 --> 00:04:04,258
+rules engine takes over.
 
 91
-00:04:06,383 --> 00:04:09,171
-Every task carries an idempotency key,
+00:04:04,768 --> 00:04:07,610
+Background work runs through a queue.
 
 92
-00:04:09,201 --> 00:04:11,387
-no two workers claim the same job,
+00:04:07,640 --> 00:04:10,428
+Every task carries an idempotency key,
 
 93
-00:04:11,417 --> 00:04:14,637
-and failures back off before they're set aside.
+00:04:10,458 --> 00:04:12,644
+no two workers claim the same job,
 
 94
-00:04:15,487 --> 00:04:19,048
-Today, Skylark is live at skylarkgo.in.
+00:04:12,674 --> 00:04:15,894
+and failures back off before they're set aside.
 
 95
-00:04:19,468 --> 00:04:21,295
-Live job listings.
+00:04:16,744 --> 00:04:20,306
+Today, Skylark is live at skylarkgo.in.
 
 96
-00:04:21,325 --> 00:04:24,913
-Google sign-in. Chat-style onboarding.
+00:04:20,726 --> 00:04:22,552
+Live job listings.
 
 97
-00:04:24,943 --> 00:04:27,984
-Subscriptions in rupees through Razorpay.
+00:04:22,582 --> 00:04:26,171
+Google sign-in. Chat-style onboarding.
 
 98
-00:04:28,014 --> 00:04:29,672
-And a specialist review queue with a
+00:04:26,201 --> 00:04:29,241
+Subscriptions in rupees through Razorpay.
 
 99
-00:04:29,702 --> 00:04:31,278
-twenty-four hour target.
+00:04:29,271 --> 00:04:30,929
+And a specialist review queue with a
 
 100
-00:04:31,788 --> 00:04:35,111
-Next, we're adding more job sources for India,
+00:04:30,959 --> 00:04:32,535
+twenty-four hour target.
 
 101
-00:04:35,141 --> 00:04:37,271
-and matching every candidate against the
+00:04:33,045 --> 00:04:36,368
+Next, we're adding more job sources for India,
 
 102
-00:04:37,301 --> 00:04:38,512
-entire catalogue.
+00:04:36,398 --> 00:04:38,528
+and matching every candidate against the
 
 103
-00:04:39,452 --> 00:04:42,974
-Skylark doesn't try to send more applications.
+00:04:38,558 --> 00:04:39,769
+entire catalogue.
 
 104
-00:04:43,004 --> 00:04:44,959
-It tries to send the right ones,
+00:04:40,709 --> 00:04:44,231
+Skylark doesn't try to send more applications.
 
 105
-00:04:44,989 --> 00:04:46,219
-and to show you why.
+00:04:44,261 --> 00:04:46,216
+It tries to send the right ones,
 
 106
-00:04:46,809 --> 00:04:48,690
-Fewer applications.
+00:04:46,246 --> 00:04:47,476
+and to show you why.
 
 107
-00:04:48,720 --> 00:04:52,479
-Better reasons. And a person checking every one.
+00:04:48,066 --> 00:04:49,948
+Fewer applications.
 
 108
-00:04:53,499 --> 00:04:57,636
+00:04:49,978 --> 00:04:53,737
+Better reasons. And a person checking every one.
+
+109
+00:04:54,757 --> 00:04:58,893
 Skylark. Your next move, already in motion.
 

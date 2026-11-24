@@ -5,3 +5,6 @@ renders
 .DS_Store
 .env
 *.mp4
+production/audio/*.wav
+production/audio/*.flac
+production/audio/*.m4a
