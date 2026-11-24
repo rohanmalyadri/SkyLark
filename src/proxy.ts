@@ -3,7 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { DEMO_SESSION_COOKIE, demoSessionSecret, verifyDemoToken } from "@/lib/auth/demo-session";
 import { POSTS } from "@/lib/content/posts";
 
-const PROTECTED = ["/dashboard", "/jobs", "/applications", "/messages", "/profile", "/settings", "/onboarding", "/obscuron-nexus-92vX7q"];
+const PROTECTED = ["/dashboard", "/jobs", "/applications", "/messages", "/profile", "/settings", "/onboarding"];
+/** The staff console. Signed-out visitors get the same 404 as any missing page, so its address isn't confirmed. */
+const ADMIN_BASE = "/obscuron-nexus-92vX7q";
 const AUTH_PAGES = ["/login", "/signup"];
 
 /** The blog is compiled in, so the full set of valid slugs is known here too. */
@@ -47,6 +49,13 @@ export async function proxy(request: NextRequest) {
   // A dead article URL must answer 404 on its first request, not stream a 200 shell.
   const blogSlug = path.startsWith("/blog/") ? path.slice("/blog/".length) : null;
   if (blogSlug && !blogSlug.includes("/") && !POST_SLUGS.has(blogSlug)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/blog-not-found";
+    url.search = "";
+    return NextResponse.rewrite(url);
+  }
+
+  if (!signedIn && (path === ADMIN_BASE || path.startsWith(`${ADMIN_BASE}/`))) {
     const url = request.nextUrl.clone();
     url.pathname = "/blog-not-found";
     url.search = "";

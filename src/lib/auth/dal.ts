@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 import { cache } from "react";
 import { userRepo } from "@/lib/data";
@@ -51,9 +51,10 @@ export async function requireCandidate(): Promise<User> {
   return user;
 }
 
+/** Staff pages answer 404 to everyone else, so the console's address isn't confirmed by a redirect. */
 export async function requireStaff(): Promise<User> {
-  const user = await requireUser();
-  if (!isStaff(user)) redirect("/dashboard");
+  const user = await getCurrentUser();
+  if (!user || !isStaff(user)) notFound();
   return user;
 }
 
