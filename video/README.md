@@ -61,7 +61,12 @@ cd ../..
 
 # 3. Picture (audio is muxed afterwards, so renders are silent)
 npx remotion render SkylarkFilm renders/film-1080p-video.mp4 --gl=swangle --crf=16 --muted
-npx remotion render SkylarkFilm renders/film-4k-video.mp4 --gl=swangle --scale=2 --crf=18 --muted
+# 4K: render in chunks with low concurrency (concurrency 4 at 4K crashes the browser near the end), then join
+npx remotion render SkylarkFilm renders/k4-a.mp4 --gl=swangle --scale=2 --crf=18 --muted --concurrency=2 --frames=0-3899
+npx remotion render SkylarkFilm renders/k4-b.mp4 --gl=swangle --scale=2 --crf=18 --muted --concurrency=2 --frames=3900-7799
+npx remotion render SkylarkFilm renders/k4-c.mp4 --gl=swangle --scale=2 --crf=18 --muted --concurrency=1 --frames=7800-9116
+printf "file 'k4-a.mp4'\nfile 'k4-b.mp4'\nfile 'k4-c.mp4'\n" > renders/k4.txt
+ffmpeg -f concat -safe 0 -i renders/k4.txt -c copy renders/film-4k-video.mp4
 npx remotion render SkylarkFilmSubtitled renders/film-1080p-sub-video.mp4 --gl=swangle --crf=16 --muted
 npx remotion still Thumbnail renders/thumbnail.png --scale=2
 
