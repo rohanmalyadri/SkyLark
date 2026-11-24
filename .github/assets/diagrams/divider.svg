@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 36" width="1600" height="36" role="img" aria-labelledby="t d">
+<title id="t">Section divider</title>
+<desc id="d">A thin rule with the Skylark mark at its centre.</desc>
+<defs>
+<linearGradient id="lineL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8A919C" stop-opacity="0"/><stop offset="1" stop-color="#8A919C" stop-opacity="0.55"/></linearGradient>
+<linearGradient id="lineR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8A919C" stop-opacity="0.55"/><stop offset="1" stop-color="#8A919C" stop-opacity="0"/></linearGradient>
+<linearGradient id="pulse" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#F95135" stop-opacity="0"/><stop offset="0.5" stop-color="#F95135"/><stop offset="1" stop-color="#F95135" stop-opacity="0"/></linearGradient></defs>
+<style>
+@keyframes pulseL { 0% { transform: translateX(760px); opacity: 0; } 10% { opacity: 1; } 70% { opacity: 0.9; } 100% { transform: translateX(0); opacity: 0; } }
+@keyframes pulseR { 0% { transform: translateX(-760px); opacity: 0; } 10% { opacity: 1; } 70% { opacity: 0.9; } 100% { transform: translateX(0); opacity: 0; } }
+.pl { animation: pulseL 6s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+.pr { animation: pulseR 6s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; } }
+</style>
+
+<rect x="40" y="17.5" width="720" height="1" fill="url(#lineL)"/>
+<rect x="840" y="17.5" width="720" height="1" fill="url(#lineR)"/>
+<rect class="pl" x="0" y="17" width="120" height="2" fill="url(#pulse)"/>
+<rect class="pr" x="1480" y="17" width="120" height="2" fill="url(#pulse)"/>
+<g transform="translate(785.72 -16.28) scale(0.085)"><g fill="#F95135"><polygon points="44.67,306.5 210.83,400.33 98.33,411"/><polygon points="233.5,408.17 108.67,500 151.83,416"/><polygon points="291.33,315.33 219.33,392.5 187.33,374.67 215.83,338.17"/></g></g>
+</svg>
