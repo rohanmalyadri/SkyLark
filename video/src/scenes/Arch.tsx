@@ -88,14 +88,14 @@ export const Arch: React.FC = () => {
   });
 
   // ---------- 29 · policy tests ----------
-  const w29 = win(t, s29 - 0.4, s30 + 0.4, 0.6, 0.6);
+  const w29 = win(t, s29 - 0.4, s30 + 0.05, 0.6, 0.5);
   const probe = tw(t, W(29, "proves") - 0.2, W(29, "read") + 0.2, 0, 1, EIO);
   const hit = probe > 0.62;
   const bounce = hit ? tw(t, W(29, "read"), W(29, "data") + 0.6, 0, 1, EO) : 0;
   const pass = tw(t, W(29, "data") - 0.2, W(29, "data") + 0.5);
 
   // ---------- 30 · AI provider ----------
-  const w30 = win(t, s30 - 0.4, s31 + 0.4, 0.6, 0.6);
+  const w30 = win(t, s30 - 0.4, s31 + 0.05, 0.6, 0.5);
   const down = tw(t, W(30, "unavailable") - 0.2, W(30, "unavailable") + 0.4, 0, 1, EIO);
   const rules = tw(t, W(30, "deterministic") - 0.2, W(30, "over") + 0.2, 0, 1, EIO);
   const valid = tw(t, W(30, "validated") - 0.1, W(30, "schema") + 0.3, 0, 1, EIO);
@@ -309,11 +309,15 @@ const Queue: React.FC<{ t: number; s31: number; opacity: number }> = ({ t, s31, 
             <div style={{ position: "absolute", left: lerp(x, 240, dead), top: lerp(y, 860, dead), width: 96, height: 54, borderRadius: 10, background: "rgba(40,20,18,0.98)", border: `1.5px solid ${C.ember}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <span style={{ fontFamily: F.mono, fontSize: 13, color: C.ember }}>failed</span>
             </div>
-            {hops.slice(1).map((h, j) => (
-              <div key={j} style={{ position: "absolute", left: lerp(820, 560, h) + 20, top: 700, fontFamily: F.mono, fontSize: 16, color: C.mist, opacity: tw(k, h - 0.15, h) * (1 - dead) }}>
-                retry {j + 1} · wait {[1, 2, 4][j]}×
-              </div>
-            ))}
+            {(() => {
+              // one label riding with the card, counting up the backoff (labels used to overlap)
+              const j = Math.max(0, hops.slice(1).filter((h) => k >= h - 0.15).length - 1);
+              return (
+                <div style={{ position: "absolute", left: x - 40, top: y - 46, width: 176, textAlign: "center", fontFamily: F.mono, fontSize: 16, color: C.mist, opacity: tw(k, 0.13, 0.28) * (1 - dead) }}>
+                  retry {j + 1} · wait {[1, 2, 4][j]}×
+                </div>
+              );
+            })()}
             <div style={{ position: "absolute", left: 120, top: 840, width: 360, height: 96, borderRadius: 14, border: `1.5px dashed ${hexA(C.ember, 0.6)}`, opacity: tw(t, W(31, "set") - 0.6, W(31, "set")) }} />
             <div style={{ position: "absolute", left: 120, top: 950, opacity: tw(t, W(31, "set") - 0.6, W(31, "set")) }}>
               <Eyebrow size={14} color={C.ember}>Dead-letter</Eyebrow>
