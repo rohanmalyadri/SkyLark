@@ -64,7 +64,7 @@ export const Product: React.FC = () => {
   const gates: [string, number][] = [
     ["Curated taxonomy", W(11, "taxonomy")],
     ["Stack Overflow tags", W(11, "Overflow")],
-    ["ESCO", W(11, "Esco")],
+    ["ESCO", W(11, "Esko")],
   ];
   const dnsP = tw(t, W(11, "email") - 0.2, W(11, "verified") + 0.3, 0, 1, EIO);
 
@@ -213,7 +213,7 @@ export const Product: React.FC = () => {
             );
           })}
           {SKILLS.map((s, i) => {
-            const prog = tw(t, s11 + 0.2 + i * 0.12, W(11, "Esco") + 0.8 + i * 0.12, 0, 1, EIO);
+            const prog = tw(t, s11 + 0.2 + i * 0.12, W(11, "Esko") + 0.8 + i * 0.12, 0, 1, EIO);
             const x = lerp(230, 1500, prog);
             const passed = gates.filter(([, at], gi) => x > 600 + gi * 360 && t > at).length;
             return (

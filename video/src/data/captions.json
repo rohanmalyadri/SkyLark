@@ -1,547 +1,552 @@
 [
  {
-  "start": 2.4,
-  "end": 4.988,
-  "text": "Somewhere tonight, a software engineer in"
+  "start": 0.45,
+  "end": 2.726,
+  "text": "This job was never yours."
  },
  {
-  "start": 5.018,
-  "end": 7.575,
-  "text": "Bengaluru is sending another application to a"
+  "start": 3.026,
+  "end": 4.976,
+  "text": "Not because of your skills."
  },
  {
-  "start": 7.605,
-  "end": 8.962,
-  "text": "company in Berlin."
+  "start": 5.196,
+  "end": 8.261,
+  "text": "Because of a visa nobody told you about."
  },
  {
-  "start": 9.342,
-  "end": 12.034,
-  "text": "She doesn't know it yet, but that job was"
+  "start": 8.811,
+  "end": 13.062,
+  "text": "Bengaluru. Eleven forty-seven at night."
  },
  {
-  "start": 12.064,
-  "end": 13.562,
-  "text": "never open to her."
+  "start": 13.092,
+  "end": 15.558,
+  "text": "A software engineer is sending her best"
  },
  {
-  "start": 14.502,
-  "end": 17.189,
+  "start": 15.588,
+  "end": 17.053,
+  "text": "application to Berlin."
+ },
+ {
+  "start": 17.353,
+  "end": 18.902,
+  "text": "It's dead on arrival."
+ },
+ {
+  "start": 18.932,
+  "end": 21.339,
+  "text": "That job was never open to her."
+ },
+ {
+  "start": 21.889,
+  "end": 24.038,
   "text": "Job boards are built for volume."
  },
  {
-  "start": 17.219,
-  "end": 19.531,
-  "text": "Search, click, apply, repeat."
+  "start": 24.068,
+  "end": 27.972,
+  "text": "Search. Click. Apply. Repeat."
  },
  {
-  "start": 19.951,
-  "end": 22.456,
-  "text": "But when you're applying across borders,"
+  "start": 28.272,
+  "end": 30.45,
+  "text": "But across borders, volume is the problem."
  },
  {
-  "start": 22.486,
-  "end": 23.94,
-  "text": "volume is the problem."
+  "start": 30.8,
+  "end": 32.879,
+  "text": "That listing needs a work permit you don't"
  },
  {
-  "start": 24.45,
-  "end": 26.589,
-  "text": "A listing may need a work permit you don't"
+  "start": 32.909,
+  "end": 35.898,
+  "text": "have. The company won't sponsor a visa."
  },
  {
-  "start": 26.619,
-  "end": 30.585,
-  "text": "have. The company may never sponsor a visa."
+  "start": 35.928,
+  "end": 37.952,
+  "text": "And the match score never tells you."
  },
  {
-  "start": 30.615,
-  "end": 33.331,
-  "text": "And none of that shows up in the match score."
+  "start": 38.302,
+  "end": 39.966,
+  "text": "So you apply everywhere."
  },
  {
-  "start": 33.801,
-  "end": 36.88,
-  "text": "So people apply everywhere, hear nothing back,"
+  "start": 39.996,
+  "end": 41.603,
+  "text": "You hear nothing back."
  },
  {
-  "start": 36.91,
-  "end": 39.547,
-  "text": "and slowly burn their name with recruiters."
+  "start": 41.633,
+  "end": 44.142,
+  "text": "And you slowly burn your name with recruiters."
  },
  {
-  "start": 40.057,
-  "end": 42.318,
-  "text": "That isn't a skills problem."
+  "start": 44.542,
+  "end": 45.974,
+  "text": "It isn't a skills problem."
  },
  {
-  "start": 42.348,
-  "end": 44.208,
+  "start": 46.004,
+  "end": 47.493,
   "text": "It's an information problem."
  },
  {
-  "start": 45.558,
-  "end": 47.155,
+  "start": 48.793,
+  "end": 50.248,
   "text": "So we built Skylark."
  },
  {
-  "start": 50.755,
-  "end": 52.875,
-  "text": "A job application service that puts you"
+  "start": 52.848,
+  "end": 55.379,
+  "text": "A job application service that only puts you"
  },
  {
-  "start": 52.905,
-  "end": 55.868,
-  "text": "forward only for roles you can actually take,"
+  "start": 55.409,
+  "end": 58.177,
+  "text": "forward for roles you can actually take."
  },
  {
-  "start": 55.898,
-  "end": 58.719,
-  "text": "explains every decision, and keeps a human in"
+  "start": 58.207,
+  "end": 60.43,
+  "text": "It explains every decision."
  },
  {
-  "start": 58.749,
-  "end": 60.972,
-  "text": "the loop before anything is sent."
+  "start": 60.46,
+  "end": 63.702,
+  "text": "And a human checks everything before it's sent."
  },
  {
-  "start": 61.822,
-  "end": 64.162,
-  "text": "It starts with one profile."
+  "start": 64.252,
+  "end": 67.005,
+  "text": "One profile. Upload your resume,"
  },
  {
-  "start": 64.192,
-  "end": 66.98,
-  "text": "Upload your resume, and Skylark pulls out your"
+  "start": 67.035,
+  "end": 69.431,
+  "text": "and Skylark pulls out your headline,"
  },
  {
-  "start": 67.01,
-  "end": 69.358,
-  "text": "headline, skills and experience."
+  "start": 69.461,
+  "end": 71.404,
+  "text": "skills and experience."
  },
  {
-  "start": 69.738,
-  "end": 72.377,
+  "start": 71.704,
+  "end": 73.911,
   "text": "Every field is checked on the server."
  },
  {
-  "start": 72.407,
-  "end": 74.965,
-  "text": "Skills, against a curated taxonomy,"
+  "start": 73.941,
+  "end": 76.581,
+  "text": "Skills against a curated taxonomy,"
  },
  {
-  "start": 74.995,
-  "end": 77.651,
+  "start": 76.611,
+  "end": 79.612,
   "text": "Stack Overflow tags and the European ESCO"
  },
  {
-  "start": 77.681,
-  "end": 81.589,
+  "start": 79.642,
+  "end": 83.128,
   "text": "catalogue. Even your email domain is verified."
  },
  {
-  "start": 82.099,
-  "end": 84.211,
-  "text": "Your dashboard shows new matches,"
+  "start": 83.478,
+  "end": 85.267,
+  "text": "Your dashboard: new matches, active"
  },
  {
-  "start": 84.241,
-  "end": 86.841,
-  "text": "active applications and today's progress."
+  "start": 85.297,
+  "end": 87.518,
+  "text": "applications, today's progress."
  },
  {
-  "start": 87.221,
-  "end": 89.883,
-  "text": "Open any role, and you see exactly why it"
+  "start": 87.818,
+  "end": 90.658,
+  "text": "Open any role and see exactly why it fits."
  },
  {
-  "start": 89.913,
-  "end": 93.353,
-  "text": "fits. Seven factors, each with a score and a"
+  "start": 90.688,
+  "end": 93.224,
+  "text": "Seven factors, each with a score and a"
  },
  {
-  "start": 93.383,
-  "end": 94.821,
+  "start": 93.254,
+  "end": 94.516,
   "text": "sentence you can read."
  },
  {
-  "start": 95.331,
-  "end": 98.25,
-  "text": "When you decide to apply, AI drafts a tailored"
+  "start": 94.866,
+  "end": 98.296,
+  "text": "Hit apply, and AI drafts a tailored resume and"
  },
  {
-  "start": 98.28,
-  "end": 100.525,
-  "text": "resume and cover letter."
+  "start": 98.326,
+  "end": 100.967,
+  "text": "cover letter. Every change comes with a"
  },
  {
-  "start": 100.555,
-  "end": 102.52,
-  "text": "Every change comes with a reason,"
+  "start": 100.997,
+  "end": 104.657,
+  "text": "reason. Nothing is applied until you accept it."
  },
  {
-  "start": 102.55,
-  "end": 105.374,
-  "text": "and nothing is applied until you accept it."
+  "start": 105.007,
+  "end": 107.11,
+  "text": "Then a real person takes over."
  },
  {
-  "start": 105.884,
-  "end": 108.253,
-  "text": "Then a specialist takes over."
+  "start": 107.14,
+  "end": 108.967,
+  "text": "They run a five-point checklist,"
  },
  {
-  "start": 108.283,
-  "end": 110.567,
-  "text": "They work through a five-point checklist,"
- },
- {
-  "start": 110.597,
-  "end": 112.968,
+  "start": 108.997,
+  "end": 110.906,
   "text": "submit the application, and record the"
  },
  {
-  "start": 112.998,
-  "end": 114.989,
+  "start": 110.936,
+  "end": 113.019,
   "text": "employer's confirmation reference."
  },
  {
-  "start": 115.409,
-  "end": 117.542,
-  "text": "You follow every step on your tracker,"
+  "start": 113.319,
+  "end": 115.548,
+  "text": "And you watch it all on your tracker."
  },
  {
-  "start": 117.572,
-  "end": 119.935,
-  "text": "from saved, to applied, to interview."
+  "start": 115.578,
+  "end": 118.856,
+  "text": "Saved. Applied. Interview."
  },
  {
-  "start": 120.785,
-  "end": 123.625,
-  "text": "Under the surface, Skylark is a pipeline."
+  "start": 119.456,
+  "end": 120.663,
+  "text": "Now, under the hood."
  },
  {
-  "start": 124.045,
-  "end": 126.558,
-  "text": "Listings arrive from public job APIs:"
+  "start": 120.963,
+  "end": 124.227,
+  "text": "Listings stream in from public job APIs:"
  },
  {
-  "start": 126.588,
-  "end": 129.66,
+  "start": 124.257,
+  "end": 128.012,
   "text": "Arbeitnow, sixteen Greenhouse company boards,"
  },
  {
-  "start": 129.69,
-  "end": 132.685,
+  "start": 128.042,
+  "end": 130.483,
   "text": "and others when they're configured."
  },
  {
-  "start": 133.105,
-  "end": 135.938,
-  "text": "Each posting is cleaned from raw HTML into a"
+  "start": 130.783,
+  "end": 132.514,
+  "text": "Raw HTML becomes clean fields:"
  },
  {
-  "start": 135.968,
-  "end": 138.995,
+  "start": 132.544,
+  "end": 136.171,
   "text": "title, seniority, location, salary,"
  },
  {
-  "start": 139.025,
-  "end": 140.721,
+  "start": 136.201,
+  "end": 138.131,
   "text": "sponsorship and skills."
  },
  {
-  "start": 141.141,
-  "end": 142.844,
-  "text": "An SHA-256 fingerprint collapses duplicates."
+  "start": 138.431,
+  "end": 140.141,
+  "text": "A SHA-256 fingerprint kills duplicates."
  },
  {
-  "start": 142.874,
-  "end": 148.192,
-  "text": "Stale listings are closed, and if nothing has"
+  "start": 140.171,
+  "end": 143.473,
+  "text": "Stale listings get closed."
  },
  {
-  "start": 148.222,
-  "end": 149.908,
-  "text": "refreshed in twenty-four hours,"
+  "start": 143.503,
+  "end": 146.201,
+  "text": "And if nothing refreshes for twenty-four"
  },
  {
-  "start": 149.938,
-  "end": 152.018,
-  "text": "candidates are told."
+  "start": 146.231,
+  "end": 149.195,
+  "text": "hours, candidates are told."
  },
  {
-  "start": 152.788,
-  "end": 155.026,
+  "start": 149.745,
+  "end": 152.15,
   "text": "Then the match engine scores every role"
  },
  {
-  "start": 155.056,
-  "end": 156.458,
-  "text": "against your profile."
+  "start": 152.18,
+  "end": 153.274,
+  "text": "against you."
  },
  {
-  "start": 156.878,
-  "end": 159.126,
+  "start": 153.574,
+  "end": 155.603,
   "text": "Skills carry thirty percent."
  },
  {
-  "start": 159.156,
-  "end": 161.16,
+  "start": 155.633,
+  "end": 157.008,
   "text": "Eligibility, twenty."
  },
  {
-  "start": 161.19,
-  "end": 163.319,
+  "start": 157.038,
+  "end": 158.773,
   "text": "Experience, eighteen."
  },
  {
-  "start": 163.349,
-  "end": 165.137,
+  "start": 158.803,
+  "end": 160.468,
   "text": "Location, twelve."
  },
  {
-  "start": 165.167,
-  "end": 167.171,
+  "start": 160.498,
+  "end": 162.163,
   "text": "Sponsorship, eight."
  },
  {
-  "start": 167.201,
-  "end": 169.137,
+  "start": 162.193,
+  "end": 164.102,
   "text": "Preferences, seven."
  },
  {
-  "start": 169.167,
-  "end": 170.883,
-  "text": "And education, five."
+  "start": 164.132,
+  "end": 165.703,
+  "text": "Education, five."
  },
  {
-  "start": 171.223,
-  "end": 173.671,
-  "text": "The score is simply their weighted sum."
+  "start": 166.004,
+  "end": 167.961,
+  "text": "The score is their weighted sum."
  },
  {
-  "start": 174.351,
-  "end": 177.601,
-  "text": "Now, here's the rule that matters most."
+  "start": 168.461,
+  "end": 171.204,
+  "text": "And here's the rule that changes everything."
  },
  {
-  "start": 177.631,
-  "end": 180.59,
+  "start": 171.234,
+  "end": 173.549,
   "text": "If a role won't sponsor someone who needs it,"
  },
  {
-  "start": 180.62,
-  "end": 182.851,
+  "start": 173.579,
+  "end": 175.43,
   "text": "the score is capped at thirty-five."
  },
  {
-  "start": 183.271,
-  "end": 185.161,
-  "text": "However strong your skills look,"
+  "start": 175.78,
+  "end": 177.799,
+  "text": "However good your skills look,"
  },
  {
-  "start": 185.191,
-  "end": 187.331,
+  "start": 177.829,
+  "end": 180.133,
   "text": "a job you can't legally take will never"
  },
  {
-  "start": 187.361,
-  "end": 188.794,
+  "start": 180.163,
+  "end": 181.545,
   "text": "outrank one you can."
  },
  {
-  "start": 189.734,
-  "end": 192.218,
-  "text": "The product itself is one Next.js application:"
+  "start": 182.345,
+  "end": 184.424,
+  "text": "The whole product is one Next.js app:"
  },
  {
-  "start": 192.248,
-  "end": 195.668,
-  "text": "the public website, the candidate app,"
+  "start": 184.454,
+  "end": 186.677,
+  "text": "the website, the candidate app,"
  },
  {
-  "start": 195.698,
-  "end": 199.233,
+  "start": 186.707,
+  "end": 190.155,
   "text": "an operations console and a shared inbox."
  },
  {
-  "start": 199.653,
-  "end": 201.931,
-  "text": "Every service talks to a single repository"
+  "start": 190.455,
+  "end": 192.593,
+  "text": "Every service talks to one repository"
  },
  {
-  "start": 201.961,
-  "end": 204.665,
+  "start": 192.623,
+  "end": 195.53,
   "text": "interface. In production, that's Supabase"
  },
  {
-  "start": 204.695,
-  "end": 209.029,
-  "text": "Postgres, with row level security on every table."
+  "start": 195.56,
+  "end": 199.139,
+  "text": "Postgres, with row-level security on every table."
  },
  {
-  "start": 209.449,
-  "end": 212.253,
-  "text": "Without credentials, the same interface runs"
+  "start": 199.439,
+  "end": 202.679,
+  "text": "No credentials? The same interface runs on a"
  },
  {
-  "start": 212.283,
-  "end": 214.623,
-  "text": "on a seeded in-memory store."
+  "start": 202.709,
+  "end": 204.99,
+  "text": "seeded in-memory store."
  },
  {
-  "start": 214.653,
-  "end": 217.237,
-  "text": "So the whole product works on a laptop,"
+  "start": 205.02,
+  "end": 207.033,
+  "text": "The whole product works on a laptop,"
  },
  {
-  "start": 217.267,
-  "end": 218.467,
+  "start": 207.063,
+  "end": 208.244,
   "text": "with zero setup."
  },
  {
-  "start": 219.057,
-  "end": 221.345,
+  "start": 208.694,
+  "end": 210.588,
   "text": "Security isn't assumed."
  },
  {
-  "start": 221.375,
-  "end": 224.618,
-  "text": "It's tested. The test suite applies every"
+  "start": 210.618,
+  "end": 213.816,
+  "text": "It's tested. The test suite runs every"
  },
  {
-  "start": 224.648,
-  "end": 227.22,
-  "text": "migration to a real Postgres engine,"
+  "start": 213.846,
+  "end": 215.987,
+  "text": "migration on a real Postgres engine,"
  },
  {
-  "start": 227.25,
-  "end": 229.925,
-  "text": "and proves that one candidate can never read"
+  "start": 216.017,
+  "end": 218.077,
+  "text": "and proves one candidate can never read"
  },
  {
-  "start": 229.955,
-  "end": 231.085,
+  "start": 218.107,
+  "end": 219.057,
   "text": "another's data."
  },
  {
-  "start": 231.675,
-  "end": 234.638,
+  "start": 219.507,
+  "end": 222.179,
   "text": "AI sits behind an interface too."
  },
  {
-  "start": 234.668,
-  "end": 237.343,
-  "text": "Claude drafts the tailoring, and its output is"
+  "start": 222.209,
+  "end": 224.419,
+  "text": "Claude drafts the tailoring, its output is"
  },
  {
-  "start": 237.373,
-  "end": 239.752,
-  "text": "validated against a schema."
+  "start": 224.449,
+  "end": 227.148,
+  "text": "validated against a schema, and if the model"
  },
  {
-  "start": 239.782,
-  "end": 242.434,
-  "text": "If the model is unavailable, a deterministic"
+  "start": 227.178,
+  "end": 230.885,
+  "text": "is unavailable, a deterministic rules engine takes over."
  },
  {
-  "start": 242.464,
-  "end": 244.258,
-  "text": "rules engine takes over."
- },
- {
-  "start": 244.768,
-  "end": 247.61,
+  "start": 231.285,
+  "end": 233.782,
   "text": "Background work runs through a queue."
  },
  {
-  "start": 247.64,
-  "end": 250.428,
+  "start": 233.812,
+  "end": 236.847,
   "text": "Every task carries an idempotency key,"
  },
  {
-  "start": 250.458,
-  "end": 252.644,
+  "start": 236.877,
+  "end": 239.227,
   "text": "no two workers claim the same job,"
  },
  {
-  "start": 252.674,
-  "end": 255.894,
+  "start": 239.257,
+  "end": 241.915,
   "text": "and failures back off before they're set aside."
  },
  {
-  "start": 256.744,
-  "end": 260.306,
-  "text": "Today, Skylark is live at skylarkgo.in."
+  "start": 242.615,
+  "end": 245.355,
+  "text": "And it's live today, at skylarkgo.in."
  },
  {
-  "start": 260.726,
-  "end": 262.552,
+  "start": 245.655,
+  "end": 247.409,
   "text": "Live job listings."
  },
  {
-  "start": 262.582,
-  "end": 266.171,
+  "start": 247.439,
+  "end": 250.753,
   "text": "Google sign-in. Chat-style onboarding."
  },
  {
-  "start": 266.201,
-  "end": 269.241,
+  "start": 250.783,
+  "end": 253.354,
   "text": "Subscriptions in rupees through Razorpay."
  },
  {
-  "start": 269.271,
-  "end": 270.929,
+  "start": 253.384,
+  "end": 255.165,
   "text": "And a specialist review queue with a"
  },
  {
-  "start": 270.959,
-  "end": 272.535,
+  "start": 255.195,
+  "end": 257.172,
   "text": "twenty-four hour target."
  },
  {
-  "start": 273.045,
-  "end": 276.368,
-  "text": "Next, we're adding more job sources for India,"
+  "start": 257.572,
+  "end": 260.789,
+  "text": "Next: more job sources for India,"
  },
  {
-  "start": 276.398,
-  "end": 278.528,
+  "start": 260.819,
+  "end": 263.436,
   "text": "and matching every candidate against the"
  },
  {
-  "start": 278.558,
-  "end": 279.769,
+  "start": 263.466,
+  "end": 264.724,
   "text": "entire catalogue."
  },
  {
-  "start": 280.709,
-  "end": 284.231,
+  "start": 265.524,
+  "end": 268.152,
   "text": "Skylark doesn't try to send more applications."
  },
  {
-  "start": 284.261,
-  "end": 286.216,
+  "start": 268.182,
+  "end": 269.557,
   "text": "It tries to send the right ones,"
  },
  {
-  "start": 286.246,
-  "end": 287.476,
+  "start": 269.587,
+  "end": 270.615,
   "text": "and to show you why."
  },
  {
-  "start": 288.066,
-  "end": 289.948,
+  "start": 271.115,
+  "end": 272.889,
   "text": "Fewer applications."
  },
  {
-  "start": 289.978,
-  "end": 293.737,
+  "start": 272.919,
+  "end": 276.545,
   "text": "Better reasons. And a person checking every one."
  },
  {
-  "start": 294.757,
-  "end": 298.893,
+  "start": 277.445,
+  "end": 280.861,
   "text": "Skylark. Your next move, already in motion."
  }
 ]

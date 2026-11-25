@@ -1,7 +1,7 @@
 """Assemble the narration and the master timeline.
 
 Reads production/script.json and the per-line TTS takes (lineNN.mp3 + lineNN.words.json from
-tts_lines.py), trims each take's edge silence, processes the voice (high-pass, gentle EQ,
+tts_elevenlabs.py), trims each take's edge silence, processes the voice (high-pass, gentle EQ,
 de-essing, light compression), lays lines out with the scripted pauses, and writes:
   production/audio/narration.wav   48 kHz stereo voice stem
   src/data/timeline.json           line/word/scene timings in seconds (the film's single clock)
@@ -12,7 +12,7 @@ import numpy as np
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 LINES = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "production/voice/lines"
 SR = 48000
-LEAD = 2.4          # atmosphere before the first word
+LEAD = 0.45         # cold open: first word almost immediately
 EXTRA = {8: 0.5}    # extra restraint before a line (seconds)
 script = json.load(open(ROOT / "production/script.json"))
 

@@ -135,7 +135,7 @@ export const Pipeline: React.FC = () => {
   const flow = tw(t, a, a + 1.4);
   const ghP = tw(t, W(18, "Greenhouse") - 0.3, W(18, "Greenhouse") + 0.8, 0, 1, EIO);
   const optP = tw(t, W(18, "others") - 0.3, W(18, "others") + 0.6);
-  const arbP = tw(t, W(18, "Arbeitnow") - 0.3, W(18, "Arbeitnow") + 0.6);
+  const arbP = tw(t, W(18, "Arbeit") - 0.3, W(18, "Arbeit") + 0.6);
   const hashFlash = (Math.sin(t * 9) * 0.5 + 0.5) * tw(t, W(20, "fingerprint") - 0.3, W(20, "fingerprint") + 0.4);
   const staleP = tw(t, W(20, "Stale"), W(20, "closed") + 0.8, 0, 1, EIO);
   const clock = tw(t, W(20, "nothing") - 0.2, W(20, "hours") + 0.6, 0, 1, EIO);

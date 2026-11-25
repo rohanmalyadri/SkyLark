@@ -1,6 +1,6 @@
 # Skylark · the product film
 
-A 5-minute cinematic explainer for Skylark, built in code: Remotion for picture, Three.js for the 3D scenes, and a
+A 4:46 cinematic explainer for Skylark, built in code: Remotion for picture, Three.js for the 3D scenes, and a
 Python pipeline for narration, score, sound design and mastering. One clock, `src/data/timeline.json`, drives every
 visual, subtitle and sound cue, so if you change a narration line, everything re-syncs.
 
@@ -15,7 +15,7 @@ Nothing in this folder touches the Skylark app. The repo root `tsconfig.json` an
 | `production/script.json` | Source of truth for the narration: text, pronunciation respellings (`tts`), pace (`rate`), pauses |
 | `production/voice/lines/` | Final narration takes (`lineNN.mp3`) with word-boundary timings (`lineNN.words.json`) |
 | `production/subtitles/skylark-film.en.srt` | English subtitles (109 cues) |
-| `production/tools/` | `tts.py` → `build_timeline.py` → `make_captions.py` → `score.py` → `mix.py`; plus `make_docs.py`, `asr_check.py` |
+| `production/tools/` | `tts_elevenlabs.py` → `build_timeline.py` → `make_captions.py` → `score.py` → `mix.py`; plus `make_docs.py`, `asr_check.py` |
 | `production/LICENSES.md` | Where every asset comes from and under what terms |
 | `capture/capture.mjs` | Playwright script that captured the real interface screenshots in `public/shots/` |
 | `src/` | Remotion project: `Film.tsx`, nine scenes in `src/scenes/`, the logo animation in `src/components/Logo.tsx` |
@@ -27,7 +27,8 @@ Rendered files (MP4s, WAV stems, master) are git-ignored because of their size. 
 
 | | Scene | Lines | What you see |
 |---|---|---|---|
-| A | Hook | 1–2 | 3D night globe, one application arcing from Bengaluru to Berlin and hitting a closed door |
+| 0 | Cold open | 101–103 | "This job was never yours." Words slam onto black, a VISA REQUIRED stamp, white-out |
+| A | Hook | 1–2 | Crash zoom out of Bengaluru, one application arcing to Berlin and dying at a closed door |
 | B | Problem | 3–7 | A wall of 192 listings, applications going out, nothing coming back |
 | C | Logo reveal | 8–9 | The official mark assembles from shards, then the three promises |
 | D | Product | 10–16 | Real screens: profile, validation, dashboard, match explanation, tailoring, specialist review, tracker |
@@ -39,7 +40,7 @@ Rendered files (MP4s, WAV stems, master) are git-ignored because of their size. 
 
 ## Reproduce it
 
-Requirements: Node 20+, Python 3.11+ with `numpy scipy edge-tts` (and `faster-whisper` for QA), ffmpeg.
+Requirements: Node 20+, Python 3.11+ with `numpy scipy` (and `faster-whisper` for QA), ffmpeg, and an ElevenLabs API key for narration.
 
 ```bash
 cd video
@@ -48,7 +49,7 @@ npx remotion browser ensure
 
 # 1. Narration (only if you change script.json). Pass ids to redo single lines: ... ../voice/lines 18,20
 cd production/tools
-python3 tts.py ../script.json ../voice/lines
+ELEVENLABS_API_KEY=... python3 tts_elevenlabs.py ../script.json ../voice/lines
 
 # 2. Timeline, subtitles, score, mix, docs
 python3 build_timeline.py      # narration.wav + src/data/timeline.json
@@ -92,9 +93,13 @@ live-site captures. Demo mode only contains fictional sample data; the film labe
 
 ## Notes
 
-- **Voice.** ElevenLabs wasn't available for this production (no API key), so the narration uses Microsoft Edge neural
-  TTS, voice `en-IN-PrabhatNeural` (Indian English, male). Product names are respelled in `script.json` (`tts` field) so
-  they're pronounced correctly. To switch to another voice, regenerate `production/voice/lines/` and rerun step 2.
+- **Voice.** The narration is Rohan Malyadri's own ElevenLabs professional voice clone ("ROHAN MALYADRI", en-Indian),
+  model `eleven_multilingual_v2`, generated line by line with neighbouring lines as context so the intonation stays
+  continuous. The API key is read from the environment and never stored in the repo. A few names are respelled in the
+  `tts` field of `script.json` (ESCO, Arbeitnow, SHA-256, Next.js, skylarkgo.in) so they're pronounced correctly.
+  `tts.py` (Edge TTS) is kept as a keyless fallback.
+- **Pacing.** A cold open in the first second, hard cuts with a punch-in and flash on every scene change
+  (`Film.tsx`), and four full-frame pattern interrupts (`src/scenes/Interrupts.tsx`) where the bed drops out.
 - **Accuracy.** Every claim in the script maps to code in this repo (the factor weights, the 35-point cap, SHA-256
   dedupe, RLS tests, the AI fallback). Numbers in the engine scene are the README's worked example; anything
   illustrative is labelled on screen.

@@ -1,436 +1,440 @@
 1
-00:00:02,400 --> 00:00:04,988
-Somewhere tonight, a software engineer in
+00:00:00,450 --> 00:00:02,726
+This job was never yours.
 
 2
-00:00:05,018 --> 00:00:07,575
-Bengaluru is sending another application to a
+00:00:03,026 --> 00:00:04,976
+Not because of your skills.
 
 3
-00:00:07,605 --> 00:00:08,962
-company in Berlin.
+00:00:05,196 --> 00:00:08,261
+Because of a visa nobody told you about.
 
 4
-00:00:09,342 --> 00:00:12,034
-She doesn't know it yet, but that job was
+00:00:08,811 --> 00:00:13,062
+Bengaluru. Eleven forty-seven at night.
 
 5
-00:00:12,064 --> 00:00:13,562
-never open to her.
+00:00:13,092 --> 00:00:15,558
+A software engineer is sending her best
 
 6
-00:00:14,502 --> 00:00:17,189
-Job boards are built for volume.
+00:00:15,588 --> 00:00:17,053
+application to Berlin.
 
 7
-00:00:17,219 --> 00:00:19,531
-Search, click, apply, repeat.
+00:00:17,353 --> 00:00:18,902
+It's dead on arrival.
 
 8
-00:00:19,951 --> 00:00:22,456
-But when you're applying across borders,
+00:00:18,932 --> 00:00:21,339
+That job was never open to her.
 
 9
-00:00:22,486 --> 00:00:23,940
-volume is the problem.
+00:00:21,889 --> 00:00:24,038
+Job boards are built for volume.
 
 10
-00:00:24,450 --> 00:00:26,589
-A listing may need a work permit you don't
+00:00:24,068 --> 00:00:27,972
+Search. Click. Apply. Repeat.
 
 11
-00:00:26,619 --> 00:00:30,585
-have. The company may never sponsor a visa.
+00:00:28,272 --> 00:00:30,450
+But across borders, volume is the problem.
 
 12
-00:00:30,615 --> 00:00:33,331
-And none of that shows up in the match score.
+00:00:30,800 --> 00:00:32,879
+That listing needs a work permit you don't
 
 13
-00:00:33,801 --> 00:00:36,880
-So people apply everywhere, hear nothing back,
+00:00:32,909 --> 00:00:35,898
+have. The company won't sponsor a visa.
 
 14
-00:00:36,910 --> 00:00:39,547
-and slowly burn their name with recruiters.
+00:00:35,928 --> 00:00:37,952
+And the match score never tells you.
 
 15
-00:00:40,057 --> 00:00:42,318
-That isn't a skills problem.
+00:00:38,302 --> 00:00:39,966
+So you apply everywhere.
 
 16
-00:00:42,348 --> 00:00:44,208
-It's an information problem.
+00:00:39,996 --> 00:00:41,603
+You hear nothing back.
 
 17
-00:00:45,558 --> 00:00:47,155
-So we built Skylark.
+00:00:41,633 --> 00:00:44,142
+And you slowly burn your name with recruiters.
 
 18
-00:00:50,755 --> 00:00:52,875
-A job application service that puts you
+00:00:44,542 --> 00:00:45,974
+It isn't a skills problem.
 
 19
-00:00:52,905 --> 00:00:55,868
-forward only for roles you can actually take,
+00:00:46,004 --> 00:00:47,493
+It's an information problem.
 
 20
-00:00:55,898 --> 00:00:58,719
-explains every decision, and keeps a human in
+00:00:48,793 --> 00:00:50,248
+So we built Skylark.
 
 21
-00:00:58,749 --> 00:01:00,972
-the loop before anything is sent.
+00:00:52,848 --> 00:00:55,379
+A job application service that only puts you
 
 22
-00:01:01,822 --> 00:01:04,162
-It starts with one profile.
+00:00:55,409 --> 00:00:58,177
+forward for roles you can actually take.
 
 23
-00:01:04,192 --> 00:01:06,980
-Upload your resume, and Skylark pulls out your
+00:00:58,207 --> 00:01:00,430
+It explains every decision.
 
 24
-00:01:07,010 --> 00:01:09,358
-headline, skills and experience.
+00:01:00,460 --> 00:01:03,702
+And a human checks everything before it's sent.
 
 25
-00:01:09,738 --> 00:01:12,377
-Every field is checked on the server.
+00:01:04,252 --> 00:01:07,005
+One profile. Upload your resume,
 
 26
-00:01:12,407 --> 00:01:14,965
-Skills, against a curated taxonomy,
+00:01:07,035 --> 00:01:09,431
+and Skylark pulls out your headline,
 
 27
-00:01:14,995 --> 00:01:17,651
-Stack Overflow tags and the European ESCO
+00:01:09,461 --> 00:01:11,404
+skills and experience.
 
 28
-00:01:17,681 --> 00:01:21,589
-catalogue. Even your email domain is verified.
+00:01:11,704 --> 00:01:13,911
+Every field is checked on the server.
 
 29
-00:01:22,099 --> 00:01:24,211
-Your dashboard shows new matches,
+00:01:13,941 --> 00:01:16,581
+Skills against a curated taxonomy,
 
 30
-00:01:24,241 --> 00:01:26,841
-active applications and today's progress.
+00:01:16,611 --> 00:01:19,612
+Stack Overflow tags and the European ESCO
 
 31
-00:01:27,221 --> 00:01:29,883
-Open any role, and you see exactly why it
+00:01:19,642 --> 00:01:23,128
+catalogue. Even your email domain is verified.
 
 32
-00:01:29,913 --> 00:01:33,353
-fits. Seven factors, each with a score and a
+00:01:23,478 --> 00:01:25,267
+Your dashboard: new matches, active
 
 33
-00:01:33,383 --> 00:01:34,821
-sentence you can read.
+00:01:25,297 --> 00:01:27,518
+applications, today's progress.
 
 34
-00:01:35,331 --> 00:01:38,250
-When you decide to apply, AI drafts a tailored
+00:01:27,818 --> 00:01:30,658
+Open any role and see exactly why it fits.
 
 35
-00:01:38,280 --> 00:01:40,525
-resume and cover letter.
+00:01:30,688 --> 00:01:33,224
+Seven factors, each with a score and a
 
 36
-00:01:40,555 --> 00:01:42,520
-Every change comes with a reason,
+00:01:33,254 --> 00:01:34,516
+sentence you can read.
 
 37
-00:01:42,550 --> 00:01:45,374
-and nothing is applied until you accept it.
+00:01:34,866 --> 00:01:38,296
+Hit apply, and AI drafts a tailored resume and
 
 38
-00:01:45,884 --> 00:01:48,253
-Then a specialist takes over.
+00:01:38,326 --> 00:01:40,967
+cover letter. Every change comes with a
 
 39
-00:01:48,283 --> 00:01:50,567
-They work through a five-point checklist,
+00:01:40,997 --> 00:01:44,657
+reason. Nothing is applied until you accept it.
 
 40
-00:01:50,597 --> 00:01:52,968
-submit the application, and record the
+00:01:45,007 --> 00:01:47,110
+Then a real person takes over.
 
 41
-00:01:52,998 --> 00:01:54,989
-employer's confirmation reference.
+00:01:47,140 --> 00:01:48,967
+They run a five-point checklist,
 
 42
-00:01:55,409 --> 00:01:57,542
-You follow every step on your tracker,
+00:01:48,997 --> 00:01:50,906
+submit the application, and record the
 
 43
-00:01:57,572 --> 00:01:59,935
-from saved, to applied, to interview.
+00:01:50,936 --> 00:01:53,019
+employer's confirmation reference.
 
 44
-00:02:00,785 --> 00:02:03,625
-Under the surface, Skylark is a pipeline.
+00:01:53,319 --> 00:01:55,548
+And you watch it all on your tracker.
 
 45
-00:02:04,045 --> 00:02:06,558
-Listings arrive from public job APIs:
+00:01:55,578 --> 00:01:58,856
+Saved. Applied. Interview.
 
 46
-00:02:06,588 --> 00:02:09,660
-Arbeitnow, sixteen Greenhouse company boards,
+00:01:59,456 --> 00:02:00,663
+Now, under the hood.
 
 47
-00:02:09,690 --> 00:02:12,685
-and others when they're configured.
+00:02:00,963 --> 00:02:04,227
+Listings stream in from public job APIs:
 
 48
-00:02:13,105 --> 00:02:15,938
-Each posting is cleaned from raw HTML into a
+00:02:04,257 --> 00:02:08,012
+Arbeitnow, sixteen Greenhouse company boards,
 
 49
-00:02:15,968 --> 00:02:18,995
-title, seniority, location, salary,
+00:02:08,042 --> 00:02:10,483
+and others when they're configured.
 
 50
-00:02:19,025 --> 00:02:20,721
-sponsorship and skills.
+00:02:10,783 --> 00:02:12,514
+Raw HTML becomes clean fields:
 
 51
-00:02:21,141 --> 00:02:22,844
-An SHA-256 fingerprint collapses duplicates.
+00:02:12,544 --> 00:02:16,171
+title, seniority, location, salary,
 
 52
-00:02:22,874 --> 00:02:28,192
-Stale listings are closed, and if nothing has
+00:02:16,201 --> 00:02:18,131
+sponsorship and skills.
 
 53
-00:02:28,222 --> 00:02:29,908
-refreshed in twenty-four hours,
+00:02:18,431 --> 00:02:20,141
+A SHA-256 fingerprint kills duplicates.
 
 54
-00:02:29,938 --> 00:02:32,018
-candidates are told.
+00:02:20,171 --> 00:02:23,473
+Stale listings get closed.
 
 55
-00:02:32,788 --> 00:02:35,026
-Then the match engine scores every role
+00:02:23,503 --> 00:02:26,201
+And if nothing refreshes for twenty-four
 
 56
-00:02:35,056 --> 00:02:36,458
-against your profile.
+00:02:26,231 --> 00:02:29,195
+hours, candidates are told.
 
 57
-00:02:36,878 --> 00:02:39,126
-Skills carry thirty percent.
+00:02:29,745 --> 00:02:32,150
+Then the match engine scores every role
 
 58
-00:02:39,156 --> 00:02:41,160
-Eligibility, twenty.
+00:02:32,180 --> 00:02:33,274
+against you.
 
 59
-00:02:41,190 --> 00:02:43,319
-Experience, eighteen.
+00:02:33,574 --> 00:02:35,603
+Skills carry thirty percent.
 
 60
-00:02:43,349 --> 00:02:45,137
-Location, twelve.
+00:02:35,633 --> 00:02:37,008
+Eligibility, twenty.
 
 61
-00:02:45,167 --> 00:02:47,171
-Sponsorship, eight.
+00:02:37,038 --> 00:02:38,773
+Experience, eighteen.
 
 62
-00:02:47,201 --> 00:02:49,137
-Preferences, seven.
+00:02:38,803 --> 00:02:40,468
+Location, twelve.
 
 63
-00:02:49,167 --> 00:02:50,883
-And education, five.
+00:02:40,498 --> 00:02:42,163
+Sponsorship, eight.
 
 64
-00:02:51,223 --> 00:02:53,671
-The score is simply their weighted sum.
+00:02:42,193 --> 00:02:44,102
+Preferences, seven.
 
 65
-00:02:54,351 --> 00:02:57,601
-Now, here's the rule that matters most.
+00:02:44,132 --> 00:02:45,703
+Education, five.
 
 66
-00:02:57,631 --> 00:03:00,590
-If a role won't sponsor someone who needs it,
+00:02:46,004 --> 00:02:47,961
+The score is their weighted sum.
 
 67
-00:03:00,620 --> 00:03:02,851
-the score is capped at thirty-five.
+00:02:48,461 --> 00:02:51,204
+And here's the rule that changes everything.
 
 68
-00:03:03,271 --> 00:03:05,161
-However strong your skills look,
+00:02:51,234 --> 00:02:53,549
+If a role won't sponsor someone who needs it,
 
 69
-00:03:05,191 --> 00:03:07,331
-a job you can't legally take will never
+00:02:53,579 --> 00:02:55,430
+the score is capped at thirty-five.
 
 70
-00:03:07,361 --> 00:03:08,794
-outrank one you can.
+00:02:55,780 --> 00:02:57,799
+However good your skills look,
 
 71
-00:03:09,734 --> 00:03:12,218
-The product itself is one Next.js application:
+00:02:57,829 --> 00:03:00,133
+a job you can't legally take will never
 
 72
-00:03:12,248 --> 00:03:15,668
-the public website, the candidate app,
+00:03:00,163 --> 00:03:01,545
+outrank one you can.
 
 73
-00:03:15,698 --> 00:03:19,233
-an operations console and a shared inbox.
+00:03:02,345 --> 00:03:04,424
+The whole product is one Next.js app:
 
 74
-00:03:19,653 --> 00:03:21,931
-Every service talks to a single repository
+00:03:04,454 --> 00:03:06,677
+the website, the candidate app,
 
 75
-00:03:21,961 --> 00:03:24,665
-interface. In production, that's Supabase
+00:03:06,707 --> 00:03:10,155
+an operations console and a shared inbox.
 
 76
-00:03:24,695 --> 00:03:29,029
-Postgres, with row level security on every table.
+00:03:10,455 --> 00:03:12,593
+Every service talks to one repository
 
 77
-00:03:29,449 --> 00:03:32,253
-Without credentials, the same interface runs
+00:03:12,623 --> 00:03:15,530
+interface. In production, that's Supabase
 
 78
-00:03:32,283 --> 00:03:34,623
-on a seeded in-memory store.
+00:03:15,560 --> 00:03:19,139
+Postgres, with row-level security on every table.
 
 79
-00:03:34,653 --> 00:03:37,237
-So the whole product works on a laptop,
+00:03:19,439 --> 00:03:22,679
+No credentials? The same interface runs on a
 
 80
-00:03:37,267 --> 00:03:38,467
-with zero setup.
+00:03:22,709 --> 00:03:24,990
+seeded in-memory store.
 
 81
-00:03:39,057 --> 00:03:41,345
-Security isn't assumed.
+00:03:25,020 --> 00:03:27,033
+The whole product works on a laptop,
 
 82
-00:03:41,375 --> 00:03:44,618
-It's tested. The test suite applies every
+00:03:27,063 --> 00:03:28,244
+with zero setup.
 
 83
-00:03:44,648 --> 00:03:47,220
-migration to a real Postgres engine,
+00:03:28,694 --> 00:03:30,588
+Security isn't assumed.
 
 84
-00:03:47,250 --> 00:03:49,925
-and proves that one candidate can never read
+00:03:30,618 --> 00:03:33,816
+It's tested. The test suite runs every
 
 85
-00:03:49,955 --> 00:03:51,085
-another's data.
+00:03:33,846 --> 00:03:35,987
+migration on a real Postgres engine,
 
 86
-00:03:51,675 --> 00:03:54,638
-AI sits behind an interface too.
+00:03:36,017 --> 00:03:38,077
+and proves one candidate can never read
 
 87
-00:03:54,668 --> 00:03:57,343
-Claude drafts the tailoring, and its output is
+00:03:38,107 --> 00:03:39,057
+another's data.
 
 88
-00:03:57,373 --> 00:03:59,752
-validated against a schema.
+00:03:39,507 --> 00:03:42,179
+AI sits behind an interface too.
 
 89
-00:03:59,782 --> 00:04:02,434
-If the model is unavailable, a deterministic
+00:03:42,209 --> 00:03:44,419
+Claude drafts the tailoring, its output is
 
 90
-00:04:02,464 --> 00:04:04,258
-rules engine takes over.
+00:03:44,449 --> 00:03:47,148
+validated against a schema, and if the model
 
 91
-00:04:04,768 --> 00:04:07,610
-Background work runs through a queue.
+00:03:47,178 --> 00:03:50,885
+is unavailable, a deterministic rules engine takes over.
 
 92
-00:04:07,640 --> 00:04:10,428
-Every task carries an idempotency key,
+00:03:51,285 --> 00:03:53,782
+Background work runs through a queue.
 
 93
-00:04:10,458 --> 00:04:12,644
-no two workers claim the same job,
+00:03:53,812 --> 00:03:56,847
+Every task carries an idempotency key,
 
 94
-00:04:12,674 --> 00:04:15,894
-and failures back off before they're set aside.
+00:03:56,877 --> 00:03:59,227
+no two workers claim the same job,
 
 95
-00:04:16,744 --> 00:04:20,306
-Today, Skylark is live at skylarkgo.in.
+00:03:59,257 --> 00:04:01,915
+and failures back off before they're set aside.
 
 96
-00:04:20,726 --> 00:04:22,552
-Live job listings.
+00:04:02,615 --> 00:04:05,355
+And it's live today, at skylarkgo.in.
 
 97
-00:04:22,582 --> 00:04:26,171
-Google sign-in. Chat-style onboarding.
+00:04:05,655 --> 00:04:07,409
+Live job listings.
 
 98
-00:04:26,201 --> 00:04:29,241
-Subscriptions in rupees through Razorpay.
+00:04:07,439 --> 00:04:10,753
+Google sign-in. Chat-style onboarding.
 
 99
-00:04:29,271 --> 00:04:30,929
-And a specialist review queue with a
+00:04:10,783 --> 00:04:13,354
+Subscriptions in rupees through Razorpay.
 
 100
-00:04:30,959 --> 00:04:32,535
-twenty-four hour target.
+00:04:13,384 --> 00:04:15,165
+And a specialist review queue with a
 
 101
-00:04:33,045 --> 00:04:36,368
-Next, we're adding more job sources for India,
+00:04:15,195 --> 00:04:17,172
+twenty-four hour target.
 
 102
-00:04:36,398 --> 00:04:38,528
-and matching every candidate against the
+00:04:17,572 --> 00:04:20,789
+Next: more job sources for India,
 
 103
-00:04:38,558 --> 00:04:39,769
-entire catalogue.
+00:04:20,819 --> 00:04:23,436
+and matching every candidate against the
 
 104
-00:04:40,709 --> 00:04:44,231
-Skylark doesn't try to send more applications.
+00:04:23,466 --> 00:04:24,724
+entire catalogue.
 
 105
-00:04:44,261 --> 00:04:46,216
-It tries to send the right ones,
+00:04:25,524 --> 00:04:28,152
+Skylark doesn't try to send more applications.
 
 106
-00:04:46,246 --> 00:04:47,476
-and to show you why.
+00:04:28,182 --> 00:04:29,557
+It tries to send the right ones,
 
 107
-00:04:48,066 --> 00:04:49,948
-Fewer applications.
+00:04:29,587 --> 00:04:30,615
+and to show you why.
 
 108
-00:04:49,978 --> 00:04:53,737
-Better reasons. And a person checking every one.
+00:04:31,115 --> 00:04:32,889
+Fewer applications.
 
 109
-00:04:54,757 --> 00:04:58,893
+00:04:32,919 --> 00:04:36,545
+Better reasons. And a person checking every one.
+
+110
+00:04:37,445 --> 00:04:40,861
 Skylark. Your next move, already in motion.
 

@@ -172,7 +172,7 @@ def printer(dur=1.2, amp=0.05):
     return lp(x + 0.05 * R.standard_normal(n), 4000) * amp
 
 # ------------------------------------------------------------------ music
-BPM = 104
+BPM = 112
 BEAT = 60 / BPM
 BAR = BEAT * 4
 music = np.zeros((N, 2))
@@ -231,10 +231,14 @@ def beat(t0, t1, kick_on=(0, 2), hats=True, amp=1.0, hat_div=2):
 def grid(t):  # snap to the next beat on the global grid
     return np.ceil(t / BEAT) * BEAT
 
+# Cold open: no music, only a sub drone under the slams (the hits live in the SFX layer).
+cut_t = L0(1) - 0.45           # white-out into the hook (Cold.tsx)
+hook0 = L0(1) - 0.35
+place(music, sub(D - 24, cut_t - 0.3, 0.10), 0.3)
 # Hook: a low drone, air and distant bells.
-pads(0.2, sc["problem"][0] + 0.5, "dark", bars_per=2, bright=700, amp=0.11)
+pads(hook0, sc["problem"][0] + 0.5, "dark", bars_per=2, bright=700, amp=0.11)
 for k, m in enumerate([74, 81, 77, 86]):
-    place(bells, bell(m, 4.0, 0.05), 1.8 + k * 3.1, pan=-0.4 + k * 0.25)
+    place(bells, bell(m, 4.0, 0.05), hook0 + 0.4 + k * 2.6, pan=-0.4 + k * 0.25)
 # Problem: restrained half-time pulse, tension builds to the line "information problem".
 p0 = grid(sc["problem"][0] - 0.6)
 p_end = L1(7) + 0.2
@@ -284,11 +288,14 @@ for k, m in enumerate([86, 89, 93, 98]):
 music = reverb(music, 0.32, 3.5, 4500) + reverb(bells, 0.55, 4.5, 6000) + reverb(drums, 0.12, 1.2, 7000)
 
 # gentle overall fades
-fade = np.ones(N); fi = int(1.5 * SR); fade[:fi] = np.linspace(0, 1, fi) ** 2
+fade = np.ones(N); fi = int(0.3 * SR); fade[:fi] = np.linspace(0, 1, fi) ** 2
 fo0 = int((T - 3.5) * SR); fade[fo0:] = np.linspace(1, 0, N - fo0) ** 1.5
 music *= fade[:, None]
 # restraint: duck the bed hard just before the reveal and the closing logo
-for t0, t1 in [(L1(7) + 0.3, reveal0 + 1.6)]:
+# pattern interrupts (Interrupts.tsx): the bed drops out while the card holds the frame
+INTER = [(L0(17) - 0.12, L1(17) + 0.28), (W(24, "rule") - 0.08, W(24, "everything") + 0.22),
+         (L0(29) - 0.08, W(29, "tested") + 0.3), (L0(32) - 0.1, W(32, "at") + 0.05)]
+for t0, t1 in [(L1(7) + 0.3, reveal0 + 1.6)] + [(a, b) for a, b in INTER]:
     g = np.ones(N); a, b = int(t0 * SR), int(t1 * SR)
     g[a:b] = 0.12; g = lp(g, 3, 1)
     music *= g[:, None]
@@ -297,6 +304,18 @@ for t0, t1 in [(L1(7) + 0.3, reveal0 + 1.6)]:
 sfx = np.zeros((N, 2))
 def S(x, t, g=1.0, pan=0.0): place(sfx, x, t, g, pan)
 
+# Cold open: every word is a hit
+for k, w in enumerate(lines[101]["words"]):
+    S(kick(0.55, 0.3), w["t"]); S(impact(0.10 + 0.04 * k, 52, 0.5), w["t"])
+S(impact(0.35, 40, 1.8), W(101, "yours"))
+S(glitch(0.09, 0.3), L0(102) - 0.03)
+for w in lines[102]["words"]: S(kick(0.45, 0.25), w["t"])
+S(whoosh(0.5, 0.08, 3000, 9000), L1(102) - 0.05)        # the strike-through
+S(glitch(0.09, 0.3), L0(103) - 0.03)
+S(impact(0.6, 36, 2.2), W(103, "visa")); S(thunk(0.3, 70), W(103, "visa")); S(crackle(1.2, 0.06), W(103, "visa") + 0.05)
+S(riser(cut_t - W(103, "nobody"), 0.12), W(103, "nobody"))
+S(whoosh(0.5, 0.14, 300, 12000), cut_t - 0.25)
+S(impact(0.45, 45, 1.6), hook0)
 # Hook
 S(whoosh(1.6, 0.07, 200, 2400), W(1, "sending") - 0.3)
 for k in range(10): S(blip(0.012, 1400 + k * 120, 0.05), W(1, "sending") + k * 0.3, pan=-0.3 + k * 0.06)
@@ -323,7 +342,7 @@ for w in ["actually", "explains", "human"]: S(click(0.05, 2600), W(9, w))
 # Product
 for i in [11, 12, 13, 14, 15, 16]: S(whoosh(0.9, 0.05, 250, 3500), L0(i) - 0.5)
 for w in ["headline", "skills", "experience"]: S(blip(0.04, 1500), W(10, w))
-for k, w in enumerate(["taxonomy", "Overflow", "Esco"]): S(chime(0.035, 84 + k * 3), W(11, w))
+for k, w in enumerate(["taxonomy", "Overflow", "Esko"]): S(chime(0.035, 84 + k * 3), W(11, w))
 S(chime(0.04, 93), W(11, "verified"))
 S(click(0.05), W(12, "new")); S(click(0.05), W(12, "today's"))
 S(click(0.04), W(13, "why"))
@@ -369,6 +388,14 @@ S(thunk(0.1, 70), W(31, "aside"))
 S(whoosh(1.6, 0.08, 150, 2500), L0(32) - 0.8)
 for w in ["Live", "Google", "Chat-style", "Subscriptions", "specialist"]: S(click(0.04, 2400), W(33, w))
 S(whoosh(1.0, 0.05, 400, 3000), L0(34) - 0.3)
+# Interrupt cards: slam in, whoosh out into the punch-in
+for a, b in INTER:
+    S(impact(0.32, 42, 1.0), a + 0.02); S(glitch(0.07, 0.22), a); S(whoosh(0.45, 0.09, 400, 9000), b - 0.3)
+# Scene cuts (Film.tsx punch-in): a short thump and air on every cut
+PRE = {"cold": 0.45, "hook": 0.35, "problem": 0.35, "reveal": 0.2, "product": 0.4, "pipeline": 0.45, "engine": 0.4, "arch": 0.45, "results": 0.4, "close": 0.5}
+for name in ["problem", "product", "engine", "arch", "close"]:
+    ct = TL["scenes"][name]["start"] - PRE[name] + 0.05
+    S(kick(0.3, 0.25), ct); S(whoosh(0.5, 0.05, 600, 8000), ct - 0.35)
 # Close
 S(whoosh(1.4, 0.06, 2000, 200, up=False), L0(35) - 0.8)
 S(riser(2.2, 0.08), close_hit - 2.2)

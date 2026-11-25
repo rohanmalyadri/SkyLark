@@ -2,9 +2,11 @@ import React from "react";
 import { AbsoluteFill } from "remotion";
 import { C, F } from "./lib/theme";
 import { FilmFinish } from "./lib/ui";
-import { sceneWin, useT, SceneName } from "./lib/time";
+import { sceneWin, useT, SceneName, SCENE_ORDER, tw, EO } from "./lib/time";
 import captions from "./data/captions.json";
+import { Cold } from "./scenes/Cold";
 import { Hook } from "./scenes/Hook";
+import { Interrupts, INTERRUPTS } from "./scenes/Interrupts";
 import { Problem } from "./scenes/Problem";
 import { Reveal } from "./scenes/Reveal";
 import { Product } from "./scenes/Product";
@@ -15,6 +17,7 @@ import { Results } from "./scenes/Results";
 import { Close } from "./scenes/Close";
 
 const SCENES: [SceneName, React.FC][] = [
+  ["cold", Cold],
   ["hook", Hook],
   ["problem", Problem],
   ["reveal", Reveal],
@@ -38,13 +41,21 @@ const Subtitles: React.FC<{ t: number }> = ({ t }) => {
 
 export const Film: React.FC<{ subtitles: boolean }> = ({ subtitles }) => {
   const t = useT();
+  // Punch-in on every cut: scene starts and the moment each interrupt card lets go.
+  const cuts = [...SCENE_ORDER.slice(1).map((n) => sceneWin(n)[0] + 0.05), ...INTERRUPTS.map((x) => x.b)];
+  const since = Math.min(...cuts.map((c) => (t >= c ? t - c : 99)));
+  const punch = since < 0.45 ? 1 - tw(since, 0, 0.45, 0, 1, EO) : 0;
   return (
     <AbsoluteFill style={{ background: C.ink }}>
-      {SCENES.map(([name, Comp]) => {
-        const [a, b] = sceneWin(name);
-        if (t < a || t > b) return null;
-        return <Comp key={name} />;
-      })}
+      <AbsoluteFill style={{ scale: `${1 + 0.05 * punch}` }}>
+        {SCENES.map(([name, Comp]) => {
+          const [a, b] = sceneWin(name);
+          if (t < a || t > b) return null;
+          return <Comp key={name} />;
+        })}
+      </AbsoluteFill>
+      <AbsoluteFill style={{ background: "#fff", opacity: since < 0.1 ? 0.22 * (1 - since / 0.1) : 0, pointerEvents: "none" }} />
+      <Interrupts t={t} />
       <FilmFinish />
       {subtitles && <Subtitles t={t} />}
     </AbsoluteFill>

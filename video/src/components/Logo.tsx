@@ -103,7 +103,8 @@ export const Logo: React.FC<{
         style={{
           position: "absolute",
           inset: 0,
-          clipPath: `inset(-10% ${(1 - wordP) * 62}% -10% 38%)`,
+          // The word's 's' starts ~33% across the viewBox; a left inset beyond that clipped it. Wipe from the left edge instead.
+          clipPath: `inset(-10% ${(1 - wordP) * 67}% -10% 0%)`,
           opacity: tw(t, 1.9, 2.4),
           filter: wordP < 1 ? `blur(${(1 - wordP) * 5}px)` : undefined,
         }}

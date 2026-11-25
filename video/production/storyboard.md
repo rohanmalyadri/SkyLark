@@ -1,22 +1,37 @@
 # Skylark film · shot-by-shot storyboard
 
-Runtime 5:03.89 at 30 fps. Times come from `src/data/timeline.json`, the single clock that drives the visuals, the subtitles and every sound cue. Regenerate with `python3 production/tools/make_docs.py`.
+Runtime 4:45.86 at 30 fps. Times come from `src/data/timeline.json`, the single clock that drives the visuals, the subtitles and every sound cue. Regenerate with `python3 production/tools/make_docs.py`.
 
-## A · Hook · 0:02.40 – 0:13.56
+## 0 · Cold open · 0:00.45 – 0:08.26
+
+**Visual.** Black frame. Each word of three lines slams in (scale-down, motion blur, RGB split, camera shake); 'yours.' lands in ember serif; a slice glitch knocks each line out; 'skills.' is struck through; on 'visa' a VISA REQUIRED stamp hits with a red wash, then a white-out cut.
+
+**Camera.** Locked off, shaken by every hit.  
+**Transition in.** Hard open, no fade  
+**Music.** Silence and a sub drone; no music until the globe  
+**Sound effects.** A kick and low impact per word, glitch bursts between lines, huge impact and thunk on 'visa', riser into a white-out whoosh
+
+| Line | Start | End | Narration |
+|---:|---:|---:|---|
+| 101 | 0:00.45 | 0:02.73 | This job was never yours. |
+| 102 | 0:03.03 | 0:04.98 | Not because of your skills. |
+| 103 | 0:05.20 | 0:08.26 | Because of a visa nobody told you about. |
+
+## A · Hook · 0:08.81 – 0:21.34
 
 **Visual.** Three.js night globe (land dots from the site's own world map). One application arcs from Bengaluru to Berlin and stops at a closed door; an illustrative listing card explains why.
 
-**Camera.** Slow push-in from over the Indian Ocean, pulling back to the full corridor.  
-**Transition in.** Fade up from black  
+**Camera.** Crash zoom out of Bengaluru, then a slow pull back to the full corridor.  
+**Transition in.** Smash cut out of the white-out, with an impact  
 **Music.** Low D drone, air, distant FM bells  
 **Sound effects.** Arc launch whoosh, travelling data blips, soft low impact at the door, ember crackle
 
 | Line | Start | End | Narration |
 |---:|---:|---:|---|
-| 1 | 0:02.40 | 0:08.96 | Somewhere tonight, a software engineer in Bengaluru is sending another application to a company in Berlin. |
-| 2 | 0:09.34 | 0:13.56 | She doesn't know it yet, but that job was never open to her. |
+| 1 | 0:08.81 | 0:17.05 | Bengaluru. Eleven forty-seven at night. A software engineer is sending her best application to Berlin. |
+| 2 | 0:17.35 | 0:21.34 | It's dead on arrival. That job was never open to her. |
 
-## B · Problem · 0:14.50 – 0:44.21
+## B · Problem · 0:21.89 – 0:47.49
 
 **Visual.** CSS 3D wall of 192 abstract listing cards. Search types, a card is clicked and applied, more fly off; the wall dims by permit / sponsorship while match badges still glow; applications stream out, replies stay empty, 'Your name' burns away.
 
@@ -27,13 +42,13 @@ Runtime 5:03.89 at 30 fps. Times come from `src/data/timeline.json`, the single 
 
 | Line | Start | End | Narration |
 |---:|---:|---:|---|
-| 3 | 0:14.50 | 0:19.53 | Job boards are built for volume. Search, click, apply, repeat. |
-| 4 | 0:19.95 | 0:23.94 | But when you're applying across borders, volume is the problem. |
-| 5 | 0:24.45 | 0:33.33 | A listing may need a work permit you don't have. The company may never sponsor a visa. And none of that shows up in the match score. |
-| 6 | 0:33.80 | 0:39.55 | So people apply everywhere, hear nothing back, and slowly burn their name with recruiters. |
-| 7 | 0:40.06 | 0:44.21 | That isn't a skills problem. It's an information problem. |
+| 3 | 0:21.89 | 0:27.97 | Job boards are built for volume. Search. Click. Apply. Repeat. |
+| 4 | 0:28.27 | 0:30.45 | But across borders, volume is the problem. |
+| 5 | 0:30.80 | 0:37.95 | That listing needs a work permit you don't have. The company won't sponsor a visa. And the match score never tells you. |
+| 6 | 0:38.30 | 0:44.14 | So you apply everywhere. You hear nothing back. And you slowly burn your name with recruiters. |
+| 7 | 0:44.54 | 0:47.49 | It isn't a skills problem. It's an information problem. |
 
-## C · Logo reveal · 0:45.56 – 1:00.97
+## C · Logo reveal · 0:48.79 – 1:03.70
 
 **Visual.** Horizon line of light; the three official mark polygons fly in from 3D, outline-draw, fill, catch a light sweep; the wordmark wipes in; dust converges. Logo rises; three promises reveal in columns.
 
@@ -44,10 +59,10 @@ Runtime 5:03.89 at 30 fps. Times come from `src/data/timeline.json`, the single 
 
 | Line | Start | End | Narration |
 |---:|---:|---:|---|
-| 8 | 0:45.56 | 0:47.16 | So we built Skylark. |
-| 9 | 0:50.76 | 1:00.97 | A job application service that puts you forward only for roles you can actually take, explains every decision, and keeps a human in the loop before anything is sent. |
+| 8 | 0:48.79 | 0:50.25 | So we built Skylark. |
+| 9 | 0:52.85 | 1:03.70 | A job application service that only puts you forward for roles you can actually take. It explains every decision. And a human checks everything before it's sent. |
 
-## D · Product · 1:01.82 – 1:59.94
+## D · Product · 1:04.25 – 1:58.86
 
 **Visual.** Real screens from the running app (demo mode, fictional sample data): resume → profile extraction, validation gates (curated taxonomy, Stack Overflow tags, ESCO, email DNS), dashboard spotlights, job detail with seven factor rows, tailoring with a real Accept click (before/after captures), specialist review checklist + submission receipt, tracker and phones.
 
@@ -58,15 +73,15 @@ Runtime 5:03.89 at 30 fps. Times come from `src/data/timeline.json`, the single 
 
 | Line | Start | End | Narration |
 |---:|---:|---:|---|
-| 10 | 1:01.82 | 1:09.36 | It starts with one profile. Upload your resume, and Skylark pulls out your headline, skills and experience. |
-| 11 | 1:09.74 | 1:21.59 | Every field is checked on the server. Skills, against a curated taxonomy, Stack Overflow tags and the European ESCO catalogue. Even your email domain is verified. |
-| 12 | 1:22.10 | 1:26.84 | Your dashboard shows new matches, active applications and today's progress. |
-| 13 | 1:27.22 | 1:34.82 | Open any role, and you see exactly why it fits. Seven factors, each with a score and a sentence you can read. |
-| 14 | 1:35.33 | 1:45.37 | When you decide to apply, AI drafts a tailored resume and cover letter. Every change comes with a reason, and nothing is applied until you accept it. |
-| 15 | 1:45.88 | 1:54.99 | Then a specialist takes over. They work through a five-point checklist, submit the application, and record the employer's confirmation reference. |
-| 16 | 1:55.41 | 1:59.94 | You follow every step on your tracker, from saved, to applied, to interview. |
+| 10 | 1:04.25 | 1:11.40 | One profile. Upload your resume, and Skylark pulls out your headline, skills and experience. |
+| 11 | 1:11.70 | 1:23.13 | Every field is checked on the server. Skills against a curated taxonomy, Stack Overflow tags and the European ESCO catalogue. Even your email domain is verified. |
+| 12 | 1:23.48 | 1:27.52 | Your dashboard: new matches, active applications, today's progress. |
+| 13 | 1:27.82 | 1:34.52 | Open any role and see exactly why it fits. Seven factors, each with a score and a sentence you can read. |
+| 14 | 1:34.87 | 1:44.66 | Hit apply, and AI drafts a tailored resume and cover letter. Every change comes with a reason. Nothing is applied until you accept it. |
+| 15 | 1:45.01 | 1:53.02 | Then a real person takes over. They run a five-point checklist, submit the application, and record the employer's confirmation reference. |
+| 16 | 1:53.32 | 1:58.86 | And you watch it all on your tracker. Saved. Applied. Interview. |
 
-## E1 · Job pipeline · 2:00.78 – 2:32.02
+## E1 · Job pipeline · 1:59.46 – 2:29.19
 
 **Visual.** Three.js pipeline: Arbeitnow and 16 Greenhouse boards emit raw postings (Adzuna, The Muse, Lever shown dim as 'when configured'); a gate turns raw shapes into six-field records; a fingerprint ring merges duplicates; a store drops stale listings; a 24 h ring and the real 'Live job data is unavailable' notice.
 
@@ -77,12 +92,12 @@ Runtime 5:03.89 at 30 fps. Times come from `src/data/timeline.json`, the single 
 
 | Line | Start | End | Narration |
 |---:|---:|---:|---|
-| 17 | 2:00.78 | 2:03.62 | Under the surface, Skylark is a pipeline. |
-| 18 | 2:04.05 | 2:12.69 | Listings arrive from public job APIs: Arbeitnow, sixteen Greenhouse company boards, and others when they're configured. |
-| 19 | 2:13.10 | 2:20.72 | Each posting is cleaned from raw HTML into a title, seniority, location, salary, sponsorship and skills. |
-| 20 | 2:21.14 | 2:32.02 | An SHA-256 fingerprint collapses duplicates. Stale listings are closed, and if nothing has refreshed in twenty-four hours, candidates are told. |
+| 17 | 1:59.46 | 2:00.66 | Now, under the hood. |
+| 18 | 2:00.96 | 2:10.48 | Listings stream in from public job APIs: Arbeitnow, sixteen Greenhouse company boards, and others when they're configured. |
+| 19 | 2:10.78 | 2:18.13 | Raw HTML becomes clean fields: title, seniority, location, salary, sponsorship and skills. |
+| 20 | 2:18.43 | 2:29.19 | A SHA-256 fingerprint kills duplicates. Stale listings get closed. And if nothing refreshes for twenty-four hours, candidates are told. |
 
-## E2 · Match engine · 2:32.79 – 3:08.79
+## E2 · Match engine · 2:29.75 – 3:01.54
 
 **Visual.** SVG dial where each arc's WIDTH is its published weight and its DEPTH the factor score; real FACTOR_WEIGHTS code highlights as each is named; README worked example sums to 86, then eligibility and sponsorship block, the sum drops to 64 and the cap takes it to 35; ranking ladder swaps.
 
@@ -93,13 +108,13 @@ Runtime 5:03.89 at 30 fps. Times come from `src/data/timeline.json`, the single 
 
 | Line | Start | End | Narration |
 |---:|---:|---:|---|
-| 21 | 2:32.79 | 2:36.46 | Then the match engine scores every role against your profile. |
-| 22 | 2:36.88 | 2:50.88 | Skills carry thirty percent. Eligibility, twenty. Experience, eighteen. Location, twelve. Sponsorship, eight. Preferences, seven. And education, five. |
-| 23 | 2:51.22 | 2:53.67 | The score is simply their weighted sum. |
-| 24 | 2:54.35 | 3:02.85 | Now, here's the rule that matters most. If a role won't sponsor someone who needs it, the score is capped at thirty-five. |
-| 25 | 3:03.27 | 3:08.79 | However strong your skills look, a job you can't legally take will never outrank one you can. |
+| 21 | 2:29.75 | 2:33.27 | Then the match engine scores every role against you. |
+| 22 | 2:33.57 | 2:45.70 | Skills carry thirty percent. Eligibility, twenty. Experience, eighteen. Location, twelve. Sponsorship, eight. Preferences, seven. Education, five. |
+| 23 | 2:46.00 | 2:47.96 | The score is their weighted sum. |
+| 24 | 2:48.46 | 2:55.43 | And here's the rule that changes everything. If a role won't sponsor someone who needs it, the score is capped at thirty-five. |
+| 25 | 2:55.78 | 3:01.54 | However good your skills look, a job you can't legally take will never outrank one you can. |
 
-## F · Engineering · 3:09.73 – 4:15.89
+## F · Engineering · 3:02.34 – 4:01.91
 
 **Visual.** CSS 3D exploded stack: Experience (Next.js 16) / Server / Domain services / Repository interface / Data. Supabase slab slides out for the in-memory store. Close-ups: two candidates' rows with an RLS wall a probe cannot cross (PGlite policy tests); AIProvider routing Claude → Zod schema, switching to the rules provider; a queue with idempotency keys, two workers, a failing job backing off to dead-letter.
 
@@ -110,14 +125,14 @@ Runtime 5:03.89 at 30 fps. Times come from `src/data/timeline.json`, the single 
 
 | Line | Start | End | Narration |
 |---:|---:|---:|---|
-| 26 | 3:09.73 | 3:19.23 | The product itself is one Next.js application: the public website, the candidate app, an operations console and a shared inbox. |
-| 27 | 3:19.65 | 3:29.03 | Every service talks to a single repository interface. In production, that's Supabase Postgres, with row level security on every table. |
-| 28 | 3:29.45 | 3:38.47 | Without credentials, the same interface runs on a seeded in-memory store. So the whole product works on a laptop, with zero setup. |
-| 29 | 3:39.06 | 3:51.09 | Security isn't assumed. It's tested. The test suite applies every migration to a real Postgres engine, and proves that one candidate can never read another's data. |
-| 30 | 3:51.68 | 4:04.26 | AI sits behind an interface too. Claude drafts the tailoring, and its output is validated against a schema. If the model is unavailable, a deterministic rules engine takes over. |
-| 31 | 4:04.77 | 4:15.89 | Background work runs through a queue. Every task carries an idempotency key, no two workers claim the same job, and failures back off before they're set aside. |
+| 26 | 3:02.34 | 3:10.16 | The whole product is one Next.js app: the website, the candidate app, an operations console and a shared inbox. |
+| 27 | 3:10.46 | 3:19.14 | Every service talks to one repository interface. In production, that's Supabase Postgres, with row-level security on every table. |
+| 28 | 3:19.44 | 3:28.24 | No credentials? The same interface runs on a seeded in-memory store. The whole product works on a laptop, with zero setup. |
+| 29 | 3:28.69 | 3:39.06 | Security isn't assumed. It's tested. The test suite runs every migration on a real Postgres engine, and proves one candidate can never read another's data. |
+| 30 | 3:39.51 | 3:50.88 | AI sits behind an interface too. Claude drafts the tailoring, its output is validated against a schema, and if the model is unavailable, a deterministic rules engine takes over. |
+| 31 | 3:51.28 | 4:01.91 | Background work runs through a queue. Every task carries an idempotency key, no two workers claim the same job, and failures back off before they're set aside. |
 
-## G · Live today · 4:16.74 – 4:39.77
+## G · Live today · 4:02.62 – 4:24.72
 
 **Visual.** Screens captured from www.skylarkgo.in (landing, sign-in with Google, rupee pricing) and the demo review queue, with five verified live capabilities; then two roadmap items from the README on a dashed horizon.
 
@@ -128,11 +143,11 @@ Runtime 5:03.89 at 30 fps. Times come from `src/data/timeline.json`, the single 
 
 | Line | Start | End | Narration |
 |---:|---:|---:|---|
-| 32 | 4:16.74 | 4:20.31 | Today, Skylark is live at skylarkgo.in. |
-| 33 | 4:20.73 | 4:32.54 | Live job listings. Google sign-in. Chat-style onboarding. Subscriptions in rupees through Razorpay. And a specialist review queue with a twenty-four hour target. |
-| 34 | 4:33.05 | 4:39.77 | Next, we're adding more job sources for India, and matching every candidate against the entire catalogue. |
+| 32 | 4:02.62 | 4:05.35 | And it's live today, at skylarkgo.in. |
+| 33 | 4:05.66 | 4:17.17 | Live job listings. Google sign-in. Chat-style onboarding. Subscriptions in rupees through Razorpay. And a specialist review queue with a twenty-four hour target. |
+| 34 | 4:17.57 | 4:24.72 | Next: more job sources for India, and matching every candidate against the entire catalogue. |
 
-## H · Close · 4:40.71 – 4:58.89
+## H · Close · 4:25.52 – 4:40.86
 
 **Visual.** Typographic thesis, then three serif lines, then the official logo reassembles with the tagline 'Your next move, already in motion.', the URL, GitHub repo and team credit.
 
@@ -143,6 +158,6 @@ Runtime 5:03.89 at 30 fps. Times come from `src/data/timeline.json`, the single 
 
 | Line | Start | End | Narration |
 |---:|---:|---:|---|
-| 35 | 4:40.71 | 4:47.48 | Skylark doesn't try to send more applications. It tries to send the right ones, and to show you why. |
-| 36 | 4:48.07 | 4:53.74 | Fewer applications. Better reasons. And a person checking every one. |
-| 37 | 4:54.76 | 4:58.89 | Skylark. Your next move, already in motion. |
+| 35 | 4:25.52 | 4:30.62 | Skylark doesn't try to send more applications. It tries to send the right ones, and to show you why. |
+| 36 | 4:31.12 | 4:36.55 | Fewer applications. Better reasons. And a person checking every one. |
+| 37 | 4:37.44 | 4:40.86 | Skylark. Your next move, already in motion. |

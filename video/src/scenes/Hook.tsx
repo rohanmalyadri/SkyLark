@@ -77,12 +77,14 @@ export const Hook: React.FC = () => {
   const tBerlin = WE(1, "Berlin");
   const tNever = W(2, "never");
   const end = L1(2) + 1.2;
+  const h0 = L0(1) - 0.35; // smash cut in from the cold open
 
   // Camera: from low over the Indian Ocean toward the full Bengaluru → Berlin corridor.
-  const k = tw(t, 0, end, 0, 1, EIO);
+  const k = tw(t, h0, end, 0, 1, EIO);
   const latC = lerp(14, 30, k);
   const lonC = lerp(80, 48, k);
-  const dist = lerp(4.6, 6.6, tw(t, 0, end, 0, 1, EIO));
+  // crash zoom out of the city, then a slow drift
+  const dist = lerp(2.6, 4.9, tw(t, h0, h0 + 1.6, 0, 1, EO)) + lerp(0, 1.7, tw(t, h0 + 1.6, end, 0, 1, EIO));
   const cam: Cam = { pos: [lerp(-0.25, 0.2, k), lerp(-0.35, 0.05, k), dist], target: [0, lerp(-0.25, 0, k), 0], fov: 32 };
   const rot = new THREE.Euler((latC * Math.PI) / 180, (-lonC * Math.PI) / 180, 0, "XYZ");
   const world = (v: THREE.Vector3) => v.clone().applyEuler(rot);
@@ -105,9 +107,9 @@ export const Hook: React.FC = () => {
   }, []);
   const bt = t - (tNever + 0.15);
 
-  const fadeIn = tw(t, 0.2, 2.6, 0, 1, EIO);
-  const stamp = tw(t, 0.6, 1.6);
-  const cardP = tw(t, W(2, "doesn't") - 0.1, W(2, "doesn't") + 0.9);
+  const fadeIn = tw(t, h0, h0 + 0.12, 0, 1);
+  const stamp = tw(t, h0 + 0.15, h0 + 0.7);
+  const cardP = tw(t, W(2, "dead") - 0.1, W(2, "dead") + 0.6);
 
   return (
     <AbsoluteFill style={{ opacity: fadeIn }}>
@@ -126,7 +128,7 @@ export const Hook: React.FC = () => {
           </mesh>
           {arcP > 0.01 && <Arc p={arcP} color={arcColor} opacity={0.95} />}
           {arcP > 0.01 && blocked < 1 && <Glow position={head} size={0.32} color={C.emberHi} opacity={1 - blocked} />}
-          <Glow position={latLon(BLR.lat, BLR.lon, R * 1.01)} size={0.3 + 0.06 * Math.sin(t * 3)} color={C.ember} opacity={tw(t, 1.2, 2.2)} />
+          <Glow position={latLon(BLR.lat, BLR.lon, R * 1.01)} size={0.3 + 0.06 * Math.sin(t * 3)} color={C.ember} opacity={tw(t, h0 + 0.1, h0 + 0.6)} />
           <Glow
             position={latLon(BER.lat, BER.lon, R * 1.01)}
             size={0.26}
@@ -178,7 +180,7 @@ export const Hook: React.FC = () => {
       )}
 
       {/* city labels */}
-      <div style={{ position: "absolute", left: blrW.x + 22, top: blrW.y - 10, opacity: tw(t, 1.4, 2.4) }}>
+      <div style={{ position: "absolute", left: blrW.x + 22, top: blrW.y - 10, opacity: tw(t, h0 + 0.3, h0 + 0.9) }}>
         <Eyebrow color={C.paper} size={16}>Bengaluru</Eyebrow>
         <Eyebrow color={C.faint} size={13} style={{ marginTop: 6 }}>12.97° N · 77.59° E</Eyebrow>
       </div>
@@ -228,7 +230,7 @@ export const Hook: React.FC = () => {
         <Eyebrow size={15} color={C.mist}>Bengaluru · 23:47 IST</Eyebrow>
         <div style={{ width: 160 * stamp, height: 1, background: hexA(C.ember, 0.7), marginTop: 12 }} />
       </div>
-      <div style={{ position: "absolute", right: 80, bottom: 64, opacity: tw(t, 1.0, 2.0) * 0.8 }}>
+      <div style={{ position: "absolute", right: 80, bottom: 64, opacity: tw(t, h0 + 0.5, h0 + 1.2) * 0.8 }}>
         <Eyebrow size={12} color={C.faint}>Illustrative scene</Eyebrow>
       </div>
     </AbsoluteFill>

@@ -11,7 +11,7 @@ export const TL = timeline as unknown as {
   scenes: Record<string, { start: number; end: number; lines: number[] }>;
 };
 
-export const SCENE_ORDER = ["hook", "problem", "reveal", "product", "pipeline", "engine", "arch", "results", "close"] as const;
+export const SCENE_ORDER = ["cold", "hook", "problem", "reveal", "product", "pipeline", "engine", "arch", "results", "close"] as const;
 export type SceneName = (typeof SCENE_ORDER)[number];
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -38,8 +38,8 @@ export const WE = (id: number, word: string, nth = 0): number => {
 };
 
 // Scene windows: each scene starts a little before its first line and overlaps the next for cross-fades.
-const PRE: Record<SceneName, number> = { hook: 2.4, problem: 0.5, reveal: 0.2, product: 0.6, pipeline: 0.7, engine: 0.6, arch: 0.7, results: 0.6, close: 0.7 };
-export const XF = 0.8;
+const PRE: Record<SceneName, number> = { cold: 0.45, hook: 0.35, problem: 0.35, reveal: 0.2, product: 0.4, pipeline: 0.45, engine: 0.4, arch: 0.45, results: 0.4, close: 0.5 };
+export const XF = 0.3; // short overlaps: cuts land hard, with a punch-in (see Film.tsx)
 export const sceneWin = (name: SceneName): [number, number] => {
   const i = SCENE_ORDER.indexOf(name);
   const start = Math.max(0, TL.scenes[name].start - PRE[name]);
