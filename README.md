@@ -36,7 +36,7 @@
 
 ## Capstone review
 
-Skylark is Team Synapse X's Semester 3 capstone (B.Tech CSE, SRM University AP). Everything the review
+Skylark is Team Synapse X's Semester 3 capstone (B.Tech CSE, SRM University Andhra Pradesh). Everything the review
 asks for is in this repository:
 
 | | |
