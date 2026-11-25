@@ -20,6 +20,7 @@
 </p>
 
 <p align="center">
+  <a href="#capstone-review">Capstone review</a> ·
   <a href="#what-is-skylark">Overview</a> ·
   <a href="#product-tour">Tour</a> ·
   <a href="#core-capabilities">Capabilities</a> ·
@@ -30,6 +31,21 @@
   <a href="#security-and-privacy">Security</a> ·
   <a href="#roadmap">Roadmap</a>
 </p>
+
+<img src=".github/assets/diagrams/divider.svg" width="100%" alt="" />
+
+## Capstone review
+
+Skylark is Team Synapse X's Semester 3 capstone (B.Tech CSE, SRM University AP). Everything the review
+asks for is in this repository:
+
+| | |
+|---|---|
+| **Code** | [`src/`](src), with tests in [`e2e/`](e2e) and [`supabase/tests`](supabase/tests). Live at [skylarkgo.in](https://www.skylarkgo.in). |
+| **Problem statement** | [`docs/problem-statement`](docs/problem-statement): who has the problem, when, and what it costs them |
+| **Interview notes** | [`docs/interview-notes`](docs/interview-notes): everyone we spoke to, with dates and roles |
+| **Slides** | [`docs/slides`](docs/slides): the HTML deck with speaker notes, and a PDF copy |
+| **What we have not built** | [`docs/not-built.md`](docs/not-built.md): the gaps, with our reasons |
 
 <img src=".github/assets/diagrams/divider.svg" width="100%" alt="" />
 
@@ -330,6 +346,7 @@ supabase/
 ├─ migrations/            Schema, RLS, column grants, plans, managed service, clients
 └─ tests/                 Policy tests against the real migrations
 e2e/                      Playwright journeys, including phone layouts
+docs/                     Capstone material: problem statement, interview notes, slides, not built
 .github/
 ├─ assets/                Everything this README shows
 └─ assets-src/            The code that generates it
