@@ -61,16 +61,6 @@ sponsorship among them), and writes down why. AI drafts a tailored resume and co
 accepts or rejects each change, and a human specialist reviews the application against a checklist
 before submitting it and recording the proof.
 
-Most job boards are built to maximise volume. But for candidates seeking international career opportunities, volume is often the problem. They spend countless hours navigating roles they are not legally eligible for, companies that do not offer visa sponsorship, and repetitive applications that risk damaging their credibility with recruiters.
-
-Skylark is built on a fundamentally different approach — precision over volume.
-
-Candidates create a single, validated professional profile. Skylark continuously imports live job listings, evaluates each opportunity against seven transparent scoring factors, including work authorisation and visa sponsorship, and provides clear reasoning behind every match.
-
-AI then generates a tailored resume and cover letter, while candidates retain complete control over every proposed change. Before submission, a human specialist reviews each application against a structured quality checklist, ensures its accuracy, and records verifiable proof of submission.
-
-The result is a smarter, more transparent and accountable job application experience that combines AI-powered intelligence with human expertise — helping candidates pursue the right opportunities, rather than simply more of them.
-
 | | A typical job board | Skylark |
 |---|---|---|
 | **Eligibility** | Your problem | A factor in every score; a role you cannot take is capped at 35 |
