@@ -346,7 +346,8 @@ supabase/
 ├─ migrations/            Schema, RLS, column grants, plans, managed service, clients
 └─ tests/                 Policy tests against the real migrations
 e2e/                      Playwright journeys, including phone layouts
-docs/                     Capstone material: problem statement, interview notes, slides, not built
+docs/                     Capstone material (problem statement, interview notes, slides, not built),
+                          engineering setup guide, research, media and team photos
 .github/
 ├─ assets/                Everything this README shows
 └─ assets-src/            The code that generates it
@@ -383,7 +384,7 @@ Open <http://localhost:3000>, choose **Sign in**, and pick **Candidate** or **Op
    ```
 5. Deploy. [`vercel.json`](vercel.json) pins functions to `syd1` and schedules the worker daily.
 
-A step-by-step guide, including Google sign-in and Razorpay, is in [`docs/backend-setup.md`](docs/backend-setup.md).
+A step-by-step guide, including Google sign-in and Razorpay, is in [`docs/engineering/backend-setup.md`](docs/engineering/backend-setup.md).
 
 ### Environment variables
 

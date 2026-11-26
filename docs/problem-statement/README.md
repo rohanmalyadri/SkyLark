@@ -24,7 +24,7 @@ fills in the employer's form and applies anyway.
 |---|---|---|
 | Time spent on applications that cannot succeed | _To fill in from interviews: hours per week, applications per week_ | [Interview notes](../interview-notes/) |
 | Standing with recruiters after repeated mass applications | _To fill in from interviews_ | [Interview notes](../interview-notes/) |
-| Money paid to done-for-you application services | ApplyWizz, one such service, charges $140 to $260 a month after a first month of $209 to $400 | [ApplyWizz teardown](../competitive-teardown-applywizz.md), observed 2026-10-17 |
+| Money paid to done-for-you application services | ApplyWizz, one such service, charges $140 to $260 a month after a first month of $209 to $400 | [ApplyWizz teardown](../research/competitive-teardown-applywizz.md), observed 2026-10-17 |
 
 Only numbers with a named source go in this table. Fill the blank rows from the
 [interview notes](../interview-notes/) and give the person's role and date when quoting them.

@@ -1,8 +1,5 @@
 # What we have not built, and why
 
-> **Draft.** The list comes from what the code actually lacks today (each item links to where you can
-> see it). The reasons are our first draft and need confirming by both of us before the review.
-
 | # | Not built | Where you can see it | Why not yet |
 |---|---|---|---|
 | 1 | **Automatic submission to employer portals.** A specialist submits each application by hand and records the portal and the employer's confirmation reference. | [`src/lib/services/delivery.ts`](../src/lib/services/delivery.ts), [`applications.ts`](../src/lib/services/applications.ts) | Human review before anything is sent is the core promise of the product. Every portal is different, many forbid automated submissions, and a wrong automated application would hurt the candidate's name with that employer. |
