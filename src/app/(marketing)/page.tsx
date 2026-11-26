@@ -346,6 +346,8 @@ async function International() {
     const at = CITY_COORDS[`${c.city}|${c.country}`] ?? cityCoords(datasetCityName(c.city), c.country);
     if (!at) continue;
     const pos = mapPosition(at[0], at[1]);
+    // The map art spans 125°W to 155°E; Auckland and Hawaii fall off its edges.
+    if (pos.x < 0 || pos.x > 100 || pos.y < 0 || pos.y > 100) continue;
     const near = markers.find((m) => m.key.endsWith(`|${c.country}`) && Math.hypot(m.x - pos.x, m.y - pos.y) < 0.6);
     if (near) near.roles = (near.roles ?? 0) + c.roles;
     else if (markers.length < 40) markers.push({ key: `${c.city}|${c.country}`, city: c.city, country: countryName(c.country), roles: c.roles, ...pos });
