@@ -517,8 +517,9 @@ export class SupabaseRepository implements Repository {
     return toProfile(check(await this.db.from("candidate_profiles").upsert(fromProfile(profile)).select().single(), "upsertProfile"));
   }
 
-  async listProfiles(limit = 1000) {
-    return check(await this.db.from("candidate_profiles").select("*").limit(limit), "listProfiles").map(toProfile);
+  async listProfiles(limit = 1000, offset = 0) {
+    // Ordered so that paging through every profile visits each one exactly once.
+    return check(await this.db.from("candidate_profiles").select("*").order("user_id").range(offset, offset + limit - 1), "listProfiles").map(toProfile);
   }
 
   /* profile verification */
@@ -556,6 +557,7 @@ export class SupabaseRepository implements Repository {
   async listVerifications(opts: Parameters<Repository["listVerifications"]>[0] = {}) {
     let q = this.db.from("profile_verifications").select("*").order("submitted_at", { ascending: false }).limit(opts.limit ?? 1000);
     if (opts.status) q = q.in("status", opts.status);
+    if (opts.userIds) q = q.in("user_id", opts.userIds);
     return check(await q, "listVerifications").map(toVerification);
   }
 
@@ -597,13 +599,15 @@ export class SupabaseRepository implements Repository {
   async upsertCompany(company: Parameters<Repository["upsertCompany"]>[0]) {
     return toCompany(check(await this.db.from("companies").upsert(fromCompany(company), { onConflict: "domain" }).select().single(), "upsertCompany"));
   }
-  async listJobs(opts: { status?: "active" | "closed"; limit?: number; search?: string } = {}) {
+  async listJobs(opts: { status?: "active" | "closed"; limit?: number; offset?: number; search?: string } = {}) {
     // PostgREST returns at most 1000 rows per request, so read larger limits a page at a time.
     const limit = opts.limit ?? 500;
+    const offset = opts.offset ?? 0;
     const rows: Row[] = [];
     while (rows.length < limit) {
       const size = Math.min(PAGE_ROWS, limit - rows.length);
-      let q = this.db.from("jobs").select(JOB_SELECT).order("posted_at", { ascending: false }).order("id").range(rows.length, rows.length + size - 1);
+      const from = offset + rows.length;
+      let q = this.db.from("jobs").select(JOB_SELECT).order("posted_at", { ascending: false }).order("id").range(from, from + size - 1);
       if (opts.status) q = q.eq("status", opts.status);
       if (opts.search) q = q.textSearch("search", opts.search, { type: "websearch" });
       const page: Row[] = check(await q, "listJobs");

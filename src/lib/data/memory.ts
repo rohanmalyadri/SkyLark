@@ -144,8 +144,8 @@ export class MemoryRepository implements Repository {
     return clone(row);
   }
 
-  async listProfiles(limit = 1000) {
-    return clone(this.s.profiles.slice(0, limit));
+  async listProfiles(limit = 1000, offset = 0) {
+    return clone([...this.s.profiles].sort((a, b) => a.userId.localeCompare(b.userId)).slice(offset, offset + limit));
   }
 
   /* profile verification */
@@ -185,7 +185,7 @@ export class MemoryRepository implements Repository {
   async listVerifications(opts: Parameters<Repository["listVerifications"]>[0] = {}) {
     return clone(
       this.s.verifications
-        .filter((v) => !opts.status || opts.status.includes(v.status))
+        .filter((v) => (!opts.status || opts.status.includes(v.status)) && (!opts.userIds || opts.userIds.includes(v.userId)))
         .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))
         .slice(0, opts.limit ?? 1000),
     );
@@ -222,12 +222,12 @@ export class MemoryRepository implements Repository {
     this.s.companies.push(row);
     return clone(row);
   }
-  async listJobs(opts: { status?: "active" | "closed"; limit?: number; search?: string } = {}) {
+  async listJobs(opts: { status?: "active" | "closed"; limit?: number; offset?: number; search?: string } = {}) {
     const q = opts.search?.toLowerCase();
     return this.s.jobs
       .filter((j) => (!opts.status || j.status === opts.status) && (!q || j.title.toLowerCase().includes(q)))
-      .sort((a, b) => b.postedAt.localeCompare(a.postedAt))
-      .slice(0, opts.limit ?? 500)
+      .sort((a, b) => b.postedAt.localeCompare(a.postedAt) || a.id.localeCompare(b.id))
+      .slice(opts.offset ?? 0, (opts.offset ?? 0) + (opts.limit ?? 500))
       .map((j) => this.withCompany(j.id)!);
   }
   async getJob(id: string) {

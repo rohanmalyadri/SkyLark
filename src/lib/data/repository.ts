@@ -117,12 +117,12 @@ export interface Repository {
   /* profiles */
   getProfile(userId: string): Promise<CandidateProfile | null>;
   upsertProfile(profile: CandidateProfile): Promise<CandidateProfile>;
-  listProfiles(limit?: number): Promise<CandidateProfile[]>;
+  listProfiles(limit?: number, offset?: number): Promise<CandidateProfile[]>;
 
   /* profile verification (server- and staff-written only) */
   getVerification(userId: string): Promise<ProfileVerification | null>;
   upsertVerification(v: Omit<ProfileVerification, "updatedAt">): Promise<ProfileVerification>;
-  listVerifications(opts?: { status?: VerificationStatus[]; limit?: number }): Promise<ProfileVerification[]>;
+  listVerifications(opts?: { status?: VerificationStatus[]; limit?: number; userIds?: string[] }): Promise<ProfileVerification[]>;
 
   /* skill review requests (server-written) */
   createSkillRequest(r: NewRow<SkillRequest>): Promise<SkillRequest>;
@@ -140,7 +140,7 @@ export interface Repository {
   /* companies & jobs */
   listCompanies(): Promise<Company[]>;
   upsertCompany(company: NewRow<Company>): Promise<Company>;
-  listJobs(opts?: { status?: Job["status"]; limit?: number; search?: string }): Promise<JobWithCompany[]>;
+  listJobs(opts?: { status?: Job["status"]; limit?: number; offset?: number; search?: string }): Promise<JobWithCompany[]>;
   getJob(id: string): Promise<JobWithCompany | null>;
   /** Company and places of every active listing, light enough to read the whole catalog. */
   listJobLocations(): Promise<{ companyId: string; locations: Job["locations"] }[]>;

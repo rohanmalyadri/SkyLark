@@ -194,8 +194,10 @@ export async function refreshCandidateEnrichment(staff: User, userId: string) {
 
 /* ---------- Catalog & operations ---------- */
 
-export async function jobsCatalog(search?: string) {
-  return systemRepo().listJobs({ search, limit: 300 });
+/** One page of the catalog, newest first; `more` says whether a further page exists. */
+export async function jobsCatalog(search?: string, limit = 50) {
+  const rows = await systemRepo().listJobs({ search, limit: limit + 1 });
+  return { jobs: rows.slice(0, limit), more: rows.length > limit };
 }
 
 export async function allApplications() {
