@@ -9,7 +9,7 @@ import { requireUser } from "@/lib/auth/dal";
 import { chatIntakeAvailable } from "@/lib/env";
 import { getProfileBundle } from "@/lib/services/profile";
 
-export const metadata: Metadata = { title: "Set up your profile" };
+export const metadata: Metadata = { title: "Set up your profile", robots: { index: false, follow: false } };
 
 export default function OnboardingPage() {
   return (

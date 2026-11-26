@@ -14,7 +14,8 @@ export const metadata: Metadata = {
     "Skylark is a human-assisted job application service. Share your profile once; we match you to roles you're eligible for, tailor each application, and a specialist reviews and submits it — while you prepare for interviews.",
   applicationName: "Skylark",
   metadataBase: new URL(siteUrl(process.env.NEXT_PUBLIC_APP_URL, process.env.NODE_ENV === "production")),
-  openGraph: { type: "website", siteName: "Skylark", url: "/" },
+  openGraph: { type: "website", siteName: "Skylark", locale: "en_IN" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {
