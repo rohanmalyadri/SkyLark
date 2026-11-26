@@ -6,6 +6,10 @@
 > They exist to show what finished notes look like. They are not research, and they are not evidence for any
 > claim about Skylark. Real interview notes go one folder up, in [`../`](../README.md).
 
+![Summary of the ten sample notes, labelled as illustrative samples, not real interviews](sample-summary.png)
+
+The image is rendered from [`sample-summary.html`](sample-summary.html) by [`render.mjs`](render.mjs).
+
 ## Everyone in the samples
 
 | # | Date | Role | How we met | One line they said | Agreed with our idea? | Notes |
