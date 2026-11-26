@@ -8,6 +8,7 @@
 | [Interview notes](interview-notes/) | Everyone we spoke to, with dates and roles, written from a template |
 | [Slides](slides/) | The HTML deck with speaker notes, and a PDF copy |
 | [What we have not built](not-built.md) | The gaps in the product today, with our reasons |
+| [Review prep](review-prep.md) | Notes for each marked section (A1 to A6), the demo script and the cross-training checklist |
 
 ## Engineering
 
