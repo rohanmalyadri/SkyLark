@@ -11,6 +11,12 @@
   and has a specialist review and submit it, with a receipt for every one.
 </p>
 
+<h3 align="center">▶ Watch the film</h3>
+
+https://github.com/user-attachments/assets/8746ea46-09bd-4a33-95fe-bd0b8c1faa7e
+
+<p align="center"><sub>Skylark in 4:46, narrated by Rohan Malyadri. Source, script and storyboard in <a href="video/">video/</a>.</sub></p>
+
 <p align="center">
   <a href="https://www.skylarkgo.in"><img alt="Live at skylarkgo.in" src="https://img.shields.io/badge/live-skylarkgo.in-F95135?style=flat-square&labelColor=1E1E1E" /></a>
   <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-F4F1EC?style=flat-square&logo=nextdotjs&logoColor=white&labelColor=1E1E1E" />

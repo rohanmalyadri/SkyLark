@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Film production project (own toolchain, see video/README.md):
+    "video/**",
   ]),
 ]);
 
