@@ -11,6 +11,9 @@ Rules we follow:
 - We record answers that went against our idea as carefully as the ones that agreed with it.
 - No full names, phone numbers or emails unless the person agreed. A role and a first name or initials is enough.
 
+> Looking for an example of finished notes? See [`samples/`](samples/README.md). Those are **illustrative samples,
+> not real interviews**, and are kept separate from the real notes below.
+
 ## Everyone we spoke to
 
 | # | Date | Role | How we met | One line they said | Agreed with our idea? | Notes |
