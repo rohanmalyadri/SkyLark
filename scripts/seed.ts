@@ -11,7 +11,6 @@
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { SupabaseRepository } from "../src/lib/data/supabase";
-import { buildClientSeed } from "../src/lib/seed/clients";
 import { buildDataset } from "../src/lib/seed/dataset";
 
 config({ path: ".env.local" });
@@ -228,19 +227,6 @@ async function main() {
   }
   console.log("✓ answer vaults, delivery runs, partners, promo codes and leads");
 
-  // CRM clients. Only into an empty table: once staff have edited these records, a re-run
-  // of the seed must never overwrite them.
-  const { count: clientCount, error: clientCountError } = await admin.from("clients").select("id", { count: "exact", head: true });
-  if (clientCountError) throw clientCountError;
-  if (!clientCount) {
-    const crm = buildClientSeed();
-    for (const c of crm.clients) await repo.createClient(c);
-    for (const m of crm.messages) await repo.addClientMessage(m);
-    for (const n of crm.notes) await repo.addClientNote(n);
-    console.log(`✓ ${crm.clients.length} clients with sample conversations`);
-  } else {
-    console.log(`• clients table already has ${clientCount} rows, left untouched`);
-  }
   console.log("\nSeed complete. Sign in as demo@skylark.dev (candidate) or ops@skylark.dev (admin) with SEED_DEMO_PASSWORD.");
 }
 

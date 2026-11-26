@@ -22,6 +22,24 @@ async function setup() {
   return { repo, user, other, staff, chat: await import("./support-chat"), clients: await import("./clients") };
 }
 
+const newClient = (name: string) => ({
+  name,
+  email: "",
+  phone: "",
+  company: "",
+  city: "",
+  status: "active" as const,
+  currency: "INR" as const,
+  amount: null,
+  paymentStatus: "unpaid" as const,
+  paymentSource: "manual" as const,
+  paidAt: null,
+  paymentMethod: null,
+  paymentReference: null,
+  userId: null,
+  lastInteractionAt: null,
+});
+
 describe("user ↔ team chat", () => {
   it("opens one client record per account on the first message and reuses it", async () => {
     const { repo, user, chat } = await setup();
@@ -60,7 +78,8 @@ describe("user ↔ team chat", () => {
 
   it("never links by matching email, and hides sample messages from the user", async () => {
     const { repo, user, staff, chat } = await setup();
-    const seeded = (await repo.listClients()).find((c) => c.name === "Harsha Gottipati")!;
+    const seeded = await repo.createClient(newClient("Existing Client"));
+    await repo.addClientMessage({ clientId: seeded.id, direction: "outbound", authorName: "Team", authorId: null, body: "Illustration", sample: true, readAt: null });
     await repo.updateClient(seeded.id, { email: user.email });
     expect((await chat.myConversation(user)).client).toBeNull();
 
@@ -72,7 +91,8 @@ describe("user ↔ team chat", () => {
 
   it("refuses staff accounts and accounts that already have a client", async () => {
     const { repo, user, staff, chat } = await setup();
-    const [a, b] = await repo.listClients();
+    const a = await repo.createClient(newClient("Client A"));
+    const b = await repo.createClient(newClient("Client B"));
     await expect(chat.linkAccount(staff, a!.id, staff.email)).rejects.toThrow(/staff account/);
     await chat.linkAccount(staff, a!.id, user.email);
     await expect(chat.linkAccount(staff, b!.id, user.email)).rejects.toThrow(/already has its own client record/);

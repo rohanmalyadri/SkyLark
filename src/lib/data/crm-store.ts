@@ -3,7 +3,6 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import type { Client, ClientMessage, ClientNote } from "@/lib/domain/types";
 import { logger } from "@/lib/infra/logger";
-import { buildClientSeed } from "@/lib/seed/clients";
 
 /*
  * Demo-mode storage for the CRM. The rest of the demo store is rebuilt on every restart,
@@ -33,7 +32,7 @@ function load(): CrmData {
   } catch {
     // Missing or unreadable: start from the seed below.
   }
-  const seeded: CrmData = { version: 1, ...buildClientSeed() };
+  const seeded: CrmData = { version: 1, clients: [], messages: [], notes: [] };
   write(seeded);
   return seeded;
 }
