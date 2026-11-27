@@ -11,7 +11,9 @@
     "seed": "tsx --conditions=react-server --tsconfig tsconfig.json scripts/seed.ts",
     "test": "vitest run",
     "test:db": "vitest run supabase/tests",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "loadtest": "node scripts/load-test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

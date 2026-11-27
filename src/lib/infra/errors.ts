@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { unstable_rethrow } from "next/navigation";
 import { z } from "zod";
 import { logger } from "./logger";
@@ -43,6 +44,22 @@ export type ActionResult<T = undefined> =
   | { ok: true; data: T; message?: string }
   | { ok: false; error: string; code: ErrorCode; fieldErrors?: Record<string, string[]>; reason?: string };
 
+/** Turns Zod issues into { "field.path": ["message"] } so every caller shows the same clean shape. */
+export function zodFieldErrors(err: z.ZodError) {
+  const fieldErrors: Record<string, string[]> = {};
+  for (const issue of err.issues) {
+    const key = issue.path.join(".") || "_";
+    (fieldErrors[key] ??= []).push(issue.message);
+  }
+  return fieldErrors;
+}
+
+/**
+ * A short code shown to the person next to "something went wrong" and written to the log with the
+ * real error, so a support message can be matched to the exact failure without exposing its details.
+ */
+export const errorReference = () => randomBytes(4).toString("hex").toUpperCase();
+
 export function toActionError(err: unknown, context: string): Extract<ActionResult, { ok: false }> {
   if (err instanceof AppError) {
     const fieldErrors = err.details?.fieldErrors as Record<string, string[]> | undefined;
@@ -51,27 +68,31 @@ export function toActionError(err: unknown, context: string): Extract<ActionResu
     return { ok: false, error: err.message, code: err.code, ...(fieldErrors ? { fieldErrors } : {}), ...(reason ? { reason } : {}) };
   }
   if (err instanceof z.ZodError) {
-    const fieldErrors: Record<string, string[]> = {};
-    for (const issue of err.issues) {
-      const key = issue.path.join(".") || "_";
-      (fieldErrors[key] ??= []).push(issue.message);
-    }
-    return { ok: false, error: "Please fix the highlighted fields.", code: "validation", fieldErrors };
+    return { ok: false, error: "Please fix the highlighted fields.", code: "validation", fieldErrors: zodFieldErrors(err) };
   }
   // Next.js uses thrown errors for redirect()/notFound(); never swallow them.
   unstable_rethrow(err);
-  logger.error("action.failed", { context, error: err });
-  return { ok: false, error: "Something went wrong on our side. Please try again.", code: "internal" };
+  const ref = errorReference();
+  logger.error("action.failed", { context, ref, error: err });
+  return { ok: false, error: `Something went wrong on our side. Please try again. If it keeps happening, send us this code: ${ref}.`, code: "internal" };
 }
 
 export function errorResponse(err: unknown, context: string) {
   unstable_rethrow(err);
+  const noStore: Record<string, string> = { "cache-control": "no-store" };
   if (err instanceof AppError) {
-    return Response.json({ error: { code: err.code, message: err.message, ...(err.details?.fieldErrors ? { fieldErrors: err.details.fieldErrors } : {}) } }, { status: err.status });
+    if (err.code !== "not_found") logger.warn("route.rejected", { context, code: err.code });
+    const retryAfter: Record<string, string> = err.code === "rate_limited" ? { "retry-after": "60" } : {};
+    return Response.json(
+      { error: { code: err.code, message: err.message, ...(err.details?.fieldErrors ? { fieldErrors: err.details.fieldErrors } : {}) } },
+      { status: err.status, headers: { ...noStore, ...retryAfter } },
+    );
   }
   if (err instanceof z.ZodError) {
-    return Response.json({ error: { code: "validation", message: "Invalid request", issues: err.issues } }, { status: 422 });
+    // Field names and messages only: raw Zod issues echo the submitted values back.
+    return Response.json({ error: { code: "validation", message: "Please check the request and try again.", fieldErrors: zodFieldErrors(err) } }, { status: 422, headers: noStore });
   }
-  logger.error("route.failed", { context, error: err });
-  return Response.json({ error: { code: "internal", message: "Internal error" } }, { status: 500 });
+  const ref = errorReference();
+  logger.error("route.failed", { context, ref, error: err });
+  return Response.json({ error: { code: "internal", message: "Something went wrong on our side. Please try again.", ref } }, { status: 500, headers: noStore });
 }

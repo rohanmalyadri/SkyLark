@@ -1,8 +1,16 @@
 import type { NextRequest } from "next/server";
+import { requestIp } from "@/lib/auth/dal";
+import { errorResponse } from "@/lib/infra/errors";
+import { rateLimit } from "@/lib/infra/rate-limit";
 import { listCities, listRegions } from "@/lib/geo";
 
 /** GET /api/geo/countries/IN/cities?region=Karnataka — cities for a country, narrowed by state/region. */
 export async function GET(req: NextRequest, ctx: RouteContext<"/api/geo/countries/[code]/cities">) {
+  try {
+    await rateLimit("geo", (await requestIp()) ?? "unknown");
+  } catch (err) {
+    return errorResponse(err, "geo.cities");
+  }
   const { code } = await ctx.params;
   if (!/^[A-Za-z]{2}$/.test(code)) return Response.json({ error: { code: "validation", message: "Use a 2-letter country code" } }, { status: 422 });
   const region = req.nextUrl.searchParams.get("region")?.slice(0, 80) || undefined;

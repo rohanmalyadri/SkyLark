@@ -10,6 +10,9 @@ export interface RateLimitRule {
 
 export const RATE_LIMITS = {
   auth: { limit: 10, windowSec: 300 },
+  // Password sign-ins per account (keyed by a hash of the email), whatever IP they come from.
+  // Enough for someone who forgot which password they used; far too few to guess one.
+  authAccount: { limit: 10, windowSec: 900 },
   // Failed sign-ins that check whether an email has an account (and how it signs in). Keyed by IP,
   // so nobody can test a list of emails; past the limit sign-in still works, with the generic error.
   accountLookup: { limit: 20, windowSec: 3600 },
@@ -19,6 +22,9 @@ export const RATE_LIMITS = {
   api: { limit: 300, windowSec: 60 },
   pipeline: { limit: 6, windowSec: 300 },
   lookup: { limit: 90, windowSec: 60 },
+  // Country, region and city lists for location pickers, keyed by IP. Responses are cached for a day,
+  // so a real visitor makes a handful of these; this only stops a script pulling every city list.
+  geo: { limit: 120, windowSec: 60 },
   enrich: { limit: 20, windowSec: 3600 },
   // Chat onboarding: each message is one Gemini call. A full intake takes ~15 turns.
   intake: { limit: 80, windowSec: 3600 },
