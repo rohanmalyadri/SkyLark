@@ -1,0 +1,565 @@
+{
+  "note": "Local run, demo mode, production build (next start), one Node process on a 4-vCPU cloud container that also ran the load generator. Capacity run had per-user rate limits raised locally so 9 demo accounts could stand in for hundreds of different people; the stock run kept the real limits.",
+  "target": "http://localhost:3100",
+  "ranAt": "2026-11-27T13:01:13.867Z",
+  "durationPerStepS": 20,
+  "thinkMs": 1000,
+  "node": "v22.23.5",
+  "capacity": {
+    "results": [
+      {
+        "users": 50,
+        "requests": 974,
+        "rps": 45.5,
+        "p50": 6,
+        "p95": 129,
+        "p99": 155,
+        "errorRate": 0,
+        "rateLimited": 0,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/v1/applications": {
+            "count": 196,
+            "p50": 5,
+            "p95": 16,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/matches": {
+            "count": 585,
+            "p50": 6,
+            "p95": 15,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/skills/suggest": {
+            "count": 102,
+            "p50": 129,
+            "p95": 181,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 91,
+            "p50": 4,
+            "p95": 11,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": true
+      },
+      {
+        "users": 100,
+        "requests": 1986,
+        "rps": 92.6,
+        "p50": 4,
+        "p95": 122,
+        "p99": 142,
+        "errorRate": 0,
+        "rateLimited": 0,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/v1/matches": {
+            "count": 1250,
+            "p50": 5,
+            "p95": 12,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/applications": {
+            "count": 373,
+            "p50": 3,
+            "p95": 9,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 176,
+            "p50": 2,
+            "p95": 10,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/skills/suggest": {
+            "count": 187,
+            "p50": 125,
+            "p95": 156,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": true
+      },
+      {
+        "users": 200,
+        "requests": 3946,
+        "rps": 183,
+        "p50": 5,
+        "p95": 126,
+        "p99": 151,
+        "errorRate": 0,
+        "rateLimited": 0,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/v1/applications": {
+            "count": 733,
+            "p50": 3,
+            "p95": 16,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/matches": {
+            "count": 2433,
+            "p50": 5,
+            "p95": 19,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 391,
+            "p50": 2,
+            "p95": 13,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/skills/suggest": {
+            "count": 389,
+            "p50": 126,
+            "p95": 192,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": true
+      },
+      {
+        "users": 400,
+        "requests": 7652,
+        "rps": 355.2,
+        "p50": 18,
+        "p95": 200,
+        "p99": 422,
+        "errorRate": 0,
+        "rateLimited": 0,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/v1/applications": {
+            "count": 1527,
+            "p50": 14,
+            "p95": 142,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 790,
+            "p50": 14,
+            "p95": 146,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/matches": {
+            "count": 4533,
+            "p50": 17,
+            "p95": 152,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/skills/suggest": {
+            "count": 802,
+            "p50": 137,
+            "p95": 345,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": true
+      },
+      {
+        "users": 500,
+        "requests": 8898,
+        "rps": 413.5,
+        "p50": 63,
+        "p95": 415,
+        "p99": 1263,
+        "errorRate": 0,
+        "rateLimited": 0,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/skills/suggest": {
+            "count": 893,
+            "p50": 167,
+            "p95": 633,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/matches": {
+            "count": 5316,
+            "p50": 56,
+            "p95": 376,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/applications": {
+            "count": 1787,
+            "p50": 58,
+            "p95": 358,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 902,
+            "p50": 52,
+            "p95": 358,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": true
+      },
+      {
+        "users": 600,
+        "requests": 9115,
+        "rps": 423.5,
+        "p50": 217,
+        "p95": 936,
+        "p99": 2368,
+        "errorRate": 0,
+        "rateLimited": 0,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/v1/applications": {
+            "count": 1852,
+            "p50": 207,
+            "p95": 895,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/matches": {
+            "count": 5447,
+            "p50": 210,
+            "p95": 891,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/skills/suggest": {
+            "count": 898,
+            "p50": 373,
+            "p95": 1449,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 918,
+            "p50": 217,
+            "p95": 792,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": true
+      },
+      {
+        "users": 800,
+        "requests": 9417,
+        "rps": 431.9,
+        "p50": 372,
+        "p95": 3297,
+        "p99": 6543,
+        "errorRate": 0,
+        "rateLimited": 0,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/v1/applications": {
+            "count": 1961,
+            "p50": 360,
+            "p95": 3293,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/matches": {
+            "count": 5638,
+            "p50": 348,
+            "p95": 3292,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 922,
+            "p50": 365,
+            "p95": 4607,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/skills/suggest": {
+            "count": 896,
+            "p50": 573,
+            "p95": 3453,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": false
+      },
+      {
+        "users": 1200,
+        "requests": 9304,
+        "rps": 389.5,
+        "p50": 706,
+        "p95": 10000,
+        "p99": 10005,
+        "errorRate": 0.0846,
+        "rateLimited": 0,
+        "statuses": {
+          "0": 787
+        },
+        "endpoints": {
+          "GET /api/v1/applications": {
+            "count": 1846,
+            "p50": 678,
+            "p95": 10000,
+            "errors": 154,
+            "rateLimited": 0
+          },
+          "GET /api/v1/matches": {
+            "count": 5585,
+            "p50": 690,
+            "p95": 10000,
+            "errors": 482,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 926,
+            "p50": 680,
+            "p95": 10000,
+            "errors": 81,
+            "rateLimited": 0
+          },
+          "GET /api/skills/suggest": {
+            "count": 947,
+            "p50": 995,
+            "p95": 10000,
+            "errors": 70,
+            "rateLimited": 0
+          }
+        },
+        "healthy": false
+      }
+    ],
+    "capacityUsers": 600
+  },
+  "stockLimits": {
+    "results": [
+      {
+        "users": 10,
+        "requests": 205,
+        "rps": 9.6,
+        "p50": 6,
+        "p95": 134,
+        "p99": 362,
+        "errorRate": 0,
+        "rateLimited": 0,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/v1/matches": {
+            "count": 132,
+            "p50": 7,
+            "p95": 11,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/applications": {
+            "count": 26,
+            "p50": 6,
+            "p95": 8,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/skills/suggest": {
+            "count": 23,
+            "p50": 133,
+            "p95": 401,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 24,
+            "p50": 5,
+            "p95": 8,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": true
+      },
+      {
+        "users": 25,
+        "requests": 492,
+        "rps": 23.2,
+        "p50": 6,
+        "p95": 125,
+        "p99": 166,
+        "errorRate": 0,
+        "rateLimited": 0,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/v1/matches": {
+            "count": 303,
+            "p50": 6,
+            "p95": 14,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 56,
+            "p50": 4,
+            "p95": 8,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/applications": {
+            "count": 91,
+            "p50": 5,
+            "p95": 8,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/skills/suggest": {
+            "count": 42,
+            "p50": 129,
+            "p95": 265,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": true
+      },
+      {
+        "users": 50,
+        "requests": 990,
+        "rps": 46.3,
+        "p50": 5,
+        "p95": 128,
+        "p99": 146,
+        "errorRate": 0,
+        "rateLimited": 0,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/v1/applications": {
+            "count": 190,
+            "p50": 4,
+            "p95": 10,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/skills/suggest": {
+            "count": 90,
+            "p50": 129,
+            "p95": 215,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/matches": {
+            "count": 610,
+            "p50": 5,
+            "p95": 13,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 100,
+            "p50": 3,
+            "p95": 7,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": true
+      },
+      {
+        "users": 100,
+        "requests": 1955,
+        "rps": 90.9,
+        "p50": 4,
+        "p95": 125,
+        "p99": 137,
+        "errorRate": 0,
+        "rateLimited": 6,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/health": {
+            "count": 195,
+            "p50": 2,
+            "p95": 8,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/v1/applications": {
+            "count": 397,
+            "p50": 3,
+            "p95": 9,
+            "errors": 0,
+            "rateLimited": 2
+          },
+          "GET /api/v1/matches": {
+            "count": 1175,
+            "p50": 4,
+            "p95": 11,
+            "errors": 0,
+            "rateLimited": 4
+          },
+          "GET /api/skills/suggest": {
+            "count": 188,
+            "p50": 126,
+            "p95": 144,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": true
+      },
+      {
+        "users": 200,
+        "requests": 3929,
+        "rps": 183,
+        "p50": 4,
+        "p95": 133,
+        "p99": 381,
+        "errorRate": 0,
+        "rateLimited": 1342,
+        "statuses": {},
+        "endpoints": {
+          "GET /api/v1/matches": {
+            "count": 2354,
+            "p50": 4,
+            "p95": 28,
+            "errors": 0,
+            "rateLimited": 1006
+          },
+          "GET /api/v1/applications": {
+            "count": 781,
+            "p50": 3,
+            "p95": 27,
+            "errors": 0,
+            "rateLimited": 336
+          },
+          "GET /api/skills/suggest": {
+            "count": 389,
+            "p50": 128,
+            "p95": 347,
+            "errors": 0,
+            "rateLimited": 0
+          },
+          "GET /api/health": {
+            "count": 405,
+            "p50": 3,
+            "p95": 25,
+            "errors": 0,
+            "rateLimited": 0
+          }
+        },
+        "healthy": true
+      }
+    ]
+  }
+}

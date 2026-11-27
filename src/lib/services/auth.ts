@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { cookies } from "next/headers";
 import { createDemoToken, DEMO_SESSION_COOKIE, SESSION_TTL_SECONDS } from "@/lib/auth/demo-session";
 import { hashPassword, verifyPassword } from "@/lib/auth/passwords";
@@ -19,6 +20,12 @@ import { audit } from "./audit";
 
 const GENERIC_LOGIN_ERROR = "That email and password don't match an account.";
 const USE_GOOGLE_ERROR = "This email is registered with Google. Use \"Continue with Google\" to sign in.";
+
+/**
+ * Rate-limit and log key for one email address. Hashed so the rate-limit table and the logs never
+ * hold the address itself, but stable so attempts on the same account add up.
+ */
+export const accountKey = (email: string) => createHash("sha256").update(email.trim().toLowerCase()).digest("hex").slice(0, 32);
 
 /** Why an email sign-in failed, when the app can safely say more than "wrong email or password". */
 export type SignInFailure = "no_account" | "use_google";
@@ -116,7 +123,10 @@ export async function signUp(input: unknown, ip: string) {
   });
   if (error) {
     if (/already registered|already exists/i.test(error.message)) throw await existingAccountError(data.email, ip);
-    throw new AppError("validation", error.message);
+    logger.warn("auth.sign_up_failed", { account: accountKey(data.email), provider: error.code ?? null, status: error.status ?? null });
+    if (/password/i.test(error.message)) throw fieldErrors({ password: "Choose a stronger password: at least 10 characters with a letter and a number." });
+    if (error.status === 429) throw new AppError("rate_limited", "Too many sign-ups from here right now. Please wait a few minutes and try again.");
+    throw new AppError("internal", "We couldn't create your account just now. Please try again in a minute.");
   }
   // Supabase hides existing accounts behind an empty identities list instead of an error.
   if (res.user && res.user.identities?.length === 0) throw await existingAccountError(data.email, ip);
@@ -126,13 +136,18 @@ export async function signUp(input: unknown, ip: string) {
 export async function signIn(input: unknown, ip: string) {
   await rateLimit("auth", ip);
   const data = SignInSchema.parse(input);
+  // Per-account limit as well as per-IP, so password guessing spread over many IPs still stalls.
+  await rateLimit("authAccount", accountKey(data.email));
   const env = serverEnv();
 
   if (env.dataMode === "demo") {
     const repo = systemRepo();
     const user = await repo.getUserByEmail(data.email);
     const hash = user ? memoryStore().passwords.get(user.id) : undefined;
-    if (!user || !hash || !(await verifyPassword(data.password, hash))) throw await failedSignInError(data.email, ip);
+    if (!user || !hash || !(await verifyPassword(data.password, hash))) {
+      logger.warn("auth.sign_in_failed", { account: accountKey(data.email) });
+      throw await failedSignInError(data.email, ip);
+    }
     await setDemoCookie(user.id);
     await audit(user, "auth.signed_in", "user", user.id);
     return user;
@@ -140,7 +155,10 @@ export async function signIn(input: unknown, ip: string) {
 
   const supabase = await createSessionClient();
   const { data: res, error } = await supabase.auth.signInWithPassword({ email: data.email, password: data.password });
-  if (error || !res.user) throw await failedSignInError(data.email, ip);
+  if (error || !res.user) {
+    logger.warn("auth.sign_in_failed", { account: accountKey(data.email), provider: error?.code ?? null });
+    throw await failedSignInError(data.email, ip);
+  }
   const user = await systemRepo().getUser(res.user.id);
   if (!user) throw new AppError("unauthorized", GENERIC_LOGIN_ERROR);
   await applyRoleAllowlist(user);

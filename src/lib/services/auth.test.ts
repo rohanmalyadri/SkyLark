@@ -61,4 +61,23 @@ describe("email sign-in failures", () => {
     const r = await reasonOf(auth.signIn({ email: "nobody@example.org", password: "whatever-1" }, ip));
     expect(r.reason).toBeUndefined();
   });
+
+  it("locks password guessing on one account even when it comes from many IPs", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { auth } = await setup();
+    const { RATE_LIMITS } = await import("@/lib/infra/rate-limit");
+    for (let i = 0; i < RATE_LIMITS.authAccount.limit; i++) {
+      await reasonOf(auth.signIn({ email: "pass.user@example.org", password: `wrong-pass-${i}` }, `192.0.2.${i}`));
+    }
+    const r = await reasonOf(auth.signIn({ email: "PASS.user@example.org", password: "correct-horse-9" }, "198.51.100.7"));
+    expect(r.message).toMatch(/too often/);
+    // Other accounts are unaffected.
+    await expect(auth.signIn({ email: "nobody@example.org", password: "whatever-1" }, "198.51.100.8")).rejects.toMatchObject({ details: { reason: "no_account" } });
+  });
+
+  it("never puts the email address itself in the rate-limit key", async () => {
+    const { accountKey } = await import("./auth");
+    expect(accountKey("Pass.User@example.org ")).toBe(accountKey("pass.user@example.org"));
+    expect(accountKey("pass.user@example.org")).not.toContain("example");
+  });
 });

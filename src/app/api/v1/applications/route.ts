@@ -4,9 +4,10 @@ import { authorize } from "@/lib/auth/dal";
 import { systemRepo } from "@/lib/data";
 import { AppError, errorResponse } from "@/lib/infra/errors";
 import { rateLimit } from "@/lib/infra/rate-limit";
+import { readJsonBody } from "@/lib/infra/request";
 import { listTracker, saveJob } from "@/lib/services/applications";
 
-const Body = z.object({ jobId: z.string().min(1).max(64) });
+const Body = z.object({ jobId: z.string({ error: "Send the jobId of the job to save." }).trim().min(1, "Send the jobId of the job to save.").max(64, "That jobId is too long.") });
 
 export async function GET() {
   try {
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
     const replay = await repo.getIdempotentResponse(scoped);
     if (replay) return Response.json(replay, { status: 200, headers: { "idempotent-replay": "true" } });
 
-    const { jobId } = Body.parse(await req.json().catch(() => ({})));
+    const { jobId } = Body.parse(await readJsonBody(req, 4_096));
     const app = await saveJob(user, jobId);
     const body = { id: app.id, jobId: app.jobId, status: app.status, createdAt: app.createdAt };
     await repo.saveIdempotentResponse(scoped, body);
