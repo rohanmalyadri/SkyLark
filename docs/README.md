@@ -13,6 +13,10 @@
 
 | | |
 |---|---|
+| [Architecture](engineering/architecture.md) | One diagram of the whole product, with a plain-language note on every box |
+| [API routes](engineering/api-routes.md) | Every API route and server action, plus a new-user walkthrough of each screen and the calls behind it |
+| [Backend hardening](engineering/backend-hardening.md) | Validation, error messages, logging, login security and the secrets audit |
+| [Load test](engineering/load-test.md) | How many users at once the backend handles, and how to rerun the test |
 | [Backend setup](engineering/backend-setup.md) | Running Skylark against a real Supabase project, Google sign-in and Razorpay |
 
 ## Research
